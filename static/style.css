@@ -147,7 +147,6 @@ body {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  flex: 1;
 }
 
 .results-table th:nth-child(1),
