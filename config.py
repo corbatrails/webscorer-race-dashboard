@@ -22,4 +22,5 @@ def load_config():
         "race_id": os.environ.get("WEBSCORER_RACE_ID") or None,
         "refresh_interval": int(os.environ.get("REFRESH_INTERVAL", "60")),
         "page_rotation_interval": int(os.environ.get("PAGE_ROTATION_INTERVAL", "20")),
+        "results_per_page": int(os.environ.get("RESULTS_PER_PAGE", "0")),
     }

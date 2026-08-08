@@ -6,13 +6,14 @@
   var ROW_HEIGHT_VH = 4.5;
   var HEADER_FOOTER_VH = 15;
 
-  function computeMaxRows() {
+  function computeMaxRows(configuredRows) {
+    if (configuredRows && configuredRows > 0) return configuredRows;
     var availableVh = 100 - HEADER_FOOTER_VH;
     return Math.floor(availableVh / ROW_HEIGHT_VH);
   }
 
-  function splitPages(apiPages) {
-    var maxRows = computeMaxRows();
+  function splitPages(apiPages, configuredRows) {
+    var maxRows = computeMaxRows(configuredRows);
     var result = [];
     for (var i = 0; i < apiPages.length; i++) {
       var page = apiPages[i];
@@ -60,7 +61,7 @@
       return;
     }
 
-    pages = splitPages(data.pages);
+    pages = splitPages(data.pages, data.results_per_page);
     if (currentPage >= pages.length) currentPage = 0;
 
     var html = "";
@@ -135,9 +136,13 @@
 
     html += '<div class="category-header">';
     html += '<div class="category-title">' + escapeHtml(page.title) + "</div>";
+    html += '<div class="category-meta">';
+    html += '<span>Last updated: ' + escapeHtml(data.last_refresh || "\u2014") + "</span>";
     if (page.total_pages > 1) {
-      html += '<div class="category-page-num">Page ' + page.page_num + " of " + page.total_pages + "</div>";
+      html += '<span>Page ' + page.page_num + " of " + page.total_pages + "</span>";
     }
+    html += '<span>Page ' + (index + 1) + " of " + pages.length + "</span>";
+    html += "</div>";
     html += "</div>";
 
     if (page.racers.length === 0) {
@@ -162,7 +167,6 @@
       html += "</tbody></table>";
     }
 
-    html += renderFooter(data);
     html += "</div>";
     return html;
   }

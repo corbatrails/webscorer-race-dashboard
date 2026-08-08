@@ -41,6 +41,7 @@ def create_app(config=None, start_polling=True):
                 "race_date": _cache["race_date"],
                 "race_sport": _cache["race_sport"],
                 "page_rotation_interval": app.config["dashboard"].get("page_rotation_interval", 20),
+                "results_per_page": app.config["dashboard"].get("results_per_page", 0),
             })
 
     if start_polling:
