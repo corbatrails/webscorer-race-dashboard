@@ -28,8 +28,13 @@ A TV-mounted dashboard that displays live race results from WebScorer. Designed 
 
 4. Run:
    ```bash
-   ./start-app.sh          # Development: server only
-   ./start-app.sh --kiosk  # Raspberry Pi: server + fullscreen Chromium
+   # Linux / Raspberry Pi
+   ./start.sh              # Development: server only
+   ./start.sh --kiosk      # Server + fullscreen Chromium
+
+   # Windows (PowerShell)
+   .\start.ps1             # Development: server only
+   .\start.ps1 --kiosk     # Server + fullscreen Chromium
    ```
 
 5. If `WEBSCORER_RACE_ID` is not set, select a race from the list when prompted.
