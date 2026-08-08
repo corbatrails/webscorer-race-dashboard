@@ -3,6 +3,41 @@
   let pages = [];
   let rotationInterval = (typeof PAGE_ROTATION_INTERVAL !== 'undefined') ? PAGE_ROTATION_INTERVAL : 20;
   let rotationTimer = null;
+  var ROW_HEIGHT_VH = 4.5;
+  var HEADER_FOOTER_VH = 15;
+
+  function computeMaxRows() {
+    var availableVh = 100 - HEADER_FOOTER_VH;
+    return Math.floor(availableVh / ROW_HEIGHT_VH);
+  }
+
+  function splitPages(apiPages) {
+    var maxRows = computeMaxRows();
+    var result = [];
+    for (var i = 0; i < apiPages.length; i++) {
+      var page = apiPages[i];
+      if (page.type === "summary") {
+        result.push(page);
+      } else {
+        var racers = page.racers || [];
+        if (racers.length <= maxRows) {
+          result.push({ type: "category", title: page.title, racers: racers, page_num: 1, total_pages: 1 });
+        } else {
+          var totalPages = Math.ceil(racers.length / maxRows);
+          for (var j = 0; j < totalPages; j++) {
+            result.push({
+              type: "category",
+              title: page.title,
+              racers: racers.slice(j * maxRows, (j + 1) * maxRows),
+              page_num: j + 1,
+              total_pages: totalPages
+            });
+          }
+        }
+      }
+    }
+    return result;
+  }
 
   function fetchData() {
     fetch("/api/data")
@@ -25,7 +60,7 @@
       return;
     }
 
-    pages = data.pages;
+    pages = splitPages(data.pages);
     if (currentPage >= pages.length) currentPage = 0;
 
     var html = "";

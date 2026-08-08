@@ -138,21 +138,36 @@ body {
 .results-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   flex: 1;
 }
+
+.results-table th:nth-child(1),
+.results-table td:nth-child(1) { width: 8%; }
+.results-table th:nth-child(2),
+.results-table td:nth-child(2) { width: 10%; }
+.results-table th:nth-child(3),
+.results-table td:nth-child(3) { width: 52%; }
+.results-table th:nth-child(4),
+.results-table td:nth-child(4) { width: 30%; }
 
 .results-table th {
   text-align: left;
   font-size: 2.2vh;
   color: #00d4ff;
   padding: 1vh 1vw;
+  height: 4.5vh;
   border-bottom: 2px solid #2a2a4a;
 }
 
 .results-table td {
   font-size: 2.2vh;
   padding: 1vh 1vw;
+  height: 4.5vh;
   border-bottom: 1px solid #2a2a4a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .results-table tr:nth-child(even) {

@@ -1,6 +1,3 @@
-import math
-
-
 def process_race_data(api_response):
     if "Error" in api_response:
         return {
@@ -41,29 +38,14 @@ def process_race_data(api_response):
 
 
 def build_pages(dashboard_data, max_rows=18):
+    """Build page list. Categories are sent whole; the frontend splits by viewport size."""
     pages = [{"type": "summary", "title": "Summary", "data": dashboard_data}]
 
     for category in dashboard_data.get("categories", []):
-        racers = category["racers"]
-        if len(racers) <= max_rows:
-            pages.append({
-                "type": "category",
-                "title": category["name"],
-                "racers": racers,
-                "page_num": 1,
-                "total_pages": 1,
-            })
-        else:
-            total_pages = math.ceil(len(racers) / max_rows)
-            for i in range(total_pages):
-                start = i * max_rows
-                end = start + max_rows
-                pages.append({
-                    "type": "category",
-                    "title": category["name"],
-                    "racers": racers[start:end],
-                    "page_num": i + 1,
-                    "total_pages": total_pages,
-                })
+        pages.append({
+            "type": "category",
+            "title": category["name"],
+            "racers": category["racers"],
+        })
 
     return pages

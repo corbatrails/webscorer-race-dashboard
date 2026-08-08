@@ -69,27 +69,24 @@ def test_build_pages_basic():
     assert pages[0]["type"] == "summary"
     assert pages[1]["type"] == "category"
     assert pages[1]["title"] == "Male 20-29"
+    assert len(pages[1]["racers"]) == 4
     assert pages[2]["type"] == "category"
     assert pages[2]["title"] == "Female 20-29"
     assert len(pages) == 3
 
 
-def test_build_pages_splits_large_category():
+def test_build_pages_large_category_unsplit():
     many_racers = [{"Place": i, "Bib": str(i), "Name": f"Racer {i}", "Time": "00:20:00"} for i in range(1, 26)]
     response = {
         "RaceInfo": {"RaceId": 100, "Name": "Big Race", "Date": "2026-08-07", "Sport": "Running"},
         "Results": [{"Grouping": {"Category": "Open"}, "Racers": many_racers}],
     }
     data = process_race_data(response)
-    pages = build_pages(data, max_rows=10)
-    # Summary + 3 pages for 25 racers at 10 per page
-    assert len(pages) == 4
+    pages = build_pages(data)
+    # Summary + 1 category (frontend handles splitting)
+    assert len(pages) == 2
     assert pages[1]["type"] == "category"
-    assert len(pages[1]["racers"]) == 10
-    assert pages[2]["type"] == "category"
-    assert len(pages[2]["racers"]) == 10
-    assert pages[3]["type"] == "category"
-    assert len(pages[3]["racers"]) == 5
+    assert len(pages[1]["racers"]) == 25
 
 
 def test_build_pages_empty():
