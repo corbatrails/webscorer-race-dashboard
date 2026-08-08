@@ -1,0 +1,94 @@
+import json
+import pytest
+from unittest.mock import patch, MagicMock
+from app import create_app
+
+
+MOCK_RACE_RESULTS = {
+    "RaceInfo": {"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"},
+    "Results": [
+        {
+            "Grouping": {"Category": "Open"},
+            "Racers": [
+                {"Place": 1, "Bib": "101", "Name": "Alice", "Time": "00:18:30"},
+            ],
+        }
+    ],
+}
+
+
+@pytest.fixture(autouse=True)
+def reset_cache():
+    import app as app_module
+    with app_module._cache_lock:
+        app_module._cache.update({
+            "pages": [],
+            "last_refresh": None,
+            "is_stale": False,
+            "waiting": True,
+            "error": None,
+            "race_name": "",
+            "race_date": "",
+            "race_sport": "",
+        })
+
+
+@pytest.fixture
+def app():
+    test_config = {
+        "api_id": "12345",
+        "api_token": "abc123de",
+        "race_id": "100",
+        "refresh_interval": 60,
+        "page_rotation_interval": 20,
+    }
+    application = create_app(test_config, start_polling=False)
+    application.config["TESTING"] = True
+    return application
+
+
+@pytest.fixture
+def client(app):
+    return app.test_client()
+
+
+def test_index_returns_html(client):
+    response = client.get("/")
+    assert response.status_code == 200
+    assert b"<!DOCTYPE html>" in response.data
+
+
+@patch("app.fetch_race_results")
+def test_api_data_returns_json(mock_fetch, app, client):
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    # Simulate a successful poll
+    with app.app_context():
+        from app import poll_once
+        poll_once(app)
+    response = client.get("/api/data")
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert "pages" in data
+    assert "page_rotation_interval" in data
+    assert data["pages"][0]["type"] == "summary"
+
+
+@patch("app.fetch_race_results")
+def test_api_data_before_first_poll(mock_fetch, client):
+    response = client.get("/api/data")
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data["pages"] == []
+    assert data["waiting"] is True
+
+
+@patch("app.fetch_race_list")
+def test_select_race_interactive(mock_fetch_list):
+    mock_fetch_list.return_value = [
+        {"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"},
+        {"RaceId": 200, "Name": "Trail 10K", "Date": "2026-08-07", "Sport": "Running"},
+    ]
+    from app import select_race
+    with patch("builtins.input", return_value="1"):
+        race_id = select_race("12345", "abc123de")
+    assert race_id == "100"
