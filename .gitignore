@@ -209,6 +209,9 @@ tempCodeRunnerFile.py
 # PyPI configuration file
 .pypirc
 
+# Superpowers SDD workspace
+.superpowers/
+
 # Marimo
 marimo/_static/
 marimo/_lsp/
