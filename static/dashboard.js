@@ -1,7 +1,7 @@
 (function () {
     let currentPage = 0;
     let pages = [];
-    let rotationInterval = 20;
+    let rotationInterval = (typeof PAGE_ROTATION_INTERVAL !== 'undefined') ? PAGE_ROTATION_INTERVAL : 20;
     let rotationTimer = null;
 
     function fetchData() {
@@ -10,6 +10,7 @@
             .then(function (data) {
                 rotationInterval = data.page_rotation_interval || 20;
                 renderDashboard(data);
+                startRotation();
             })
             .catch(function (err) {
                 console.error("Fetch error:", err);
@@ -178,6 +179,5 @@
 
     // Initial fetch, then poll on refresh interval
     fetchData();
-    startRotation();
     setInterval(fetchData, 60 * 1000);
 })();

@@ -211,6 +211,10 @@ body {
     justify-content: center;
     gap: 0.8vw;
     padding-top: 1vh;
+    position: fixed;
+    bottom: 1vh;
+    left: 0;
+    width: 100%;
 }
 
 .progress-dot {
