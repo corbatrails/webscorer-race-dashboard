@@ -135,12 +135,13 @@
     var html = '<div class="page' + activeClass + '" data-index="' + index + '">';
 
     html += '<div class="category-header">';
-    html += '<div class="category-title">' + escapeHtml(page.title) + "</div>";
+    html += '<div class="category-title">' + escapeHtml(page.title);
+    if (page.total_pages > 1) {
+      html += '<span class="category-page-num"> \u2014 Page ' + page.page_num + " of " + page.total_pages + "</span>";
+    }
+    html += "</div>";
     html += '<div class="category-meta">';
     html += '<span>Last updated: ' + escapeHtml(data.last_refresh || "\u2014") + "</span>";
-    if (page.total_pages > 1) {
-      html += '<span>Page ' + page.page_num + " of " + page.total_pages + "</span>";
-    }
     html += '<span>Page ' + (index + 1) + " of " + pages.length + "</span>";
     html += "</div>";
     html += "</div>";
