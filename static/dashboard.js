@@ -99,7 +99,9 @@
     html += "<div>";
     html += '<div class="race-title">' + escapeHtml(data.race_name) + "</div>";
     html += '<div class="race-subtitle">' + escapeHtml(data.race_date) + " \u2022 " + escapeHtml(data.race_sport) + "</div>";
-    html += "</div></div>";
+    html += "</div>";
+    html += '<div class="summary-meta">Last updated: ' + escapeHtml(data.last_refresh || "\u2014") + "</div>";
+    html += "</div>";
 
     html += '<div class="stats-bar">';
     html += '<div class="stat"><div class="stat-value">' + d.total_finished + '</div><div class="stat-label">Finished</div></div>';
@@ -126,7 +128,6 @@
     }
     html += "</div>";
 
-    html += renderFooter(data);
     html += "</div>";
     return html;
   }
