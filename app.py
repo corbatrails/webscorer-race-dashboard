@@ -81,7 +81,13 @@ def _poll_loop(app, race_id, interval):
 
 
 def select_race(api_id, api_token):
-    races = fetch_race_list(api_id, api_token)
+    try:
+        races = fetch_race_list(api_id, api_token)
+    except Exception as e:
+        print(f"\nERROR: Failed to fetch race list: {e}")
+        print("Set WEBSCORER_RACE_ID in your .env file to skip race selection.")
+        raise SystemExit(1)
+
     if not races:
         print("No posted races found.")
         raise SystemExit(1)

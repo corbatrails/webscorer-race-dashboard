@@ -37,6 +37,7 @@ def test_fetch_race_list(mock_get):
     mock_get.assert_called_once_with(
         "https://www.webscorer.com/json/mypostedraces",
         params={"apiid": "12345", "apipriv": "abc123de"},
+        headers={"User-Agent": "WebScorerDashboard/1.0"},
         timeout=30,
     )
     assert len(races) == 2
@@ -56,6 +57,7 @@ def test_fetch_race_results(mock_get):
     mock_get.assert_called_once_with(
         "https://www.webscorer.com/json/race",
         params={"raceid": "100", "apiid": "12345", "apipriv": "abc123de"},
+        headers={"User-Agent": "WebScorerDashboard/1.0"},
         timeout=30,
     )
     assert data["RaceInfo"]["Name"] == "Morning 5K"

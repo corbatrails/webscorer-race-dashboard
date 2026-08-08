@@ -1,5 +1,6 @@
 import os
 import pytest
+from unittest.mock import patch
 from config import load_config
 
 
@@ -17,7 +18,8 @@ def test_load_config_with_all_values(monkeypatch):
     assert cfg["page_rotation_interval"] == 15
 
 
-def test_load_config_defaults(monkeypatch):
+@patch("config.load_dotenv")
+def test_load_config_defaults(mock_dotenv, monkeypatch):
     monkeypatch.setenv("WEBSCORER_API_ID", "12345")
     monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
     monkeypatch.delenv("WEBSCORER_RACE_ID", raising=False)
@@ -29,14 +31,16 @@ def test_load_config_defaults(monkeypatch):
     assert cfg["page_rotation_interval"] == 20
 
 
-def test_load_config_missing_api_id(monkeypatch):
+@patch("config.load_dotenv")
+def test_load_config_missing_api_id(mock_dotenv, monkeypatch):
     monkeypatch.delenv("WEBSCORER_API_ID", raising=False)
     monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
     with pytest.raises(SystemExit):
         load_config()
 
 
-def test_load_config_missing_api_token(monkeypatch):
+@patch("config.load_dotenv")
+def test_load_config_missing_api_token(mock_dotenv, monkeypatch):
     monkeypatch.setenv("WEBSCORER_API_ID", "12345")
     monkeypatch.delenv("WEBSCORER_API_TOKEN", raising=False)
     with pytest.raises(SystemExit):
