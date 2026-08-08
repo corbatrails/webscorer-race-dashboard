@@ -70,7 +70,11 @@ def poll_once(app):
     except Exception as e:
         with _cache_lock:
             _cache["is_stale"] = True
-            _cache["error"] = str(e)
+            error_msg = str(e)
+            # Strip URL params to avoid leaking API credentials to the frontend
+            if "apipriv=" in error_msg:
+                error_msg = error_msg.split("?")[0] if "?" in error_msg else "API request failed"
+            _cache["error"] = error_msg
 
 
 def _poll_loop(app, race_id, interval):
