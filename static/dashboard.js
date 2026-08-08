@@ -21,14 +21,16 @@
         result.push(page);
       } else {
         var racers = page.racers || [];
+        var gender = page.gender || "";
         if (racers.length <= maxRows) {
-          result.push({ type: "category", title: page.title, racers: racers, page_num: 1, total_pages: 1 });
+          result.push({ type: "category", title: page.title, gender: gender, racers: racers, page_num: 1, total_pages: 1 });
         } else {
           var totalPages = Math.ceil(racers.length / maxRows);
           for (var j = 0; j < totalPages; j++) {
             result.push({
               type: "category",
               title: page.title,
+              gender: gender,
               racers: racers.slice(j * maxRows, (j + 1) * maxRows),
               page_num: j + 1,
               total_pages: totalPages
@@ -137,6 +139,9 @@
 
     html += '<div class="category-header">';
     html += '<div class="category-title">' + escapeHtml(page.title);
+    if (page.gender) {
+      html += '<span class="category-gender"> \u2022 ' + escapeHtml(page.gender) + "</span>";
+    }
     if (page.total_pages > 1) {
       html += '<span class="category-page-num"> \u2014 Page ' + page.page_num + " of " + page.total_pages + "</span>";
     }
