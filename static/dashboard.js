@@ -4,7 +4,7 @@
   let rotationInterval = (typeof PAGE_ROTATION_INTERVAL !== 'undefined') ? PAGE_ROTATION_INTERVAL : 20;
   let rotationTimer = null;
   var ROW_HEIGHT_VH = 4.5;
-  var HEADER_FOOTER_VH = 20;
+  var HEADER_FOOTER_VH = 25;
 
   function computeMaxRows(configuredRows) {
     if (configuredRows && configuredRows > 0) return configuredRows;
