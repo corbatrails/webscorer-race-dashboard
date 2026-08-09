@@ -1,0 +1,276 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #1a1a2e;
+  color: #e0e0e0;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+.page {
+  display: none;
+  height: 100vh;
+  padding: 2vh 3vw;
+  flex-direction: column;
+}
+
+.page.active {
+  display: flex;
+}
+
+/* Summary page */
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 2vw;
+  margin-bottom: 3vh;
+}
+
+.summary-meta {
+  margin-left: auto;
+  font-size: 2vh;
+  color: #a0a0c0;
+}
+
+.summary-header img {
+  height: 10vh;
+  width: auto;
+  object-fit: contain;
+}
+
+.race-title {
+  font-size: 4vh;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.race-subtitle {
+  font-size: 2.5vh;
+  color: #a0a0c0;
+}
+
+.stats-bar {
+  display: flex;
+  gap: 4vw;
+  margin-bottom: 3vh;
+  padding: 2vh 2vw;
+  background: #16213e;
+  border-radius: 1vh;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 5vh;
+  font-weight: bold;
+  color: #00d4ff;
+}
+
+.stat-label {
+  font-size: 2vh;
+  color: #a0a0c0;
+}
+
+/* Leaders section */
+.leaders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(30vw, 1fr));
+  gap: 2vw;
+  flex: 1;
+  overflow: hidden;
+}
+
+.leader-card {
+  background: #16213e;
+  border-radius: 1vh;
+  padding: 2vh 2vw;
+}
+
+.leader-card h3 {
+  font-size: 2.5vh;
+  color: #00d4ff;
+  margin-bottom: 1vh;
+  border-bottom: 1px solid #2a2a4a;
+  padding-bottom: 1vh;
+}
+
+.leader-entry {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.8vh 0;
+  font-size: 2.2vh;
+}
+
+.leader-place {
+  color: #ffd700;
+  min-width: 3vw;
+}
+
+.leader-name {
+  flex: 1;
+}
+
+.leader-time {
+  color: #a0a0c0;
+}
+
+/* Category results page */
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2vh;
+}
+
+.category-title {
+  font-size: 3.5vh;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.category-page-num {
+  font-size: 2.5vh;
+  font-weight: normal;
+  color: #a0a0c0;
+}
+
+.category-meta {
+  display: flex;
+  gap: 2vw;
+  font-size: 2vh;
+  color: #a0a0c0;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.results-table th:nth-child(1),
+.results-table td:nth-child(1) {
+  width: 8%;
+}
+
+.results-table th:nth-child(2),
+.results-table td:nth-child(2) {
+  width: 10%;
+}
+
+.results-table th:nth-child(3),
+.results-table td:nth-child(3) {
+  width: 52%;
+}
+
+.results-table th:nth-child(4),
+.results-table td:nth-child(4) {
+  width: 30%;
+}
+
+.results-table th {
+  text-align: left;
+  font-size: 2.2vh;
+  color: #00d4ff;
+  padding: 1vh 1vw;
+  height: 4.5vh;
+  border-bottom: 2px solid #2a2a4a;
+}
+
+.results-table td {
+  font-size: 2.2vh;
+  padding: 1vh 1vw;
+  height: 4.5vh;
+  border-bottom: 1px solid #2a2a4a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.results-table tr:nth-child(even) {
+  background: #16213e;
+}
+
+.results-table .place-1 {
+  color: #ffd700;
+}
+
+.results-table .place-2 {
+  color: #c0c0c0;
+}
+
+.results-table .place-3 {
+  color: #cd7f32;
+}
+
+/* Footer */
+.page-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1vh;
+  font-size: 1.8vh;
+  color: #606080;
+  margin-top: auto;
+}
+
+.stale-indicator {
+  color: #ff6b6b;
+  font-weight: bold;
+}
+
+/* Waiting/error states */
+.waiting-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+}
+
+.waiting-screen h1 {
+  font-size: 5vh;
+  margin-bottom: 3vh;
+}
+
+.waiting-screen p {
+  font-size: 2.5vh;
+  color: #a0a0c0;
+}
+
+.error-message {
+  color: #ff6b6b;
+  font-size: 2.5vh;
+  margin-top: 2vh;
+}
+
+/* Page progress dots */
+.progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.8vw;
+  padding-top: 1vh;
+  position: fixed;
+  bottom: 1vh;
+  left: 0;
+  width: 100%;
+}
+
+.progress-dot {
+  width: 1.2vh;
+  height: 1.2vh;
+  border-radius: 50%;
+  background: #2a2a4a;
+}
+
+.progress-dot.active {
+  background: #00d4ff;
+}
