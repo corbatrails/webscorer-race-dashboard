@@ -41,7 +41,7 @@ def create_app(config=None, start_polling=True):
                 "race_sport": _cache["race_sport"],
                 "summary_display_time": app.config["dashboard"].get("summary_display_time", 20),
                 "scroll_speed": app.config["dashboard"].get("scroll_speed", 100),
-                "category_pause_time": app.config["dashboard"].get("category_pause_time", 3),
+                "scroll_pause_time": app.config["dashboard"].get("scroll_pause_time", 3),
                 "pinned_leaders": app.config["dashboard"].get("pinned_leaders", 3),
                 "show_summary": app.config["dashboard"].get("show_summary", True),
                 "show_categories": app.config["dashboard"].get("show_categories", True),
@@ -142,7 +142,7 @@ def main():
     print(f"  Refresh:         {config['refresh_interval']}s")
     print(f"  Summary time:    {config['summary_display_time']}s")
     print(f"  Scroll speed:    {config['scroll_speed']}px/s")
-    print(f"  Category pause:  {config['category_pause_time']}s")
+    print(f"  Scroll pause:    {config['scroll_pause_time']}s")
     print(f"  Pinned leaders:  {config['pinned_leaders']}")
     print(f"\nDashboard running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=False)

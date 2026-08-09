@@ -23,7 +23,7 @@ def load_config():
         "refresh_interval": int(os.environ.get("REFRESH_INTERVAL", "60")),
         "summary_display_time": int(os.environ.get("SUMMARY_DISPLAY_TIME", "20")),
         "scroll_speed": int(os.environ.get("SCROLL_SPEED", "100")),
-        "category_pause_time": int(os.environ.get("CATEGORY_PAUSE_TIME", "3")),
+        "scroll_pause_time": int(os.environ.get("SCROLL_PAUSE_TIME", "3")),
         "pinned_leaders": int(os.environ.get("PINNED_LEADERS", "3")),
         "show_summary": os.environ.get("SHOW_SUMMARY", "true").lower() == "true",
         "show_categories": os.environ.get("SHOW_CATEGORIES", "true").lower() == "true",

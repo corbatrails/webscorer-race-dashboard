@@ -42,7 +42,7 @@ def app():
         "refresh_interval": 60,
         "summary_display_time": 20,
         "scroll_speed": 100,
-        "category_pause_time": 3,
+        "scroll_pause_time": 3,
         "pinned_leaders": 3,
         "show_summary": True,
         "show_categories": True,

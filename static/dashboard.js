@@ -15,7 +15,7 @@
         config = {
           summaryDisplayTime: data.summary_display_time,
           scrollSpeed: data.scroll_speed,
-          categoryPauseTime: data.category_pause_time,
+          scrollPauseTime: data.scroll_pause_time,
           pinnedLeaders: data.pinned_leaders,
           showSummary: data.show_summary !== false,
           showCategories: data.show_categories !== false
@@ -121,11 +121,14 @@
       if (progress < 1) {
         scrollAnimationId = requestAnimationFrame(step);
       } else {
-        advanceTimer = setTimeout(advance, config.categoryPauseTime * 1000);
+        advanceTimer = setTimeout(advance, config.scrollPauseTime * 1000);
       }
     }
 
-    scrollAnimationId = requestAnimationFrame(step);
+    // Pause before starting scroll so first rows are visible
+    advanceTimer = setTimeout(function () {
+      scrollAnimationId = requestAnimationFrame(step);
+    }, config.scrollPauseTime * 1000);
   }
 
   function renderWaiting(error) {

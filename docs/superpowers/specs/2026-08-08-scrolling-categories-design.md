@@ -11,8 +11,8 @@ Replace page-based category display with a continuous scroll. Each category has 
 ## Behavior
 
 1. Summary page displays statically for `SUMMARY_DISPLAY_TIME` seconds
-2. Category page appears: top N rows (leaders) pinned, remaining rows begin scrolling upward at `SCROLL_SPEED` px/s
-3. When the last row is fully visible, pause for `CATEGORY_PAUSE_TIME` seconds
+2. Category page appears: top N rows (leaders) pinned, pause for `SCROLL_PAUSE_TIME` seconds, then begin scrolling upward at `SCROLL_SPEED` px/s
+3. When the last row is fully visible, pause for `SCROLL_PAUSE_TIME` seconds
 4. Advance to next category (or back to summary)
 5. If a category fits entirely on screen (no overflow beyond pinned + visible area), display statically for `SUMMARY_DISPLAY_TIME` then advance
 
@@ -24,7 +24,7 @@ Replaces `PAGE_ROTATION_INTERVAL` and `RESULTS_PER_PAGE`.
 |---|---|---|
 | `SUMMARY_DISPLAY_TIME` | `20` | Seconds the summary page displays |
 | `SCROLL_SPEED` | `100` | Pixels per second for category result scrolling |
-| `CATEGORY_PAUSE_TIME` | `3` | Seconds to pause after scroll completes before advancing |
+| `SCROLL_PAUSE_TIME` | `3` | Seconds to pause before and after scroll |
 | `PINNED_LEADERS` | `3` | Number of rows frozen at top of each category |
 | `SHOW_SUMMARY` | `true` | Whether to show the summary page |
 | `SHOW_CATEGORIES` | `true` | Whether to show category pages |
@@ -58,8 +58,8 @@ Removed:
 - Scroll is CSS-driven (`transform: translateY()` or `scrollTop` animation via `requestAnimationFrame`)
 - Scroll distance = total height of non-pinned rows - visible scroll area height
 - If scroll distance ≤ 0 (all results fit), no scroll needed — static display
-- Scroll starts immediately when category page becomes active
-- On completion (last row visible): pause `CATEGORY_PAUSE_TIME`, then fire advance
+- Scroll starts after `SCROLL_PAUSE_TIME` pause when category page becomes active
+- On completion (last row visible): pause `SCROLL_PAUSE_TIME`, then fire advance
 
 ## Rotation Flow
 
@@ -90,7 +90,7 @@ API response adds new fields:
 {
   "summary_display_time": 20,
   "scroll_speed": 100,
-  "category_pause_time": 3,
+  "scroll_pause_time": 3,
   "pinned_leaders": 3
 }
 ```
