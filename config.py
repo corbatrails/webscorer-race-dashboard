@@ -23,4 +23,6 @@ def load_config():
         "refresh_interval": int(os.environ.get("REFRESH_INTERVAL", "60")),
         "page_rotation_interval": int(os.environ.get("PAGE_ROTATION_INTERVAL", "20")),
         "results_per_page": int(os.environ.get("RESULTS_PER_PAGE", "0")),
+        "show_summary": os.environ.get("SHOW_SUMMARY", "true").lower() == "true",
+        "show_categories": os.environ.get("SHOW_CATEGORIES", "true").lower() == "true",
     }

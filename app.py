@@ -42,6 +42,8 @@ def create_app(config=None, start_polling=True):
                 "race_sport": _cache["race_sport"],
                 "page_rotation_interval": app.config["dashboard"].get("page_rotation_interval", 20),
                 "results_per_page": app.config["dashboard"].get("results_per_page", 0),
+                "show_summary": app.config["dashboard"].get("show_summary", True),
+                "show_categories": app.config["dashboard"].get("show_categories", True),
             })
 
     if start_polling:

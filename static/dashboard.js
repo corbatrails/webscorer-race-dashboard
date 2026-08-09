@@ -12,14 +12,15 @@
     return Math.floor(availableVh / ROW_HEIGHT_VH);
   }
 
-  function splitPages(apiPages, configuredRows) {
+  function splitPages(apiPages, configuredRows, showSummary, showCategories) {
     var maxRows = computeMaxRows(configuredRows);
     var result = [];
     for (var i = 0; i < apiPages.length; i++) {
       var page = apiPages[i];
       if (page.type === "summary") {
-        result.push(page);
+        if (showSummary) result.push(page);
       } else {
+        if (!showCategories) continue;
         var racers = page.racers || [];
         if (racers.length <= maxRows) {
           result.push({ type: "category", title: page.title, racers: racers, page_num: 1, total_pages: 1 });
@@ -61,7 +62,7 @@
       return;
     }
 
-    pages = splitPages(data.pages, data.results_per_page);
+    pages = splitPages(data.pages, data.results_per_page, data.show_summary !== false, data.show_categories !== false);
     if (currentPage >= pages.length) currentPage = 0;
 
     var html = "";
