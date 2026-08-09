@@ -120,8 +120,14 @@ def main():
         config["race_id"] = select_race(config["api_id"], config["api_token"])
 
     app = create_app(config, start_polling=True)
+    token = config["api_token"]
+    print(f"\n--- Configuration ---")
+    print(f"  API ID:          {config['api_id']}")
+    print(f"  API Token:       {token[:3]}{'*' * (len(token) - 3)}")
+    print(f"  Race ID:         {config['race_id']}")
+    print(f"  Refresh:         {config['refresh_interval']}s")
+    print(f"  Page rotation:   {config['page_rotation_interval']}s")
     print(f"\nDashboard running at http://localhost:5000")
-    print(f"Polling every {config['refresh_interval']}s, rotating pages every {config['page_rotation_interval']}s")
     app.run(host="0.0.0.0", port=5000, debug=False)
 
 
