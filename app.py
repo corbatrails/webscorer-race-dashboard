@@ -66,7 +66,8 @@ def poll_once(app):
             _cache["pages"] = pages
             _cache["last_refresh"] = datetime.now().strftime("%H:%M:%S")
             _cache["is_stale"] = False
-            _cache["waiting"] = False
+            if not data.get("error"):
+                _cache["waiting"] = False
             _cache["error"] = data.get("error")
             _cache["race_name"] = data.get("race_name", "")
             _cache["race_date"] = data.get("race_date", "")
