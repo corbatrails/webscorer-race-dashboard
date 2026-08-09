@@ -133,8 +133,8 @@
 
   function renderWaiting(error) {
     var html = '<div class="waiting-screen">';
-    html += "<h1>Waiting for race data\u2026</h1>";
-    html += "<p>Dashboard will update automatically when results are available.</p>";
+    html += "<h1>No results yet</h1>";
+    html += "<p>Waiting for race data\u2026 Dashboard will update automatically.</p>";
     if (error) {
       html += '<p class="error-message">' + escapeHtml(error) + "</p>";
     }
@@ -266,4 +266,13 @@
   // Initial fetch, then poll on refresh interval
   fetchData();
   setInterval(fetchData, 60 * 1000);
+
+  // Retry quickly if still waiting for initial data
+  var waitingRetry = setInterval(function () {
+    if (lastData && !lastData.waiting) {
+      clearInterval(waitingRetry);
+      return;
+    }
+    fetchData();
+  }, 3000);
 })();
