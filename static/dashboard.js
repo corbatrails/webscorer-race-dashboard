@@ -266,13 +266,4 @@
   // Initial fetch, then poll on refresh interval
   fetchData();
   setInterval(fetchData, 60 * 1000);
-
-  // Retry quickly if still waiting for initial data
-  var waitingRetry = setInterval(function () {
-    if (lastData && !lastData.waiting) {
-      clearInterval(waitingRetry);
-      return;
-    }
-    fetchData();
-  }, 3000);
 })();
