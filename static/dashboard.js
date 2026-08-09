@@ -1,83 +1,134 @@
 (function () {
-  let currentPage = 0;
-  let pages = [];
-  let rotationInterval = (typeof PAGE_ROTATION_INTERVAL !== 'undefined') ? PAGE_ROTATION_INTERVAL : 20;
-  let rotationTimer = null;
-  var ROW_HEIGHT_VH = 4.5;
-  var HEADER_FOOTER_VH = 25;
-
-  function computeMaxRows(configuredRows) {
-    if (configuredRows && configuredRows > 0) return configuredRows;
-    var availableVh = 100 - HEADER_FOOTER_VH;
-    return Math.floor(availableVh / ROW_HEIGHT_VH);
-  }
-
-  function splitPages(apiPages, configuredRows, showSummary, showCategories) {
-    var maxRows = computeMaxRows(configuredRows);
-    var result = [];
-    for (var i = 0; i < apiPages.length; i++) {
-      var page = apiPages[i];
-      if (page.type === "summary") {
-        if (showSummary) result.push(page);
-      } else {
-        if (!showCategories) continue;
-        var racers = page.racers || [];
-        if (racers.length <= maxRows) {
-          result.push({ type: "category", title: page.title, racers: racers, page_num: 1, total_pages: 1 });
-        } else {
-          var totalPages = Math.ceil(racers.length / maxRows);
-          for (var j = 0; j < totalPages; j++) {
-            result.push({
-              type: "category",
-              title: page.title,
-              racers: racers.slice(j * maxRows, (j + 1) * maxRows),
-              page_num: j + 1,
-              total_pages: totalPages
-            });
-          }
-        }
-      }
-    }
-    return result;
-  }
+  var currentIndex = 0;
+  var categories = [];
+  var summaryPage = null;
+  var config = {};
+  var scrollAnimationId = null;
+  var advanceTimer = null;
+  var lastData = null;
 
   function fetchData() {
     fetch("/api/data")
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        rotationInterval = data.page_rotation_interval || 20;
-        renderDashboard(data);
-        startRotation();
+        lastData = data;
+        config = {
+          summaryDisplayTime: data.summary_display_time,
+          scrollSpeed: data.scroll_speed,
+          scrollPauseTime: data.scroll_pause_time,
+          pinnedLeaders: data.pinned_leaders,
+          showSummary: data.show_summary !== false,
+          showCategories: data.show_categories !== false
+        };
+        buildPageList(data);
+        renderCurrentPage();
       })
       .catch(function (err) {
         console.error("Fetch error:", err);
       });
   }
 
-  function renderDashboard(data) {
-    var container = document.getElementById("dashboard");
-
+  function buildPageList(data) {
     if (data.waiting && data.pages.length === 0) {
-      container.innerHTML = renderWaiting(data.error);
+      summaryPage = null;
+      categories = [];
       return;
     }
 
-    pages = splitPages(data.pages, data.results_per_page, data.show_summary !== false, data.show_categories !== false);
-    if (currentPage >= pages.length) currentPage = 0;
+    summaryPage = null;
+    categories = [];
+    for (var i = 0; i < data.pages.length; i++) {
+      var page = data.pages[i];
+      if (page.type === "summary" && config.showSummary) {
+        summaryPage = page;
+      } else if (page.type === "category" && config.showCategories) {
+        categories.push(page);
+      }
+    }
+  }
 
-    var html = "";
-    for (var i = 0; i < pages.length; i++) {
-      var page = pages[i];
-      var active = i === currentPage ? " active" : "";
-      if (page.type === "summary") {
-        html += renderSummary(page, data, active, i);
+  function getTotalPages() {
+    return (summaryPage ? 1 : 0) + categories.length;
+  }
+
+  function renderCurrentPage() {
+    stopAnimations();
+    var container = document.getElementById("dashboard");
+
+    if (!summaryPage && categories.length === 0) {
+      container.innerHTML = renderWaiting(lastData ? lastData.error : null);
+      return;
+    }
+
+    var totalPages = getTotalPages();
+    if (currentIndex >= totalPages) currentIndex = 0;
+
+    var html;
+    if (summaryPage && currentIndex === 0) {
+      html = renderSummary(summaryPage, lastData);
+      html += renderProgressDots(totalPages, currentIndex);
+      container.innerHTML = html;
+      advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
+    } else {
+      var catIndex = summaryPage ? currentIndex - 1 : currentIndex;
+      var category = categories[catIndex];
+      html = renderCategory(category, catIndex, lastData);
+      html += renderProgressDots(totalPages, currentIndex);
+      container.innerHTML = html;
+      startScroll();
+    }
+  }
+
+  function advance() {
+    stopAnimations();
+    currentIndex = (currentIndex + 1) % getTotalPages();
+    renderCurrentPage();
+  }
+
+  function stopAnimations() {
+    if (scrollAnimationId) {
+      cancelAnimationFrame(scrollAnimationId);
+      scrollAnimationId = null;
+    }
+    if (advanceTimer) {
+      clearTimeout(advanceTimer);
+      advanceTimer = null;
+    }
+  }
+
+  function startScroll() {
+    var scrollContainer = document.getElementById("scroll-container");
+    if (!scrollContainer) {
+      advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
+      return;
+    }
+
+    var scrollDistance = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+    if (scrollDistance <= 0) {
+      advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
+      return;
+    }
+
+    var startTime = null;
+    var duration = (scrollDistance / config.scrollSpeed) * 1000;
+
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var elapsed = timestamp - startTime;
+      var progress = Math.min(elapsed / duration, 1);
+      scrollContainer.scrollTop = progress * scrollDistance;
+
+      if (progress < 1) {
+        scrollAnimationId = requestAnimationFrame(step);
       } else {
-        html += renderCategory(page, active, i, data);
+        advanceTimer = setTimeout(advance, config.scrollPauseTime * 1000);
       }
     }
 
-    html += renderProgressDots(pages.length, currentPage);
-    container.innerHTML = html;
+    // Pause before starting scroll so first rows are visible
+    advanceTimer = setTimeout(function () {
+      scrollAnimationId = requestAnimationFrame(step);
+    }, config.scrollPauseTime * 1000);
   }
 
   function renderWaiting(error) {
@@ -91,9 +142,9 @@
     return html;
   }
 
-  function renderSummary(page, data, activeClass, index) {
+  function renderSummary(page, data) {
     var d = page.data;
-    var html = '<div class="page' + activeClass + '" data-index="' + index + '">';
+    var html = '<div class="page active">';
 
     html += '<div class="summary-header">';
     html += '<img src="/static/logo.png" alt="Logo" onerror="this.style.display=\'none\'">';
@@ -133,54 +184,65 @@
     return html;
   }
 
-  function renderCategory(page, activeClass, index, data) {
-    var html = '<div class="page' + activeClass + '" data-index="' + index + '">';
+  function renderCategory(category, catIndex, data) {
+    var racers = category.racers || [];
+    var pinnedCount = Math.min(config.pinnedLeaders, racers.length);
+    var pinned = racers.slice(0, pinnedCount);
+    var scrolling = racers.slice(pinnedCount);
+
+    var html = '<div class="page active">';
 
     html += '<div class="category-header">';
-    html += '<div class="category-title">' + escapeHtml(page.title);
-    if (page.total_pages > 1) {
-      html += '<span class="category-page-num"> \u2014 Page ' + page.page_num + " of " + page.total_pages + "</span>";
-    }
-    html += "</div>";
+    html += '<div class="category-title">' + escapeHtml(category.title) + "</div>";
     html += '<div class="category-meta">';
     html += '<span>Last updated: ' + escapeHtml(data.last_refresh || "\u2014") + "</span>";
-    html += '<span>Page ' + (index + 1) + " of " + pages.length + "</span>";
+    html += '<span>Category ' + (catIndex + 1) + " of " + categories.length + "</span>";
     html += "</div>";
     html += "</div>";
 
-    if (page.racers.length === 0) {
+    if (racers.length === 0) {
       html += '<p style="font-size:3vh;color:#606080;text-align:center;margin-top:10vh">No results yet</p>';
-    } else {
-      html += '<table class="results-table">';
-      html += "<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Time</th></tr></thead>";
+      html += "</div>";
+      return html;
+    }
+
+    // Pinned leaders table
+    html += '<table class="results-table pinned-table">';
+    html += "<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Time</th></tr></thead>";
+    html += "<tbody>";
+    for (var i = 0; i < pinned.length; i++) {
+      html += renderRacerRow(pinned[i]);
+    }
+    html += "</tbody></table>";
+
+    // Scrolling results
+    if (scrolling.length > 0) {
+      html += '<div id="scroll-container" class="scroll-container">';
+      html += '<table class="results-table scroll-table">';
       html += "<tbody>";
-      for (var i = 0; i < page.racers.length; i++) {
-        var r = page.racers[i];
-        var placeClass = "";
-        if (r.Place === 1) placeClass = " place-1";
-        else if (r.Place === 2) placeClass = " place-2";
-        else if (r.Place === 3) placeClass = " place-3";
-        html += "<tr>";
-        html += '<td class="' + placeClass + '">' + (r.Place || "") + "</td>";
-        html += "<td>" + escapeHtml(r.Bib || "") + "</td>";
-        html += "<td>" + escapeHtml(r.Name || "") + "</td>";
-        html += "<td>" + escapeHtml(r.Time || "") + "</td>";
-        html += "</tr>";
+      for (var j = 0; j < scrolling.length; j++) {
+        html += renderRacerRow(scrolling[j]);
       }
       html += "</tbody></table>";
+      html += "</div>";
     }
 
     html += "</div>";
     return html;
   }
 
-  function renderFooter(data) {
-    var html = '<div class="page-footer">';
-    html += "<span>Last updated: " + escapeHtml(data.last_refresh || "\u2014") + "</span>";
-    if (data.is_stale) {
-      html += '<span class="stale-indicator">\u26a0 Stale data</span>';
-    }
-    html += "</div>";
+  function renderRacerRow(r) {
+    var placeClass = "";
+    var place = parseInt(r.Place) || 0;
+    if (place === 1) placeClass = " place-1";
+    else if (place === 2) placeClass = " place-2";
+    else if (place === 3) placeClass = " place-3";
+    var html = "<tr>";
+    html += '<td class="' + placeClass + '">' + (r.Place || "") + "</td>";
+    html += "<td>" + escapeHtml(r.Bib || "") + "</td>";
+    html += "<td>" + escapeHtml(r.Name || "") + "</td>";
+    html += "<td>" + escapeHtml(r.Time || "") + "</td>";
+    html += "</tr>";
     return html;
   }
 
@@ -199,24 +261,6 @@
     var div = document.createElement("div");
     div.appendChild(document.createTextNode(str));
     return div.innerHTML;
-  }
-
-  function rotatePage() {
-    if (pages.length <= 1) return;
-    currentPage = (currentPage + 1) % pages.length;
-    var allPages = document.querySelectorAll(".page");
-    var allDots = document.querySelectorAll(".progress-dot");
-    for (var i = 0; i < allPages.length; i++) {
-      allPages[i].classList.toggle("active", i === currentPage);
-    }
-    for (var j = 0; j < allDots.length; j++) {
-      allDots[j].classList.toggle("active", j === currentPage);
-    }
-  }
-
-  function startRotation() {
-    if (rotationTimer) clearInterval(rotationTimer);
-    rotationTimer = setInterval(rotatePage, rotationInterval * 1000);
   }
 
   // Initial fetch, then poll on refresh interval
