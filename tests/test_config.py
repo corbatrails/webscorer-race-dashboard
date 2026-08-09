@@ -39,7 +39,7 @@ def test_load_config_defaults(mock_dotenv, monkeypatch):
     assert cfg["refresh_interval"] == 60
     assert cfg["summary_display_time"] == 20
     assert cfg["scroll_speed"] == 100
-    assert cfg["scroll_pause_time"] == 3
+    assert cfg["scroll_pause_time"] == 2
     assert cfg["pinned_leaders"] == 3
 
 
