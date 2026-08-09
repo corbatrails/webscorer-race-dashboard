@@ -42,7 +42,7 @@ def create_app(config=None, start_polling=True):
                 "race_sport": _cache["race_sport"],
                 "summary_display_time": app.config["dashboard"].get("summary_display_time", 20),
                 "scroll_speed": app.config["dashboard"].get("scroll_speed", 100),
-                "scroll_pause_time": app.config["dashboard"].get("scroll_pause_time", 3),
+                "scroll_pause_time": app.config["dashboard"].get("scroll_pause_time", 2),
                 "pinned_leaders": app.config["dashboard"].get("pinned_leaders", 3),
                 "show_summary": app.config["dashboard"].get("show_summary", True),
                 "show_categories": app.config["dashboard"].get("show_categories", True),
