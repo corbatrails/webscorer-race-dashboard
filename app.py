@@ -124,16 +124,30 @@ def main():
     if not config["race_id"]:
         config["race_id"] = select_race(config["api_id"], config["api_token"])
 
-    app = create_app(config, start_polling=True)
-    token = config["api_token"]
+    # Fetch initial data before starting the server to avoid rate-limit conflicts
     race_name = ""
     race_date = ""
     try:
         raw = fetch_race_results(config["race_id"], config["api_id"], config["api_token"])
-        race_name = raw.get("RaceInfo", {}).get("Name", "")
-        race_date = raw.get("RaceInfo", {}).get("Date", "")
+        data = process_race_data(raw)
+        pages = build_pages(data)
+        with _cache_lock:
+            _cache["pages"] = pages
+            _cache["last_refresh"] = datetime.now().strftime("%H:%M:%S")
+            _cache["is_stale"] = False
+            if not data.get("error"):
+                _cache["waiting"] = False
+            _cache["error"] = data.get("error")
+            _cache["race_name"] = data.get("race_name", "")
+            _cache["race_date"] = data.get("race_date", "")
+            _cache["race_sport"] = data.get("race_sport", "")
+        race_name = data.get("race_name", "")
+        race_date = data.get("race_date", "")
     except Exception:
         pass
+
+    app = create_app(config, start_polling=True)
+    token = config["api_token"]
     print(f"\n--- Configuration ---")
     print(f"  API ID:          {config['api_id']}")
     print(f"  API Token:       {token[:3]}{'*' * (len(token) - 3)}")
