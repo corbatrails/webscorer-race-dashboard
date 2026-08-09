@@ -121,10 +121,18 @@ def main():
 
     app = create_app(config, start_polling=True)
     token = config["api_token"]
+    race_name = ""
+    race_date = ""
+    try:
+        raw = fetch_race_results(config["race_id"], config["api_id"], config["api_token"])
+        race_name = raw.get("RaceInfo", {}).get("Name", "")
+        race_date = raw.get("RaceInfo", {}).get("Date", "")
+    except Exception:
+        pass
     print(f"\n--- Configuration ---")
     print(f"  API ID:          {config['api_id']}")
     print(f"  API Token:       {token[:3]}{'*' * (len(token) - 3)}")
-    print(f"  Race ID:         {config['race_id']}")
+    print(f"  Race:            {race_name} ({race_date}) [ID: {config['race_id']}]")
     print(f"  Refresh:         {config['refresh_interval']}s")
     print(f"  Page rotation:   {config['page_rotation_interval']}s")
     print(f"\nDashboard running at http://localhost:5000")
