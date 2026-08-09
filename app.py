@@ -25,8 +25,7 @@ def create_app(config=None, start_polling=True):
 
     @app.route("/")
     def index():
-        cfg = app.config["dashboard"]
-        return render_template("dashboard.html", page_rotation_interval=cfg.get("page_rotation_interval", 20))
+        return render_template("dashboard.html")
 
     @app.route("/api/data")
     def api_data():
@@ -40,8 +39,10 @@ def create_app(config=None, start_polling=True):
                 "race_name": _cache["race_name"],
                 "race_date": _cache["race_date"],
                 "race_sport": _cache["race_sport"],
-                "page_rotation_interval": app.config["dashboard"].get("page_rotation_interval", 20),
-                "results_per_page": app.config["dashboard"].get("results_per_page", 0),
+                "summary_display_time": app.config["dashboard"].get("summary_display_time", 20),
+                "scroll_speed": app.config["dashboard"].get("scroll_speed", 100),
+                "category_pause_time": app.config["dashboard"].get("category_pause_time", 3),
+                "pinned_leaders": app.config["dashboard"].get("pinned_leaders", 3),
                 "show_summary": app.config["dashboard"].get("show_summary", True),
                 "show_categories": app.config["dashboard"].get("show_categories", True),
             })
@@ -138,7 +139,10 @@ def main():
     print(f"  Race Name:       {race_name}")
     print(f"  Race Date:       {race_date}")
     print(f"  Refresh:         {config['refresh_interval']}s")
-    print(f"  Page rotation:   {config['page_rotation_interval']}s")
+    print(f"  Summary time:    {config['summary_display_time']}s")
+    print(f"  Scroll speed:    {config['scroll_speed']}px/s")
+    print(f"  Category pause:  {config['category_pause_time']}s")
+    print(f"  Pinned leaders:  {config['pinned_leaders']}")
     print(f"\nDashboard running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=False)
 

@@ -40,7 +40,12 @@ def app():
         "api_token": "abc123de",
         "race_id": "100",
         "refresh_interval": 60,
-        "page_rotation_interval": 20,
+        "summary_display_time": 20,
+        "scroll_speed": 100,
+        "category_pause_time": 3,
+        "pinned_leaders": 3,
+        "show_summary": True,
+        "show_categories": True,
     }
     application = create_app(test_config, start_polling=False)
     application.config["TESTING"] = True
@@ -69,7 +74,7 @@ def test_api_data_returns_json(mock_fetch, app, client):
     assert response.status_code == 200
     data = json.loads(response.data)
     assert "pages" in data
-    assert "page_rotation_interval" in data
+    assert "scroll_speed" in data
     assert data["pages"][0]["type"] == "summary"
 
 

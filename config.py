@@ -21,8 +21,10 @@ def load_config():
         "api_token": api_token,
         "race_id": os.environ.get("WEBSCORER_RACE_ID") or None,
         "refresh_interval": int(os.environ.get("REFRESH_INTERVAL", "60")),
-        "page_rotation_interval": int(os.environ.get("PAGE_ROTATION_INTERVAL", "20")),
-        "results_per_page": int(os.environ.get("RESULTS_PER_PAGE", "0")),
+        "summary_display_time": int(os.environ.get("SUMMARY_DISPLAY_TIME", "20")),
+        "scroll_speed": int(os.environ.get("SCROLL_SPEED", "100")),
+        "category_pause_time": int(os.environ.get("CATEGORY_PAUSE_TIME", "3")),
+        "pinned_leaders": int(os.environ.get("PINNED_LEADERS", "3")),
         "show_summary": os.environ.get("SHOW_SUMMARY", "true").lower() == "true",
         "show_categories": os.environ.get("SHOW_CATEGORIES", "true").lower() == "true",
     }
