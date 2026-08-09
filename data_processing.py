@@ -21,10 +21,8 @@ def process_race_data(api_response):
         name = grouping.get("Category") or grouping.get("Distance") or grouping.get("Gender") or "Overall"
 
         total_finished += len(racers)
-        gender = racers[0].get("Gender", "") if racers else ""
         categories.append({
             "name": name,
-            "gender": gender,
             "racers": racers,
             "leaders": racers[:3],
         })
@@ -47,7 +45,6 @@ def build_pages(dashboard_data, max_rows=18):
         pages.append({
             "type": "category",
             "title": category["name"],
-            "gender": category.get("gender", ""),
             "racers": category["racers"],
         })
 
