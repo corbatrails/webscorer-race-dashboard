@@ -13,10 +13,10 @@
       .then(function (data) {
         lastData = data;
         config = {
-          summaryDisplayTime: data.summary_display_time || 20,
-          scrollSpeed: data.scroll_speed || 100,
-          categoryPauseTime: data.category_pause_time || 3,
-          pinnedLeaders: data.pinned_leaders || 3,
+          summaryDisplayTime: data.summary_display_time,
+          scrollSpeed: data.scroll_speed,
+          categoryPauseTime: data.category_pause_time,
+          pinnedLeaders: data.pinned_leaders,
           showSummary: data.show_summary !== false,
           showCategories: data.show_categories !== false
         };
