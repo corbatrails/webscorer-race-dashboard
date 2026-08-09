@@ -22,10 +22,11 @@ _cache_lock = threading.Lock()
 def create_app(config=None, start_polling=True):
     app = Flask(__name__)
     app.config["dashboard"] = config or {}
+    _start_time = int(time.time())
 
     @app.route("/")
     def index():
-        return render_template("dashboard.html")
+        return render_template("dashboard.html", cache_bust=_start_time)
 
     @app.route("/api/data")
     def api_data():
