@@ -7,6 +7,11 @@ cd "$SCRIPT_DIR"
 # Create venv if it doesn't exist
 if [ ! -d "venv" ]; then
     echo "Creating Python virtual environment..."
+    if ! python3 -c "import ensurepip" 2>/dev/null; then
+        echo "ERROR: python3-venv is not installed. Install it with:"
+        echo "    sudo apt install python3-venv"
+        exit 1
+    fi
     python3 -m venv venv
 fi
 

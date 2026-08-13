@@ -7,6 +7,11 @@ Set-Location $ScriptDir
 # Create venv if it doesn't exist
 if (-not (Test-Path "venv")) {
   Write-Host "Creating Python virtual environment..."
+  python -c "import ensurepip" 2>$null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Error "ERROR: python3-venv is not installed. Install it with: sudo apt install python3-venv"
+    exit 1
+  }
   python -m venv venv
 }
 
