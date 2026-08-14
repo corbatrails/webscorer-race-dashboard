@@ -11,6 +11,7 @@ MOCK_API_RESPONSE = {
                 {"Place": 2, "Bib": "102", "Name": "Bob", "Time": "00:19:15"},
                 {"Place": 3, "Bib": "103", "Name": "Charlie", "Time": "00:20:00"},
                 {"Place": 4, "Bib": "104", "Name": "Dave", "Time": "00:21:45"},
+                {"Place": "", "Bib": "105", "Name": "Ed", "Time": "DNF"},
             ],
         },
         {
@@ -18,6 +19,8 @@ MOCK_API_RESPONSE = {
             "Racers": [
                 {"Place": 1, "Bib": "201", "Name": "Eve", "Time": "00:19:00"},
                 {"Place": 2, "Bib": "202", "Name": "Fran", "Time": "00:22:10"},
+                {"Place": "", "Bib": "203", "Name": "Grace", "Time": "DNS"},
+                {"Place": "", "Bib": "204", "Name": "Heidi", "Time": "DSQ"},
             ],
         },
     ],
@@ -29,7 +32,11 @@ def test_process_race_data_basic():
     assert result["race_name"] == "Morning 5K"
     assert result["race_date"] == "2026-08-07"
     assert result["race_sport"] == "Running"
+    assert result["total_racers"] == 9
     assert result["total_finished"] == 6
+    assert result["total_dns"] == 1
+    assert result["total_dnf"] == 1
+    assert result["total_dsq"] == 1
     assert len(result["categories"]) == 2
 
 
@@ -37,14 +44,14 @@ def test_process_race_data_categories():
     result = process_race_data(MOCK_API_RESPONSE)
     cat1 = result["categories"][0]
     assert cat1["name"] == "Male 20-29"
-    assert len(cat1["racers"]) == 4
+    assert len(cat1["racers"]) == 5
     assert len(cat1["leaders"]) == 3
     assert cat1["leaders"][0]["Name"] == "Alice"
 
     cat2 = result["categories"][1]
     assert cat2["name"] == "Female 20-29"
-    assert len(cat2["racers"]) == 2
-    assert len(cat2["leaders"]) == 2
+    assert len(cat2["racers"]) == 4
+    assert len(cat2["leaders"]) == 3
 
 
 def test_process_race_data_empty_results():
@@ -53,7 +60,11 @@ def test_process_race_data_empty_results():
         "Results": [],
     }
     result = process_race_data(response)
+    assert result["total_racers"] == 0
     assert result["total_finished"] == 0
+    assert result["total_dns"] == 0
+    assert result["total_dnf"] == 0
+    assert result["total_dsq"] == 0
     assert result["categories"] == []
 
 
@@ -69,7 +80,7 @@ def test_build_pages_basic():
     assert pages[0]["type"] == "summary"
     assert pages[1]["type"] == "category"
     assert pages[1]["title"] == "Male 20-29"
-    assert len(pages[1]["racers"]) == 4
+    assert len(pages[1]["racers"]) == 5
     assert pages[2]["type"] == "category"
     assert pages[2]["title"] == "Female 20-29"
     assert len(pages) == 3

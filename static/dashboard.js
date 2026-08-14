@@ -144,7 +144,7 @@
 
   function renderSummary(page, data) {
     var d = page.data;
-    var html = '<div class="page active">';
+    var html = '<div class="page active summary-page">';
 
     html += '<div class="summary-header">';
     html += '<img src="/static/logo.png" alt="Logo" onerror="this.style.display=\'none\'">';
@@ -155,29 +155,16 @@
     html += '<div class="summary-meta">Last updated: ' + escapeHtml(data.last_refresh || "\u2014") + "</div>";
     html += "</div>";
 
-    html += '<div class="stats-bar">';
-    html += '<div class="stat"><div class="stat-value">' + d.total_finished + '</div><div class="stat-label">Finished</div></div>';
-    html += '<div class="stat"><div class="stat-value">' + d.categories.length + '</div><div class="stat-label">Categories</div></div>';
+    html += '<div class="summary-stats-row">';
+    html += '<div class="stat-card stat-card-primary"><div class="stat-value">' + d.total_racers + '</div><div class="stat-label">Total Racers</div></div>';
+    html += '<div class="stat-card stat-card-primary"><div class="stat-value">' + d.total_finished + '</div><div class="stat-label">Finishers</div></div>';
+    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + d.total_dns + '</div><div class="stat-label">DNS</div></div>';
+    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + d.total_dnf + '</div><div class="stat-label">DNF</div></div>';
+    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + d.total_dsq + '</div><div class="stat-label">DSQ</div></div>';
     html += "</div>";
 
-    html += '<div class="leaders-grid">';
-    for (var i = 0; i < d.categories.length; i++) {
-      var cat = d.categories[i];
-      html += '<div class="leader-card">';
-      html += "<h3>" + escapeHtml(cat.name) + "</h3>";
-      for (var j = 0; j < cat.leaders.length; j++) {
-        var r = cat.leaders[j];
-        html += '<div class="leader-entry">';
-        html += '<span class="leader-place">' + (r.Place || j + 1) + ".</span>";
-        html += '<span class="leader-name">' + escapeHtml(r.Name || "") + "</span>";
-        html += '<span class="leader-time">' + escapeHtml(r.Time || "") + "</span>";
-        html += "</div>";
-      }
-      if (cat.leaders.length === 0) {
-        html += '<div class="leader-entry" style="color:#606080">No results yet</div>';
-      }
-      html += "</div>";
-    }
+    html += '<div class="summary-chart-area">';
+    html += '<div class="chart-placeholder">Chart coming soon</div>';
     html += "</div>";
 
     html += "</div>";

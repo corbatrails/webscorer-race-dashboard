@@ -25,11 +25,16 @@ body {
 }
 
 /* Summary page */
+.summary-page {
+  display: flex;
+  flex-direction: column;
+}
+
 .summary-header {
   display: flex;
   align-items: center;
   gap: 2vw;
-  margin-bottom: 3vh;
+  margin-bottom: 2vh;
 }
 
 .summary-meta {
@@ -55,71 +60,65 @@ body {
   color: #a0a0c0;
 }
 
-.stats-bar {
+.summary-stats-row {
   display: flex;
-  gap: 4vw;
-  margin-bottom: 3vh;
-  padding: 2vh 2vw;
+  gap: 2vw;
+  margin-bottom: 2vh;
+}
+
+.stat-card {
   background: #16213e;
   border-radius: 1vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3vh 2vw;
 }
 
-.stat {
-  text-align: center;
+.stat-card-primary {
+  flex: 2;
 }
 
-.stat-value {
-  font-size: 5vh;
+.stat-card-primary .stat-value {
+  font-size: 10vh;
   font-weight: bold;
   color: #00d4ff;
 }
 
-.stat-label {
-  font-size: 2vh;
+.stat-card-primary .stat-label {
+  font-size: 3vh;
   color: #a0a0c0;
 }
 
-/* Leaders section */
-.leaders-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(30vw, 1fr));
-  gap: 2vw;
+.stat-card-secondary {
   flex: 1;
-  overflow: hidden;
 }
 
-.leader-card {
+.stat-card-secondary .stat-value {
+  font-size: 7vh;
+  font-weight: bold;
+  color: #ff9f43;
+}
+
+.stat-card-secondary .stat-label {
+  font-size: 2.5vh;
+  color: #a0a0c0;
+}
+
+.summary-chart-area {
+  flex: 1;
   background: #16213e;
   border-radius: 1vh;
-  padding: 2vh 2vw;
-}
-
-.leader-card h3 {
-  font-size: 2.5vh;
-  color: #00d4ff;
-  margin-bottom: 1vh;
-  border-bottom: 1px solid #2a2a4a;
-  padding-bottom: 1vh;
-}
-
-.leader-entry {
   display: flex;
-  justify-content: space-between;
-  padding: 0.8vh 0;
-  font-size: 2.2vh;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
 }
 
-.leader-place {
-  color: #ffd700;
-  min-width: 3vw;
-}
-
-.leader-name {
-  flex: 1;
-}
-
-.leader-time {
-  color: #a0a0c0;
+.chart-placeholder {
+  font-size: 3vh;
+  color: #606080;
 }
 
 /* Category results page */
