@@ -1,10 +1,13 @@
 _NON_FINISH_STATUSES = {"DNS", "DNF", "DSQ"}
+_NO_TIME_VALUES = {"-", ""}
 
 
 def _classify_racer(racer):
     time_val = (racer.get("Time") or "").strip().upper()
     if time_val in _NON_FINISH_STATUSES:
         return time_val
+    if time_val in _NO_TIME_VALUES:
+        return "IN_PROGRESS"
     return "FINISHED"
 
 
@@ -38,17 +41,19 @@ def process_race_data(api_response):
         racers = group.get("Racers", [])
         name = grouping.get("Category") or grouping.get("Distance") or grouping.get("Gender") or "Overall"
 
-        total_racers += len(racers)
-        for racer in racers:
-            status = _classify_racer(racer)
-            if status == "DNS":
-                total_dns += 1
-            elif status == "DNF":
-                total_dnf += 1
-            elif status == "DSQ":
-                total_dsq += 1
-            else:
-                total_finished += 1
+        # Count totals only from Overall groups (one per distance)
+        if grouping.get("Overall"):
+            total_racers += len(racers)
+            for racer in racers:
+                status = _classify_racer(racer)
+                if status == "DNS":
+                    total_dns += 1
+                elif status == "DNF":
+                    total_dnf += 1
+                elif status == "DSQ":
+                    total_dsq += 1
+                elif status == "FINISHED":
+                    total_finished += 1
 
         categories.append({
             "name": name,
