@@ -1,4 +1,4 @@
-from data_processing import process_race_data, build_pages
+from data_processing import _classify_racer, process_race_data, build_pages
 
 
 MOCK_API_RESPONSE = {
@@ -16,6 +16,8 @@ MOCK_API_RESPONSE = {
                 {"Place": "", "Bib": "105", "Name": "Ed", "Time": "DNF"},
                 {"Place": "", "Bib": "203", "Name": "Grace", "Time": "DNS"},
                 {"Place": "", "Bib": "204", "Name": "Heidi", "Time": "DSQ"},
+                {"Place": "-", "Bib": "106", "Name": "Ivan", "Time": "-"},
+                {"Place": "-", "Bib": "205", "Name": "Judy", "Time": "-"},
             ],
         },
         {
@@ -46,7 +48,7 @@ def test_process_race_data_basic():
     assert result["race_name"] == "Morning 5K"
     assert result["race_date"] == "2026-08-07"
     assert result["race_sport"] == "Running"
-    assert result["total_racers"] == 9
+    assert result["total_racers"] == 11
     assert result["total_finished"] == 6
     assert result["total_dns"] == 1
     assert result["total_dnf"] == 1
@@ -58,7 +60,7 @@ def test_process_race_data_categories():
     result = process_race_data(MOCK_API_RESPONSE)
     cat0 = result["categories"][0]
     assert cat0["name"] == "Overall"
-    assert len(cat0["racers"]) == 9
+    assert len(cat0["racers"]) == 11
 
     cat1 = result["categories"][1]
     assert cat1["name"] == "Male 20-29"
@@ -98,7 +100,7 @@ def test_build_pages_basic():
     assert pages[0]["type"] == "summary"
     assert pages[1]["type"] == "category"
     assert pages[1]["title"] == "Overall"
-    assert len(pages[1]["racers"]) == 9
+    assert len(pages[1]["racers"]) == 11
     assert pages[2]["type"] == "category"
     assert pages[2]["title"] == "Male 20-29"
     assert pages[3]["type"] == "category"
@@ -130,9 +132,19 @@ def test_build_pages_empty():
 def test_process_race_data_counts_only_overall_groups():
     """Totals come from Overall groups only, not summed across all groups."""
     result = process_race_data(MOCK_API_RESPONSE)
-    assert result["total_racers"] == 9
+    assert result["total_racers"] == 11
     assert result["total_finished"] == 6
     assert len(result["categories"]) == 3
+
+
+def test_classify_racer():
+    assert _classify_racer({"Time": "00:18:30"}) == "FINISHED"
+    assert _classify_racer({"Time": "DNS"}) == "DNS"
+    assert _classify_racer({"Time": "DNF"}) == "DNF"
+    assert _classify_racer({"Time": "DSQ"}) == "DSQ"
+    assert _classify_racer({"Time": "-"}) == "IN_PROGRESS"
+    assert _classify_racer({"Time": ""}) == "IN_PROGRESS"
+    assert _classify_racer({}) == "IN_PROGRESS"
 
 
 def test_process_race_data_multi_distance():
