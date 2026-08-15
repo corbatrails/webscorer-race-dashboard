@@ -183,9 +183,18 @@
     return html;
   }
 
+  function isFinished(racer) {
+    var t = (racer.Time || "").trim().toUpperCase();
+    return t && t !== "-" && t !== "DNS" && t !== "DNF" && t !== "DSQ";
+  }
+
   function renderCategory(category, catIndex, data) {
     var racers = category.racers || [];
-    var pinnedCount = Math.min(config.pinnedLeaders, racers.length);
+    var pinnedCount = 0;
+    for (var i = 0; i < Math.min(config.pinnedLeaders, racers.length); i++) {
+      if (isFinished(racers[i])) pinnedCount++;
+      else break;
+    }
     var pinned = racers.slice(0, pinnedCount);
     var scrolling = racers.slice(pinnedCount);
 
@@ -206,19 +215,24 @@
       return html;
     }
 
-    // Pinned leaders table
-    html += '<table class="results-table pinned-table">';
-    html += "<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>";
-    html += "<tbody>";
-    for (var i = 0; i < pinned.length; i++) {
-      html += renderRacerRow(pinned[i]);
+    // Pinned leaders table (only shown when at least one racer has finished)
+    if (pinned.length > 0) {
+      html += '<table class="results-table pinned-table">';
+      html += "<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>";
+      html += "<tbody>";
+      for (var i = 0; i < pinned.length; i++) {
+        html += renderRacerRow(pinned[i]);
+      }
+      html += "</tbody></table>";
     }
-    html += "</tbody></table>";
 
     // Scrolling results
     if (scrolling.length > 0) {
       html += '<div id="scroll-container" class="scroll-container">';
       html += '<table class="results-table scroll-table">';
+      if (pinned.length === 0) {
+        html += "<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>";
+      }
       html += "<tbody>";
       for (var j = 0; j < scrolling.length; j++) {
         html += renderRacerRow(scrolling[j]);
