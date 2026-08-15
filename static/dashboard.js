@@ -208,7 +208,7 @@
 
     // Pinned leaders table
     html += '<table class="results-table pinned-table">';
-    html += "<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Time</th></tr></thead>";
+    html += "<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>";
     html += "<tbody>";
     for (var i = 0; i < pinned.length; i++) {
       html += renderRacerRow(pinned[i]);
@@ -241,6 +241,7 @@
     html += '<td class="' + placeClass + '">' + (r.Place || "") + "</td>";
     html += "<td>" + escapeHtml(r.Bib || "") + "</td>";
     html += "<td>" + escapeHtml(r.Name || "") + "</td>";
+    html += "<td>" + escapeHtml(r.TeamName || "") + "</td>";
     html += "<td>" + escapeHtml(r.Time || "") + "</td>";
     html += "</tr>";
     return html;
