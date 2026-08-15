@@ -1,5 +1,4 @@
-api_response_dump.json
-dump_api.py
+api_dump_*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
