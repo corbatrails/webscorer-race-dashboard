@@ -45,7 +45,6 @@ def create_app(config=None, start_polling=True):
                 "scroll_pause_time": app.config["dashboard"].get("scroll_pause_time", 2),
                 "pinned_leaders": app.config["dashboard"].get("pinned_leaders", 3),
                 "show_summary": app.config["dashboard"].get("show_summary", True),
-                "show_categories": app.config["dashboard"].get("show_categories", True),
             })
 
     if start_polling:
@@ -61,7 +60,11 @@ def poll_once(app):
     cfg = app.config["dashboard"]
     try:
         raw = fetch_race_results(cfg["race_id"], cfg["api_id"], cfg["api_token"])
-        data = process_race_data(raw)
+        data = process_race_data(
+            raw,
+            show_overall_results=cfg.get("show_overall_results", True),
+            show_category_results=cfg.get("show_category_results", True),
+        )
         pages = build_pages(data)
         with _cache_lock:
             _cache["pages"] = pages
@@ -129,7 +132,11 @@ def main():
     race_date = ""
     try:
         raw = fetch_race_results(config["race_id"], config["api_id"], config["api_token"])
-        data = process_race_data(raw)
+        data = process_race_data(
+            raw,
+            show_overall_results=config.get("show_overall_results", True),
+            show_category_results=config.get("show_category_results", True),
+        )
         pages = build_pages(data)
         with _cache_lock:
             _cache["pages"] = pages

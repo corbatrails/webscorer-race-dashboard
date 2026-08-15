@@ -45,7 +45,8 @@ def app():
         "scroll_pause_time": 3,
         "pinned_leaders": 3,
         "show_summary": True,
-        "show_categories": True,
+        "show_overall_results": True,
+        "show_category_results": True,
     }
     application = create_app(test_config, start_polling=False)
     application.config["TESTING"] = True
