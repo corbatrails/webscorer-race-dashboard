@@ -26,5 +26,6 @@ def load_config():
         "scroll_pause_time": int(os.environ.get("SCROLL_PAUSE_TIME", "2")),
         "pinned_leaders": int(os.environ.get("PINNED_LEADERS", "3")),
         "show_summary": os.environ.get("SHOW_SUMMARY", "true").lower() == "true",
-        "show_categories": os.environ.get("SHOW_CATEGORIES", "true").lower() == "true",
+        "show_overall_results": os.environ.get("SHOW_OVERALL_RESULTS", "true").lower() == "true",
+        "show_category_results": os.environ.get("SHOW_CATEGORY_RESULTS", "true").lower() == "true",
     }

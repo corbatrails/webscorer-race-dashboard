@@ -17,11 +17,14 @@
           scrollSpeed: data.scroll_speed,
           scrollPauseTime: data.scroll_pause_time,
           pinnedLeaders: data.pinned_leaders,
-          showSummary: data.show_summary !== false,
-          showCategories: data.show_categories !== false
+          showSummary: data.show_summary !== false
         };
+        var wasEmpty = !summaryPage && categories.length === 0;
         buildPageList(data);
-        renderCurrentPage();
+        // Only render on first data arrival; ongoing animations pick up new data on next advance
+        if (wasEmpty && (summaryPage || categories.length > 0)) {
+          renderCurrentPage();
+        }
       })
       .catch(function (err) {
         console.error("Fetch error:", err);
@@ -41,7 +44,7 @@
       var page = data.pages[i];
       if (page.type === "summary" && config.showSummary) {
         summaryPage = page;
-      } else if (page.type === "category" && config.showCategories) {
+      } else if (page.type === "category") {
         categories.push(page);
       }
     }

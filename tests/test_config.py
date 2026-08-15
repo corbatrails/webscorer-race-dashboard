@@ -34,6 +34,8 @@ def test_load_config_defaults(mock_dotenv, monkeypatch):
     monkeypatch.delenv("SCROLL_SPEED", raising=False)
     monkeypatch.delenv("SCROLL_PAUSE_TIME", raising=False)
     monkeypatch.delenv("PINNED_LEADERS", raising=False)
+    monkeypatch.delenv("SHOW_OVERALL_RESULTS", raising=False)
+    monkeypatch.delenv("SHOW_CATEGORY_RESULTS", raising=False)
     cfg = load_config()
     assert cfg["race_id"] is None
     assert cfg["refresh_interval"] == 60
@@ -41,6 +43,8 @@ def test_load_config_defaults(mock_dotenv, monkeypatch):
     assert cfg["scroll_speed"] == 100
     assert cfg["scroll_pause_time"] == 2
     assert cfg["pinned_leaders"] == 3
+    assert cfg["show_overall_results"] is True
+    assert cfg["show_category_results"] is True
 
 
 @patch("config.load_dotenv")
