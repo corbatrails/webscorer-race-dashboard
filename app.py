@@ -126,7 +126,7 @@ def main():
 
     if not config["race_id"]:
         config["race_id"] = select_race(config["api_id"], config["api_token"])
-        # WebScorer rate-limits to ~1 request per 5s
+        print("Waiting 5s for API rate limit...")
         time.sleep(5)
 
     # Fetch initial data before starting the server to avoid rate-limit conflicts
