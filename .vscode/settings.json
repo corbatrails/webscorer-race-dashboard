@@ -1,0 +1,18 @@
+{
+  "chat.tools.terminal.autoApprove": {
+    "/^python -m pytest tests/ -v$/": {
+      "approve": true,
+      "matchCommandLine": true
+    },
+    "git checkout": true,
+    "git push": true,
+    "git commit": true,
+    "Test-Path": true,
+    "New-Item": true,
+    "git rev-parse": true,
+    "/^git merge-base main HEAD$/": {
+      "approve": true,
+      "matchCommandLine": true
+    }
+  }
+}
