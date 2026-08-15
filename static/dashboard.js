@@ -264,7 +264,14 @@
     return div.innerHTML;
   }
 
-  // Initial fetch, then poll on refresh interval
+  // Fast-poll until data arrives, then switch to normal refresh interval
   fetchData();
-  setInterval(fetchData, 60 * 1000);
+  var startupPoll = setInterval(function () {
+    if (lastData && !lastData.waiting) {
+      clearInterval(startupPoll);
+      setInterval(fetchData, 60 * 1000);
+    } else {
+      fetchData();
+    }
+  }, 5000);
 })();
