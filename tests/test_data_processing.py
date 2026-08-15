@@ -1,4 +1,33 @@
-from data_processing import _classify_racer, process_race_data, build_pages
+from data_processing import _classify_racer, _classify_group, _group_name, process_race_data, build_pages
+
+
+def test_classify_group_overall():
+    assert _classify_group({"Distance": "Long", "Overall": True}) == "overall"
+    assert _classify_group({"Category": "Overall", "Overall": True}) == "overall"
+
+
+def test_classify_group_category():
+    assert _classify_group({"Category": "Masters Men", "Gender": "Male"}) == "category"
+    assert _classify_group({"Category": "Male 20-29"}) == "category"
+
+
+def test_classify_group_skipped():
+    assert _classify_group({"Distance": "Long", "Gender": "Male"}) is None
+    assert _classify_group({"Gender": "Female"}) is None
+
+
+def test_group_name_overall():
+    assert _group_name({"Distance": "Long Course (88 miles)", "Overall": True}, "overall") == "Long Course (88 miles)"
+    assert _group_name({"Category": "Overall", "Overall": True}, "overall") == "Overall"
+
+
+def test_group_name_category_with_gender():
+    g = {"Distance": "Long", "Category": "Adult Long Course (age 18-44)", "Gender": "Male"}
+    assert _group_name(g, "category") == "Adult Long Course (age 18-44) Male"
+
+
+def test_group_name_category_without_gender():
+    assert _group_name({"Category": "Male 20-29"}, "category") == "Male 20-29"
 
 
 MOCK_API_RESPONSE = {
@@ -175,8 +204,98 @@ def test_process_race_data_multi_distance():
         ],
     }
     result = process_race_data(response)
-    # 2 from Long Overall + 3 from Short Overall = 5
+    # Totals unchanged (from Overall groups)
     assert result["total_racers"] == 5
     assert result["total_finished"] == 3
     assert result["total_dns"] == 1
     assert result["total_dnf"] == 1
+    # Distance+Gender group skipped; only 2 Overall groups remain
+    assert len(result["categories"]) == 2
+    assert result["categories"][0]["name"] == "Long"
+    assert result["categories"][1]["name"] == "Short"
+
+
+def test_process_race_data_multi_distance_with_categories():
+    response = {
+        "RaceInfo": {"RaceId": 300, "Name": "Big Race", "Date": "2026-08-14", "Sport": "Cycling"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "Long", "Overall": True},
+                "Racers": [
+                    {"Place": 1, "Bib": "1", "Name": "A", "Time": "01:00:00"},
+                    {"Place": 2, "Bib": "2", "Name": "B", "Time": "01:10:00"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "Long", "Gender": "Male"},
+                "Racers": [
+                    {"Place": 1, "Bib": "1", "Name": "A", "Time": "01:00:00"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "Long", "Category": "Masters", "Gender": "Male"},
+                "Racers": [
+                    {"Place": 1, "Bib": "1", "Name": "A", "Time": "01:00:00"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "Short", "Overall": True},
+                "Racers": [
+                    {"Place": 1, "Bib": "3", "Name": "C", "Time": "00:30:00"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "Short", "Category": "Adult", "Gender": "Female"},
+                "Racers": [
+                    {"Place": 1, "Bib": "4", "Name": "D", "Time": "00:35:00"},
+                ],
+            },
+        ],
+    }
+    result = process_race_data(response)
+    # Ordered: Long Overall, Long categories, Short Overall, Short categories
+    assert len(result["categories"]) == 4
+    assert result["categories"][0]["name"] == "Long"
+    assert result["categories"][1]["name"] == "Masters Male"
+    assert result["categories"][2]["name"] == "Short"
+    assert result["categories"][3]["name"] == "Adult Female"
+
+
+def test_process_race_data_filter_overall_off():
+    response = {
+        "RaceInfo": {"RaceId": 300, "Name": "Race", "Date": "", "Sport": ""},
+        "Results": [
+            {
+                "Grouping": {"Distance": "Long", "Overall": True},
+                "Racers": [{"Place": 1, "Bib": "1", "Name": "A", "Time": "01:00:00"}],
+            },
+            {
+                "Grouping": {"Distance": "Long", "Category": "Masters", "Gender": "Male"},
+                "Racers": [{"Place": 1, "Bib": "1", "Name": "A", "Time": "01:00:00"}],
+            },
+        ],
+    }
+    result = process_race_data(response, show_overall_results=False)
+    assert len(result["categories"]) == 1
+    assert result["categories"][0]["name"] == "Masters Male"
+    # Totals still counted from Overall groups
+    assert result["total_racers"] == 1
+
+
+def test_process_race_data_filter_category_off():
+    response = {
+        "RaceInfo": {"RaceId": 300, "Name": "Race", "Date": "", "Sport": ""},
+        "Results": [
+            {
+                "Grouping": {"Distance": "Long", "Overall": True},
+                "Racers": [{"Place": 1, "Bib": "1", "Name": "A", "Time": "01:00:00"}],
+            },
+            {
+                "Grouping": {"Distance": "Long", "Category": "Masters", "Gender": "Male"},
+                "Racers": [{"Place": 1, "Bib": "1", "Name": "A", "Time": "01:00:00"}],
+            },
+        ],
+    }
+    result = process_race_data(response, show_category_results=False)
+    assert len(result["categories"]) == 1
+    assert result["categories"][0]["name"] == "Long"

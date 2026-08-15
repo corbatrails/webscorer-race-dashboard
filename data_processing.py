@@ -11,7 +11,25 @@ def _classify_racer(racer):
     return "FINISHED"
 
 
-def process_race_data(api_response):
+def _classify_group(grouping):
+    if grouping.get("Overall"):
+        return "overall"
+    if grouping.get("Category"):
+        return "category"
+    return None
+
+
+def _group_name(grouping, tier):
+    if tier == "overall":
+        return grouping.get("Distance") or "Overall"
+    parts = [grouping.get("Category", "")]
+    gender = grouping.get("Gender")
+    if gender:
+        parts.append(gender)
+    return " ".join(parts)
+
+
+def process_race_data(api_response, show_overall_results=True, show_category_results=True):
     if "Error" in api_response:
         return {
             "race_name": "",
@@ -29,19 +47,20 @@ def process_race_data(api_response):
     info = api_response.get("RaceInfo", {})
     results = api_response.get("Results", [])
 
-    categories = []
     total_racers = 0
     total_finished = 0
     total_dns = 0
     total_dnf = 0
     total_dsq = 0
 
+    # Collect groups by distance, preserving API order
+    distance_order = []
+    distance_buckets = {}
+
     for group in results:
         grouping = group.get("Grouping", {})
         racers = group.get("Racers", [])
-        name = grouping.get("Category") or grouping.get("Distance") or grouping.get("Gender") or "Overall"
 
-        # Count totals only from Overall groups (one per distance)
         if grouping.get("Overall"):
             total_racers += len(racers)
             for racer in racers:
@@ -55,11 +74,31 @@ def process_race_data(api_response):
                 elif status == "FINISHED":
                     total_finished += 1
 
-        categories.append({
+        tier = _classify_group(grouping)
+        if tier is None:
+            continue
+        if tier == "overall" and not show_overall_results:
+            continue
+        if tier == "category" and not show_category_results:
+            continue
+
+        distance = grouping.get("Distance", "")
+        if distance not in distance_buckets:
+            distance_order.append(distance)
+            distance_buckets[distance] = {"overall": [], "category": []}
+
+        name = _group_name(grouping, tier)
+        distance_buckets[distance][tier].append({
             "name": name,
             "racers": racers,
             "leaders": racers[:3],
         })
+
+    categories = []
+    for dist in distance_order:
+        bucket = distance_buckets[dist]
+        categories.extend(bucket["overall"])
+        categories.extend(bucket["category"])
 
     return {
         "race_name": info.get("Name", ""),
