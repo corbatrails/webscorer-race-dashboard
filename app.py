@@ -126,7 +126,7 @@ def main():
 
     if not config["race_id"]:
         config["race_id"] = select_race(config["api_id"], config["api_token"])
-        print("Waiting 5s for API rate limit...")
+        print("Waiting 5s to prevent API rate limit...")
         time.sleep(5)
 
     # Fetch initial data before starting the server to avoid rate-limit conflicts
