@@ -16,7 +16,8 @@ Each group in the API `Results` array is classified by its `Grouping` fields:
 |---|---|---|---|
 | **overall** | `Overall: true` | `Distance` (or fallback to "Overall") | "Long Course (88 miles)" |
 | **category** | Has `Category`, no `Overall` | `Category` + " " + `Gender` | "Adult Long Course (age 18-44) Male" |
-| **distance** | Everything else | `Distance` + " " + `Gender` (or available fields) | "Long Course (88 miles) Female" |
+
+Groups that match neither tier (e.g., Distance+Gender mid-level groups) are skipped.
 
 ## Configuration
 
@@ -26,17 +27,16 @@ Replaces `SHOW_CATEGORIES`.
 |---|---|---|
 | `SHOW_OVERALL_RESULTS` | `true` | Show Overall groups (one per distance) |
 | `SHOW_CATEGORY_RESULTS` | `true` | Show Category+Gender leaf groups |
-| `SHOW_DISTANCE_RESULTS` | `false` | Show Distance+Gender mid-level groups |
 
 `SHOW_SUMMARY` remains unchanged.
 
-If all three result flags are false, no result pages are shown (equivalent to old `SHOW_CATEGORIES=false`).
+If both result flags are false, no result pages are shown (equivalent to old `SHOW_CATEGORIES=false`).
 
 ## Ordering
 
-Groups are ordered by distance, with tiers within each distance in order: overall → distance → category. Within each tier, groups appear in their original API order.
+Groups are ordered by distance, with tiers within each distance in order: overall → category. Within each tier, groups appear in their original API order.
 
-Example with defaults (`overall=true`, `category=true`, `distance=false`):
+Example with defaults (`overall=true`, `category=true`):
 1. Long Course (88 miles) — overall
 2. Adult Long Course (age 18-44) Female — category
 3. Adult Long Course (age 18-44) Male — category
@@ -52,11 +52,11 @@ No change — summary page totals are still counted from `Overall: true` groups 
 
 ## Frontend
 
-The frontend `showCategories` config key is removed. The backend filtering means the frontend simply renders whatever categories it receives. `buildPageList` always includes category pages from `data.pages` (unless the pages array is empty).
+The frontend `showCategories` config key is removed. The backend filtering means the frontend simply renders whatever result pages it receives. `buildPageList` always includes result pages from `data.pages` (unless the pages array is empty).
 
 ## Files Changed
 
-- `config.py` — remove `show_categories`, add `show_overall_results`, `show_category_results`, `show_distance_results`
+- `config.py` — remove `show_categories`, add `show_overall_results`, `show_category_results`
 - `data_processing.py` — `process_race_data` accepts grouping config, classifies groups, filters by tier, orders by distance
 - `app.py` — pass grouping config to `process_race_data`, remove `show_categories` from API response
 - `static/dashboard.js` — remove `showCategories` handling from `buildPageList`; always include category pages
@@ -70,7 +70,7 @@ For simple single-distance races (groups have `Category` but no `Distance`): the
 
 ## Edge Cases
 
-- Group with only `Gender` and no other fields: classified as `distance` tier
-- All three flags false: no result pages shown, only summary
-- Race with no `Category`-level groups: only overall and/or distance groups available
+- Group with only `Gender` and no other fields: skipped (matches neither overall nor category tier)
+- Both flags false: no result pages shown, only summary
+- Race with no `Category`-level groups: only overall groups available
 - `Gender` value "Female/Male" (non-binary): treated the same as any other gender value
