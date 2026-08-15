@@ -6,10 +6,6 @@
     },
     "git checkout": true,
     "git push": true,
-    "/^cd c:\\\\git\\\\corbatrails\\\\webscorer-race-dashboard; gh issue create --title \"feat: only show leaders when top positions have finished\" --body \"\\*\\*Problem\\*\\*\nThe pinned leaders section shows the top X racers even when none \\(or few\\) have actually crossed the finish line\\. This is misleading - showing leaders with Time: - implies they've placed\\.\n\n\\*\\*Expected behavior\\*\\*\nOnly display leaders who have a finish time\\. If fewer than X racers have finished, show only those who have\\. If none have finished, hide the leaders section or show a 'No finishers yet' message\\.\"$/": {
-      "approve": true,
-      "matchCommandLine": true
-    },
     "git commit": true,
     "Test-Path": true,
     "New-Item": true,
