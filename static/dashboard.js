@@ -56,7 +56,7 @@
     var container = document.getElementById("dashboard");
 
     if (!summaryPage && categories.length === 0) {
-      container.innerHTML = renderWaiting(lastData ? lastData.error : null);
+      container.innerHTML = renderWaiting(lastData);
       return;
     }
 
@@ -131,13 +131,29 @@
     }, config.scrollPauseTime * 1000);
   }
 
-  function renderWaiting(error) {
-    var html = '<div class="waiting-screen">';
+  function renderWaiting(data) {
+    var html = "";
+    if (data && data.race_name) {
+      html += renderEventHeader(data);
+    }
+    html += '<div class="waiting-screen">';
     html += "<h1>No results yet</h1>";
     html += "<p>Waiting for race data\u2026 Dashboard will update automatically.</p>";
-    if (error) {
-      html += '<p class="error-message">' + escapeHtml(error) + "</p>";
+    if (data && data.error) {
+      html += '<p class="error-message">' + escapeHtml(data.error) + "</p>";
     }
+    html += "</div>";
+    return html;
+  }
+
+  function renderEventHeader(data) {
+    var html = '<div class="summary-header">';
+    html += '<img src="/static/logo.png" alt="Logo" onerror="this.style.display=\'none\'">';
+    html += "<div>";
+    html += '<div class="race-title">' + escapeHtml(data.race_name) + "</div>";
+    html += '<div class="race-subtitle">' + escapeHtml(data.race_date) + " \u2022 " + escapeHtml(data.race_sport) + "</div>";
+    html += "</div>";
+    html += '<div class="summary-meta">Last updated: ' + escapeHtml(data.last_refresh || "\u2014") + "</div>";
     html += "</div>";
     return html;
   }
@@ -146,14 +162,7 @@
     var d = page.data;
     var html = '<div class="page active summary-page">';
 
-    html += '<div class="summary-header">';
-    html += '<img src="/static/logo.png" alt="Logo" onerror="this.style.display=\'none\'">';
-    html += "<div>";
-    html += '<div class="race-title">' + escapeHtml(data.race_name) + "</div>";
-    html += '<div class="race-subtitle">' + escapeHtml(data.race_date) + " \u2022 " + escapeHtml(data.race_sport) + "</div>";
-    html += "</div>";
-    html += '<div class="summary-meta">Last updated: ' + escapeHtml(data.last_refresh || "\u2014") + "</div>";
-    html += "</div>";
+    html += renderEventHeader(data);
 
     html += '<div class="summary-stats-row">';
     html += '<div class="stat-card stat-card-primary"><div class="stat-value">' + d.total_racers + '</div><div class="stat-label">Total Racers</div></div>';
@@ -179,10 +188,11 @@
 
     var html = '<div class="page active">';
 
+    html += renderEventHeader(data);
+
     html += '<div class="category-header">';
     html += '<div class="category-title">' + escapeHtml(category.title) + "</div>";
     html += '<div class="category-meta">';
-    html += '<span>Last updated: ' + escapeHtml(data.last_refresh || "\u2014") + "</span>";
     html += '<span>Category ' + (catIndex + 1) + " of " + categories.length + "</span>";
     html += "</div>";
     html += "</div>";
