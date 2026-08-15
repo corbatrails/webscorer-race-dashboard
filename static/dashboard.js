@@ -19,8 +19,12 @@
           pinnedLeaders: data.pinned_leaders,
           showSummary: data.show_summary !== false
         };
+        var wasEmpty = !summaryPage && categories.length === 0;
         buildPageList(data);
-        renderCurrentPage();
+        // Only render on first data arrival; ongoing animations pick up new data on next advance
+        if (wasEmpty && (summaryPage || categories.length > 0)) {
+          renderCurrentPage();
+        }
       })
       .catch(function (err) {
         console.error("Fetch error:", err);
