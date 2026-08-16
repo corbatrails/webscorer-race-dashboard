@@ -4,6 +4,9 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Deactivate any active venv before proceeding
+if command -v deactivate &>/dev/null; then deactivate; fi
+
 # Create venv if it doesn't exist
 if [ ! -d "venv" ]; then
     echo "Creating Python virtual environment..."

@@ -1,3 +1,4 @@
+import json
 import threading
 import time
 from datetime import datetime
@@ -63,7 +64,12 @@ def create_app(config=None, start_polling=True):
 def poll_once(app):
     cfg = app.config["dashboard"]
     try:
-        raw = fetch_race_results(cfg["race_id"], cfg["api_id"], cfg["api_token"])
+        if cfg.get("data_file"):
+            print(f"Loading data from local file: {cfg['data_file']}")
+            with open(cfg["data_file"], "r", encoding="utf-8") as f:
+                raw = json.load(f)
+        else:
+            raw = fetch_race_results(cfg["race_id"], cfg["api_id"], cfg["api_token"])
         data = process_race_data(
             raw,
             show_overall_results=cfg.get("show_overall_results", True),
@@ -130,7 +136,7 @@ def select_race(api_id, api_token):
 def main():
     config = load_config()
 
-    if not config["race_id"]:
+    if not config.get("data_file") and not config["race_id"]:
         config["race_id"] = select_race(config["api_id"], config["api_token"])
         print("Waiting 5s to prevent API rate limit...")
         time.sleep(5)
@@ -139,7 +145,11 @@ def main():
     race_name = ""
     race_date = ""
     try:
-        raw = fetch_race_results(config["race_id"], config["api_id"], config["api_token"])
+        if config.get("data_file"):
+            with open(config["data_file"], "r", encoding="utf-8") as f:
+                raw = json.load(f)
+        else:
+            raw = fetch_race_results(config["race_id"], config["api_id"], config["api_token"])
         data = process_race_data(
             raw,
             show_overall_results=config.get("show_overall_results", True),
@@ -162,11 +172,14 @@ def main():
         pass
 
     app = create_app(config, start_polling=True)
-    token = config["api_token"]
     print(f"\n--- Configuration ---")
-    print(f"  API ID:          {config['api_id']}")
-    print(f"  API Token:       {token[:3]}{'*' * (len(token) - 3)}")
-    print(f"  Race ID:         {config['race_id']}")
+    if config.get("data_file"):
+        print(f"  Data file:       {config['data_file']}")
+    else:
+        token = config["api_token"]
+        print(f"  API ID:          {config['api_id']}")
+        print(f"  API Token:       {token[:3]}{'*' * (len(token) - 3)}")
+        print(f"  Race ID:         {config['race_id']}")
     print(f"  Race Name:       {race_name}")
     print(f"  Race Date:       {race_date}")
     print(f"  Refresh:         {config['refresh_interval']}s")
