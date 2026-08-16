@@ -61,3 +61,21 @@ def test_load_config_missing_api_token(mock_dotenv, monkeypatch):
     monkeypatch.delenv("WEBSCORER_API_TOKEN", raising=False)
     with pytest.raises(SystemExit):
         load_config()
+
+
+def test_chart_bucket_minutes_default(monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "123")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
+    monkeypatch.delenv("CHART_BUCKET_MINUTES", raising=False)
+    from config import load_config
+    cfg = load_config()
+    assert cfg["chart_bucket_minutes"] == 15
+
+
+def test_chart_bucket_minutes_custom(monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "123")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
+    monkeypatch.setenv("CHART_BUCKET_MINUTES", "30")
+    from config import load_config
+    cfg = load_config()
+    assert cfg["chart_bucket_minutes"] == 30

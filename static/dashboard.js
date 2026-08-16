@@ -71,6 +71,9 @@
       html = renderSummary(summaryPage, lastData);
       html += renderProgressDots(totalPages, currentIndex);
       container.innerHTML = html;
+      if (lastData.finish_chart) {
+        renderFinishChart(lastData.finish_chart);
+      }
       advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
     } else {
       var catIndex = summaryPage ? currentIndex - 1 : currentIndex;
@@ -176,7 +179,11 @@
     html += "</div>";
 
     html += '<div class="summary-chart-area">';
-    html += '<div class="chart-placeholder">Chart coming soon</div>';
+    if (data.finish_chart && data.finish_chart.labels && data.finish_chart.labels.length > 0) {
+      html += '<canvas id="finish-chart"></canvas>';
+    } else {
+      html += '<div class="chart-placeholder">No finishers yet</div>';
+    }
     html += "</div>";
 
     html += "</div>";
@@ -269,6 +276,59 @@
     }
     html += "</div>";
     return html;
+  }
+
+  var CHART_COLORS = [
+    "rgba(54, 162, 235, 0.8)",
+    "rgba(255, 159, 64, 0.8)",
+    "rgba(75, 192, 192, 0.8)",
+    "rgba(153, 102, 255, 0.8)",
+    "rgba(255, 99, 132, 0.8)",
+  ];
+
+  function renderFinishChart(chartData) {
+    var canvas = document.getElementById("finish-chart");
+    if (!canvas || !chartData) return;
+
+    var datasets = [];
+    for (var i = 0; i < chartData.datasets.length; i++) {
+      datasets.push({
+        label: chartData.datasets[i].label,
+        data: chartData.datasets[i].data,
+        backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+      });
+    }
+
+    new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: chartData.labels,
+        datasets: datasets,
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          x: {
+            stacked: true,
+            ticks: { color: "#a0a0c0", font: { size: 14 } },
+            grid: { color: "rgba(160,160,192,0.2)" },
+          },
+          y: {
+            stacked: true,
+            beginAtZero: true,
+            ticks: { color: "#a0a0c0", font: { size: 14 }, stepSize: 1 },
+            grid: { color: "rgba(160,160,192,0.2)" },
+          },
+        },
+        plugins: {
+          legend: {
+            labels: { color: "#e0e0e0", font: { size: 14 } },
+          },
+        },
+      },
+    });
   }
 
   function escapeHtml(str) {

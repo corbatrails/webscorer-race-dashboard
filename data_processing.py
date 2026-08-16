@@ -1,3 +1,5 @@
+import re
+
 _NON_FINISH_STATUSES = {"DNS", "DNF", "DSQ"}
 _NO_TIME_VALUES = {"-", ""}
 
@@ -112,6 +114,94 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
         "categories": categories,
         "error": None,
     }
+
+
+def _parse_time_seconds(time_str):
+    parts = time_str.split(":")
+    if len(parts) == 3:
+        return int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
+    elif len(parts) == 2:
+        return int(parts[0]) * 60 + float(parts[1])
+    return float(parts[0])
+
+
+def _extract_race_start_seconds(start_time_str):
+    """Extract seconds-since-midnight from RaceInfo StartTime string.
+    Format: 'Thursday, August 13, 2026 2:08 PM (GMT-5)'
+    """
+    match = re.search(r'(\d{1,2}):(\d{2})\s*(AM|PM)', start_time_str, re.IGNORECASE)
+    if not match:
+        return 0
+    hour = int(match.group(1))
+    minute = int(match.group(2))
+    ampm = match.group(3).upper()
+    if ampm == "PM" and hour != 12:
+        hour += 12
+    elif ampm == "AM" and hour == 12:
+        hour = 0
+    return hour * 3600 + minute * 60
+
+
+def build_finish_chart_data(api_response, bucket_minutes=15):
+    if "Error" in api_response:
+        return None
+
+    results = api_response.get("Results", [])
+    race_info = api_response.get("RaceInfo", {})
+
+    start_time_str = race_info.get("StartTime", "")
+    race_start_seconds = _extract_race_start_seconds(start_time_str)
+    floor_hour = (race_start_seconds // 3600) * 3600
+
+    distance_order = []
+    finishers_by_distance = {}
+
+    for group in results:
+        grouping = group.get("Grouping", {})
+        if not grouping.get("Overall"):
+            continue
+        distance = grouping.get("Distance", "")
+        if distance not in finishers_by_distance:
+            distance_order.append(distance)
+            finishers_by_distance[distance] = []
+
+        for racer in group.get("Racers", []):
+            if _classify_racer(racer) != "FINISHED":
+                continue
+            start_str = racer.get("StartTime")
+            if not start_str:
+                continue
+            start_secs = _parse_time_seconds(start_str)
+            elapsed_secs = _parse_time_seconds(racer["Time"])
+            finish_secs = start_secs + elapsed_secs
+            finishers_by_distance[distance].append(finish_secs)
+
+    all_finishes = [s for fins in finishers_by_distance.values() for s in fins]
+    if not all_finishes:
+        return None
+
+    bucket_secs = bucket_minutes * 60
+    last_finish = max(all_finishes)
+    labels = []
+    bucket_starts = []
+    t = floor_hour
+    while t <= last_finish:
+        h = int(t // 3600)
+        m = int((t % 3600) // 60)
+        labels.append(f"{h}:{m:02d}")
+        bucket_starts.append(t)
+        t += bucket_secs
+
+    datasets = []
+    for distance in distance_order:
+        counts = [0] * len(bucket_starts)
+        for finish_secs in finishers_by_distance[distance]:
+            idx = int((finish_secs - floor_hour) // bucket_secs)
+            if 0 <= idx < len(counts):
+                counts[idx] += 1
+        datasets.append({"label": distance, "data": counts})
+
+    return {"labels": labels, "datasets": datasets}
 
 
 def build_pages(dashboard_data, max_rows=18):

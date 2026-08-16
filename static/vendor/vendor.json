@@ -1,0 +1,7 @@
+{
+  "chart.js": {
+    "version": "4.4.7",
+    "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js",
+    "file": "chart.umd.min.js"
+  }
+}

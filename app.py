@@ -3,7 +3,7 @@ import time
 from datetime import datetime
 from flask import Flask, render_template, jsonify
 from webscorer_client import fetch_race_list, fetch_race_results
-from data_processing import process_race_data, build_pages
+from data_processing import process_race_data, build_pages, build_finish_chart_data
 from config import load_config
 
 _cache = {
@@ -15,6 +15,7 @@ _cache = {
     "race_name": "",
     "race_date": "",
     "race_sport": "",
+    "finish_chart": None,
 }
 _cache_lock = threading.Lock()
 
@@ -40,11 +41,13 @@ def create_app(config=None, start_polling=True):
                 "race_name": _cache["race_name"],
                 "race_date": _cache["race_date"],
                 "race_sport": _cache["race_sport"],
+                "finish_chart": _cache["finish_chart"],
                 "summary_display_time": app.config["dashboard"].get("summary_display_time", 20),
                 "scroll_speed": app.config["dashboard"].get("scroll_speed", 100),
                 "scroll_pause_time": app.config["dashboard"].get("scroll_pause_time", 2),
                 "pinned_leaders": app.config["dashboard"].get("pinned_leaders", 3),
                 "show_summary": app.config["dashboard"].get("show_summary", True),
+                "chart_bucket_minutes": app.config["dashboard"].get("chart_bucket_minutes", 15),
             })
 
     if start_polling:
@@ -66,6 +69,7 @@ def poll_once(app):
             show_category_results=cfg.get("show_category_results", True),
         )
         pages = build_pages(data)
+        finish_chart = build_finish_chart_data(raw, cfg.get("chart_bucket_minutes", 15))
         with _cache_lock:
             _cache["pages"] = pages
             _cache["last_refresh"] = datetime.now().strftime("%H:%M:%S")
@@ -76,6 +80,7 @@ def poll_once(app):
             _cache["race_name"] = data.get("race_name", "")
             _cache["race_date"] = data.get("race_date", "")
             _cache["race_sport"] = data.get("race_sport", "")
+            _cache["finish_chart"] = finish_chart
     except Exception as e:
         with _cache_lock:
             _cache["is_stale"] = True

@@ -121,6 +121,11 @@ body {
   color: #606080;
 }
 
+.summary-chart-area canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
 /* Category results page */
 .category-header {
   display: flex;
