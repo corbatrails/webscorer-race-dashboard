@@ -307,9 +307,10 @@ body {
 }
 
 .progress-bar-label {
-  font-size: 2vh;
+  font-size: 3.5vh;
   color: #a0a0c0;
   margin-bottom: 0.5vh;
+  text-align: center;
 }
 
 .progress-bar-track {

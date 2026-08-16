@@ -178,6 +178,9 @@
     html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + d.total_dsq + '</div><div class="stat-label">DSQ</div></div>';
     html += "</div>";
 
+    var chartColorCount = (data.finish_chart && data.finish_chart.datasets) ? data.finish_chart.datasets.length : 0;
+    html += renderProgressBars(d.distance_stats, chartColorCount);
+
     html += '<div class="summary-chart-area">';
     if (data.finish_chart && data.finish_chart.labels && data.finish_chart.labels.length > 0) {
       html += '<canvas id="finish-chart"></canvas>';
@@ -185,9 +188,6 @@
       html += '<div class="chart-placeholder">No finishers yet</div>';
     }
     html += "</div>";
-
-    var chartColorCount = (data.finish_chart && data.finish_chart.datasets) ? data.finish_chart.datasets.length : 0;
-    html += renderProgressBars(d.distance_stats, chartColorCount);
 
     html += "</div>";
     return html;
@@ -347,9 +347,7 @@
           },
         },
         plugins: {
-          legend: {
-            labels: { color: "#e0e0e0", font: { size: 14 } },
-          },
+          legend: { display: false },
         },
       },
     });
