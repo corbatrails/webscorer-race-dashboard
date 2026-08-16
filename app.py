@@ -27,7 +27,8 @@ def create_app(config=None, start_polling=True):
 
     @app.route("/")
     def index():
-        return render_template("dashboard.html", cache_bust=_start_time)
+        color_scheme = app.config["dashboard"].get("color_scheme", "dark")
+        return render_template("dashboard.html", cache_bust=_start_time, color_scheme=color_scheme)
 
     @app.route("/api/data")
     def api_data():
