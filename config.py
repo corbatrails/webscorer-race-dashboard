@@ -10,7 +10,11 @@ def load_config():
     api_id = os.environ.get("WEBSCORER_API_ID")
     api_token = os.environ.get("WEBSCORER_API_TOKEN")
 
-    if not data_file:
+    if data_file:
+        if not os.path.isfile(data_file):
+            print(f"ERROR: DATA_FILE '{data_file}' not found.")
+            sys.exit(1)
+    else:
         if not api_id:
             print("ERROR: WEBSCORER_API_ID is required. Set it in .env file.")
             sys.exit(1)

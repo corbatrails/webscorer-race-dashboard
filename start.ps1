@@ -4,6 +4,9 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $ScriptDir
 
+# Deactivate any active venv before proceeding
+if (Get-Command deactivate -ErrorAction SilentlyContinue) { deactivate }
+
 # Create venv if it doesn't exist
 if (-not (Test-Path "venv")) {
   Write-Host "Creating Python virtual environment..."
@@ -22,12 +25,12 @@ pip install -q -r requirements.txt
 # Download pinned JS vendor dependencies
 $vendorJson = Get-Content "static/vendor/vendor.json" | ConvertFrom-Json
 foreach ($dep in $vendorJson.PSObject.Properties) {
-    $info = $dep.Value
-    $dest = Join-Path "static/vendor" $info.file
-    if (-not (Test-Path $dest)) {
-        Write-Host "Downloading $($dep.Name) v$($info.version)..."
-        Invoke-WebRequest -Uri $info.url -OutFile $dest -UseBasicParsing
-    }
+  $info = $dep.Value
+  $dest = Join-Path "static/vendor" $info.file
+  if (-not (Test-Path $dest)) {
+    Write-Host "Downloading $($dep.Name) v$($info.version)..."
+    Invoke-WebRequest -Uri $info.url -OutFile $dest -UseBasicParsing
+  }
 }
 
 # Check for .env

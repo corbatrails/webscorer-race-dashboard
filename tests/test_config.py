@@ -65,6 +65,15 @@ def test_load_config_missing_api_token(mock_dotenv, monkeypatch):
         load_config()
 
 
+@patch("config.load_dotenv")
+def test_load_config_missing_data_file(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("DATA_FILE", "nonexistent_file_that_does_not_exist.json")
+    monkeypatch.delenv("WEBSCORER_API_ID", raising=False)
+    monkeypatch.delenv("WEBSCORER_API_TOKEN", raising=False)
+    with pytest.raises(SystemExit):
+        load_config()
+
+
 def test_chart_bucket_minutes_default(monkeypatch):
     monkeypatch.setenv("WEBSCORER_API_ID", "123")
     monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
