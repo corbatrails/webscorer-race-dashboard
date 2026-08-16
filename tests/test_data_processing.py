@@ -404,3 +404,53 @@ def test_process_race_data_filter_category_off():
     result = process_race_data(response, show_category_results=False)
     assert len(result["categories"]) == 1
     assert result["categories"][0]["name"] == "Long"
+
+
+def test_distance_stats_multi_distance():
+    response = {
+        "RaceInfo": {"RaceId": 200, "Name": "Trail Race", "Date": "2026-08-13", "Sport": "Cycling"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "Long", "Overall": True},
+                "Racers": [
+                    {"Place": 1, "Bib": "1", "Name": "A", "Time": "01:00:00"},
+                    {"Place": "", "Bib": "2", "Name": "B", "Time": "DNS"},
+                    {"Place": "-", "Bib": "3", "Name": "C", "Time": "-"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "Short", "Overall": True},
+                "Racers": [
+                    {"Place": 1, "Bib": "4", "Name": "D", "Time": "00:30:00"},
+                    {"Place": 2, "Bib": "5", "Name": "E", "Time": "00:35:00"},
+                ],
+            },
+        ],
+    }
+    result = process_race_data(response)
+    assert result["distance_stats"] == [
+        {"name": "Long", "total": 3, "finished": 1},
+        {"name": "Short", "total": 2, "finished": 2},
+    ]
+
+
+def test_distance_stats_single_distance():
+    result = process_race_data(MOCK_API_RESPONSE)
+    assert result["distance_stats"] == [
+        {"name": "Overall", "total": 11, "finished": 6},
+    ]
+
+
+def test_distance_stats_empty_results():
+    response = {
+        "RaceInfo": {"RaceId": 100, "Name": "Empty", "Date": "", "Sport": ""},
+        "Results": [],
+    }
+    result = process_race_data(response)
+    assert result["distance_stats"] == []
+
+
+def test_distance_stats_error_response():
+    response = {"Error": "PRO Results subscription required"}
+    result = process_race_data(response)
+    assert result["distance_stats"] == []

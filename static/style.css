@@ -292,3 +292,49 @@ body {
 .progress-dot.active {
   background: #00d4ff;
 }
+
+/* Distance progress bars */
+.progress-bars-row {
+  display: flex;
+  gap: 1.5vw;
+  padding: 1.5vh 0;
+}
+
+.progress-bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.progress-bar-label {
+  font-size: 3.5vh;
+  color: #a0a0c0;
+  margin-bottom: 0.5vh;
+  text-align: center;
+}
+
+.progress-bar-track {
+  height: 5vh;
+  background: #0f3460;
+  border-radius: 0.5vh;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 0.5vh;
+}
+
+.progress-bar-count {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  line-height: 5vh;
+  font-size: 3vh;
+  font-weight: bold;
+  color: #ffffff;
+}
