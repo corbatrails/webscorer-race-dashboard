@@ -98,3 +98,17 @@ def test_select_race_interactive(mock_fetch_list):
     with patch("builtins.input", return_value="1"):
         race_id = select_race("12345", "abc123de")
     assert race_id == "100"
+
+
+@patch("app.fetch_race_results")
+def test_api_data_includes_finish_chart(mock_fetch, app, client):
+    """finish_chart key is present in /api/data response."""
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    # Simulate a successful poll
+    with app.app_context():
+        from app import poll_once
+        poll_once(app)
+    response = client.get("/api/data")
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert "finish_chart" in data
