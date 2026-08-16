@@ -4,9 +4,39 @@
   box-sizing: border-box;
 }
 
+[data-theme="dark"] {
+  --bg-primary: #1a1a2e;
+  --bg-card: #16213e;
+  --bg-track: #0f3460;
+  --text-primary: #ffffff;
+  --text-body: #e0e0e0;
+  --text-muted: #a0a0c0;
+  --text-dim: #606080;
+  --accent-primary: #00d4ff;
+  --accent-secondary: #ff9f43;
+  --border-color: #2a2a4a;
+  --error-color: #ff6b6b;
+  --row-even: #16213e;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f5f5f5;
+  --bg-card: #ffffff;
+  --bg-track: #e0e0e0;
+  --text-primary: #1a1a2e;
+  --text-body: #333333;
+  --text-muted: #666666;
+  --text-dim: #999999;
+  --accent-primary: #0088cc;
+  --accent-secondary: #e07000;
+  --border-color: #dddddd;
+  --error-color: #cc0000;
+  --row-even: #f0f0f0;
+}
+
 body {
-  background: #1a1a2e;
-  color: #e0e0e0;
+  background: var(--bg-primary);
+  color: var(--text-body);
   font-family: 'Segoe UI', Arial, sans-serif;
   overflow: hidden;
   height: 100vh;
@@ -40,7 +70,7 @@ body {
 .summary-meta {
   margin-left: auto;
   font-size: 2vh;
-  color: #a0a0c0;
+  color: var(--text-muted);
 }
 
 .summary-header img {
@@ -52,12 +82,12 @@ body {
 .race-title {
   font-size: 4vh;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .race-subtitle {
   font-size: 2.5vh;
-  color: #a0a0c0;
+  color: var(--text-muted);
 }
 
 .summary-stats-row {
@@ -67,7 +97,7 @@ body {
 }
 
 .stat-card {
-  background: #16213e;
+  background: var(--bg-card);
   border-radius: 1vh;
   display: flex;
   flex-direction: column;
@@ -83,12 +113,12 @@ body {
 .stat-card-primary .stat-value {
   font-size: 10vh;
   font-weight: bold;
-  color: #00d4ff;
+  color: var(--accent-primary);
 }
 
 .stat-card-primary .stat-label {
   font-size: 3vh;
-  color: #a0a0c0;
+  color: var(--text-muted);
 }
 
 .stat-card-secondary {
@@ -98,17 +128,17 @@ body {
 .stat-card-secondary .stat-value {
   font-size: 7vh;
   font-weight: bold;
-  color: #ff9f43;
+  color: var(--accent-secondary);
 }
 
 .stat-card-secondary .stat-label {
   font-size: 2.5vh;
-  color: #a0a0c0;
+  color: var(--text-muted);
 }
 
 .summary-chart-area {
   flex: 1;
-  background: #16213e;
+  background: var(--bg-card);
   border-radius: 1vh;
   display: flex;
   align-items: center;
@@ -118,7 +148,7 @@ body {
 
 .chart-placeholder {
   font-size: 3vh;
-  color: #606080;
+  color: var(--text-dim);
 }
 
 .summary-chart-area canvas {
@@ -137,20 +167,20 @@ body {
 .category-title {
   font-size: 3.5vh;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .category-page-num {
   font-size: 2.5vh;
   font-weight: normal;
-  color: #a0a0c0;
+  color: var(--text-muted);
 }
 
 .category-meta {
   display: flex;
   gap: 2vw;
   font-size: 2vh;
-  color: #a0a0c0;
+  color: var(--text-muted);
 }
 
 .scroll-container {
@@ -159,7 +189,7 @@ body {
 }
 
 .pinned-table {
-  border-bottom: 2px solid #00d4ff;
+  border-bottom: 2px solid var(--accent-primary);
 }
 
 .results-table {
@@ -196,24 +226,24 @@ body {
 .results-table th {
   text-align: left;
   font-size: 2.2vh;
-  color: #00d4ff;
+  color: var(--accent-primary);
   padding: 1vh 1vw;
   height: 4.5vh;
-  border-bottom: 2px solid #2a2a4a;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .results-table td {
   font-size: 2.2vh;
   padding: 1vh 1vw;
   height: 4.5vh;
-  border-bottom: 1px solid #2a2a4a;
+  border-bottom: 1px solid var(--border-color);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .results-table tr:nth-child(even) {
-  background: #16213e;
+  background: var(--row-even);
 }
 
 .results-table .place-1 {
@@ -235,12 +265,12 @@ body {
   align-items: center;
   padding-top: 1vh;
   font-size: 1.8vh;
-  color: #606080;
+  color: var(--text-dim);
   margin-top: auto;
 }
 
 .stale-indicator {
-  color: #ff6b6b;
+  color: var(--error-color);
   font-weight: bold;
 }
 
@@ -261,11 +291,11 @@ body {
 
 .waiting-screen p {
   font-size: 2.5vh;
-  color: #a0a0c0;
+  color: var(--text-muted);
 }
 
 .error-message {
-  color: #ff6b6b;
+  color: var(--error-color);
   font-size: 2.5vh;
   margin-top: 2vh;
 }
@@ -286,11 +316,11 @@ body {
   width: 1.2vh;
   height: 1.2vh;
   border-radius: 50%;
-  background: #2a2a4a;
+  background: var(--border-color);
 }
 
 .progress-dot.active {
-  background: #00d4ff;
+  background: var(--accent-primary);
 }
 
 /* Distance progress bars */
@@ -308,14 +338,14 @@ body {
 
 .progress-bar-label {
   font-size: 3.5vh;
-  color: #a0a0c0;
+  color: var(--text-muted);
   margin-bottom: 0.5vh;
   text-align: center;
 }
 
 .progress-bar-track {
   height: 5vh;
-  background: #0f3460;
+  background: var(--bg-track);
   border-radius: 0.5vh;
   position: relative;
   overflow: hidden;
@@ -336,5 +366,5 @@ body {
   line-height: 5vh;
   font-size: 3vh;
   font-weight: bold;
-  color: #ffffff;
+  color: var(--text-primary);
 }
