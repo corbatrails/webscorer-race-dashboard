@@ -1,4 +1,4 @@
-from data_processing import _classify_racer, _classify_group, _group_name, process_race_data, build_pages
+from data_processing import _classify_racer, _classify_group, _group_name, process_race_data, build_pages, build_finish_chart_data
 
 
 def test_classify_group_overall():
@@ -280,6 +280,111 @@ def test_process_race_data_filter_overall_off():
     assert result["categories"][0]["name"] == "Masters Male"
     # Totals still counted from Overall groups
     assert result["total_racers"] == 1
+
+
+CHART_API_RESPONSE = {
+    "RaceInfo": {
+        "Name": "Test Race",
+        "StartTime": "Saturday, August 9, 2026 2:00 PM (GMT-5)",
+    },
+    "Results": [
+        {
+            "Grouping": {"Distance": "Short (5K)", "Overall": True},
+            "Racers": [
+                {"Name": "Alice", "Time": "-", "StartTime": "14:00:00.0", "Distance": "Short (5K)"},
+                {"Name": "Bob", "Time": "DNS", "StartTime": "14:00:00.0", "Distance": "Short (5K)"},
+            ],
+        },
+    ],
+}
+
+
+def test_build_finish_chart_no_finishers():
+    result = build_finish_chart_data(CHART_API_RESPONSE)
+    assert result is None
+
+
+CHART_API_FINISHERS = {
+    "RaceInfo": {
+        "Name": "Test Race",
+        "StartTime": "Saturday, August 9, 2026 2:00 PM (GMT-5)",
+    },
+    "Results": [
+        {
+            "Grouping": {"Distance": "Short (5K)", "Overall": True},
+            "Racers": [
+                {"Name": "A", "Time": "0:20:00.0", "StartTime": "14:00:00.0", "Distance": "Short (5K)"},
+                {"Name": "B", "Time": "0:25:00.0", "StartTime": "14:00:00.0", "Distance": "Short (5K)"},
+                {"Name": "C", "Time": "0:40:00.0", "StartTime": "14:00:00.0", "Distance": "Short (5K)"},
+            ],
+        },
+        {
+            "Grouping": {"Distance": "Long (10K)", "Overall": True},
+            "Racers": [
+                {"Name": "D", "Time": "0:50:00.0", "StartTime": "14:00:00.0", "Distance": "Long (10K)"},
+                {"Name": "E", "Time": "1:05:00.0", "StartTime": "14:00:00.0", "Distance": "Long (10K)"},
+            ],
+        },
+    ],
+}
+
+
+def test_build_finish_chart_basic():
+    result = build_finish_chart_data(CHART_API_FINISHERS, bucket_minutes=15)
+    assert result is not None
+    # Start hour floor is 14:00, finishers at 14:20, 14:25, 14:40, 14:50, 15:05
+    # Buckets: 14:00, 14:15, 14:30, 14:45, 15:00
+    assert result["labels"] == ["14:00", "14:15", "14:30", "14:45", "15:00"]
+    assert len(result["datasets"]) == 2
+    # Short: 0 in 14:00, 2 in 14:15 (14:20/14:25), 1 in 14:30 (14:40), 0 in 14:45, 0 in 15:00
+    short_ds = next(ds for ds in result["datasets"] if ds["label"] == "Short (5K)")
+    assert short_ds["data"] == [0, 2, 1, 0, 0]
+    # Long: 0, 0, 0, 1 in 14:45 (14:50), 1 in 15:00 (15:05)
+    long_ds = next(ds for ds in result["datasets"] if ds["label"] == "Long (10K)")
+    assert long_ds["data"] == [0, 0, 0, 1, 1]
+
+
+def test_build_finish_chart_missing_start_time():
+    response = {
+        "RaceInfo": {"Name": "Test", "StartTime": "Saturday, August 9, 2026 2:00 PM (GMT-5)"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "5K", "Overall": True},
+                "Racers": [
+                    {"Name": "A", "Time": "0:20:00.0", "StartTime": "14:00:00.0", "Distance": "5K"},
+                    {"Name": "B", "Time": "0:25:00.0", "StartTime": None, "Distance": "5K"},
+                ],
+            },
+        ],
+    }
+    result = build_finish_chart_data(response, bucket_minutes=15)
+    assert result is not None
+    assert result["labels"] == ["14:00", "14:15"]
+    assert result["datasets"][0]["data"] == [0, 1]
+
+
+def test_build_finish_chart_skips_category_groups():
+    response = {
+        "RaceInfo": {"Name": "Test", "StartTime": "Saturday, August 9, 2026 2:00 PM (GMT-5)"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "5K", "Overall": True},
+                "Racers": [
+                    {"Name": "A", "Time": "0:20:00.0", "StartTime": "14:00:00.0", "Distance": "5K"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "5K", "Category": "Male"},
+                "Racers": [
+                    {"Name": "A", "Time": "0:20:00.0", "StartTime": "14:00:00.0", "Distance": "5K"},
+                ],
+            },
+        ],
+    }
+    result = build_finish_chart_data(response, bucket_minutes=15)
+    # Only 1 finisher counted (from Overall), not 2
+    total = sum(result["datasets"][0]["data"])
+    assert total == 1
 
 
 def test_process_race_data_filter_category_off():
