@@ -186,6 +186,9 @@
     }
     html += "</div>";
 
+    var chartColorCount = (data.finish_chart && data.finish_chart.datasets) ? data.finish_chart.datasets.length : 0;
+    html += renderProgressBars(d.distance_stats, chartColorCount);
+
     html += "</div>";
     return html;
   }
@@ -285,6 +288,25 @@
       colors.push("hsla(" + hue + ", 70%, 60%, 0.8)");
     }
     return colors;
+  }
+
+  function renderProgressBars(distanceStats, colorCount) {
+    if (!distanceStats || distanceStats.length === 0) return "";
+    var colors = generateChartColors(colorCount || distanceStats.length);
+    var html = '<div class="progress-bars-row">';
+    for (var i = 0; i < distanceStats.length; i++) {
+      var stat = distanceStats[i];
+      var pct = stat.total > 0 ? Math.round((stat.finished / stat.total) * 100) : 0;
+      html += '<div class="progress-bar-item">';
+      html += '<div class="progress-bar-label">' + escapeHtml(stat.name) + '</div>';
+      html += '<div class="progress-bar-track">';
+      html += '<div class="progress-bar-fill" style="width:' + pct + '%;background:' + colors[i] + '"></div>';
+      html += '<div class="progress-bar-count">' + stat.finished + '/' + stat.total + '</div>';
+      html += '</div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
   }
 
   function renderFinishChart(chartData) {
