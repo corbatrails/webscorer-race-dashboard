@@ -278,24 +278,26 @@
     return html;
   }
 
-  var CHART_COLORS = [
-    "rgba(54, 162, 235, 0.8)",
-    "rgba(255, 159, 64, 0.8)",
-    "rgba(75, 192, 192, 0.8)",
-    "rgba(153, 102, 255, 0.8)",
-    "rgba(255, 99, 132, 0.8)",
-  ];
+  function generateChartColors(count) {
+    var colors = [];
+    for (var i = 0; i < count; i++) {
+      var hue = Math.round((360 / count) * i);
+      colors.push("hsla(" + hue + ", 70%, 60%, 0.8)");
+    }
+    return colors;
+  }
 
   function renderFinishChart(chartData) {
     var canvas = document.getElementById("finish-chart");
     if (!canvas || !chartData) return;
 
+    var colors = generateChartColors(chartData.datasets.length);
     var datasets = [];
     for (var i = 0; i < chartData.datasets.length; i++) {
       datasets.push({
         label: chartData.datasets[i].label,
         data: chartData.datasets[i].data,
-        backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
+        backgroundColor: colors[i],
       });
     }
 
