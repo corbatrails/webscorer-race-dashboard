@@ -47,6 +47,7 @@ def app():
         "show_summary": True,
         "show_overall_results": True,
         "show_category_results": True,
+        "color_scheme": "dark",
     }
     application = create_app(test_config, start_polling=False)
     application.config["TESTING"] = True
@@ -62,6 +63,11 @@ def test_index_returns_html(client):
     response = client.get("/")
     assert response.status_code == 200
     assert b"<!DOCTYPE html>" in response.data
+
+
+def test_index_includes_data_theme(client):
+    response = client.get("/")
+    assert b'data-theme="dark"' in response.data
 
 
 @patch("app.fetch_race_results")

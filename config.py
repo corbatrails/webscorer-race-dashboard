@@ -16,6 +16,8 @@ def load_config():
         print("ERROR: WEBSCORER_API_TOKEN is required. Set it in .env file.")
         sys.exit(1)
 
+    color_scheme_raw = os.environ.get("COLOR_SCHEME", "dark").lower()
+
     return {
         "api_id": api_id,
         "api_token": api_token,
@@ -29,4 +31,5 @@ def load_config():
         "show_overall_results": os.environ.get("SHOW_OVERALL_RESULTS", "true").lower() == "true",
         "show_category_results": os.environ.get("SHOW_CATEGORY_RESULTS", "true").lower() == "true",
         "chart_bucket_minutes": int(os.environ.get("CHART_BUCKET_MINUTES", "15")),
+        "color_scheme": color_scheme_raw if color_scheme_raw in ("dark", "light") else "dark",
     }

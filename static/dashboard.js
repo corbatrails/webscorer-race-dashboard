@@ -220,7 +220,7 @@
     html += "</div>";
 
     if (racers.length === 0) {
-      html += '<p style="font-size:3vh;color:#606080;text-align:center;margin-top:10vh">No results yet</p>';
+      html += '<p style="font-size:3vh;color:var(--text-dim);text-align:center;margin-top:10vh">No results yet</p>';
       html += "</div>";
       return html;
     }
@@ -313,6 +313,9 @@
     var canvas = document.getElementById("finish-chart");
     if (!canvas || !chartData) return;
 
+    var style = getComputedStyle(document.body);
+    var textMuted = style.getPropertyValue('--text-muted').trim();
+
     var colors = generateChartColors(chartData.datasets.length);
     var datasets = [];
     for (var i = 0; i < chartData.datasets.length; i++) {
@@ -336,14 +339,14 @@
         scales: {
           x: {
             stacked: true,
-            ticks: { color: "#a0a0c0", font: { size: 14 } },
-            grid: { color: "rgba(160,160,192,0.2)" },
+            ticks: { color: textMuted, font: { size: 14 } },
+            grid: { color: textMuted + "33" },
           },
           y: {
             stacked: true,
             beginAtZero: true,
-            ticks: { color: "#a0a0c0", font: { size: 14 }, stepSize: 1 },
-            grid: { color: "rgba(160,160,192,0.2)" },
+            ticks: { color: textMuted, font: { size: 14 }, stepSize: 1 },
+            grid: { color: textMuted + "33" },
           },
         },
         plugins: {

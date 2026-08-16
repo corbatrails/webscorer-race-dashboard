@@ -79,3 +79,30 @@ def test_chart_bucket_minutes_custom(monkeypatch):
     from config import load_config
     cfg = load_config()
     assert cfg["chart_bucket_minutes"] == 30
+
+
+@patch("config.load_dotenv")
+def test_color_scheme_default(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "123")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
+    monkeypatch.delenv("COLOR_SCHEME", raising=False)
+    cfg = load_config()
+    assert cfg["color_scheme"] == "dark"
+
+
+@patch("config.load_dotenv")
+def test_color_scheme_light(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "123")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
+    monkeypatch.setenv("COLOR_SCHEME", "light")
+    cfg = load_config()
+    assert cfg["color_scheme"] == "light"
+
+
+@patch("config.load_dotenv")
+def test_color_scheme_invalid_falls_back_to_dark(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "123")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
+    monkeypatch.setenv("COLOR_SCHEME", "neon")
+    cfg = load_config()
+    assert cfg["color_scheme"] == "dark"
