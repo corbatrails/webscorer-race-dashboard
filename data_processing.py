@@ -43,6 +43,7 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
             "total_dnf": 0,
             "total_dsq": 0,
             "categories": [],
+            "distance_stats": [],
             "error": api_response["Error"],
         }
 
@@ -58,12 +59,17 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
     # Collect groups by distance, preserving API order
     distance_order = []
     distance_buckets = {}
+    distance_stats_map = {}
 
     for group in results:
         grouping = group.get("Grouping", {})
         racers = group.get("Racers", [])
 
         if grouping.get("Overall"):
+            dist_name = grouping.get("Distance") or "Overall"
+            if dist_name not in distance_stats_map:
+                distance_stats_map[dist_name] = {"name": dist_name, "total": 0, "finished": 0}
+            distance_stats_map[dist_name]["total"] += len(racers)
             total_racers += len(racers)
             for racer in racers:
                 status = _classify_racer(racer)
@@ -75,6 +81,7 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
                     total_dsq += 1
                 elif status == "FINISHED":
                     total_finished += 1
+                    distance_stats_map[dist_name]["finished"] += 1
 
         tier = _classify_group(grouping)
         if tier is None:
@@ -102,6 +109,8 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
         categories.extend(bucket["overall"])
         categories.extend(bucket["category"])
 
+    distance_stats = list(distance_stats_map.values())
+
     return {
         "race_name": info.get("Name", ""),
         "race_date": info.get("Date", ""),
@@ -112,6 +121,7 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
         "total_dnf": total_dnf,
         "total_dsq": total_dsq,
         "categories": categories,
+        "distance_stats": distance_stats,
         "error": None,
     }
 
