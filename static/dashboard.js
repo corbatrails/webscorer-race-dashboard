@@ -363,6 +363,36 @@
     return div.innerHTML;
   }
 
+  var TOAST_DURATION = 5000;
+  var TOAST_FADE = 300;
+
+  function showToasts(toasts) {
+    var container = document.getElementById("toast-container");
+    if (!container) return;
+    for (var i = 0; i < toasts.length; i++) {
+      createToast(container, toasts[i]);
+    }
+  }
+
+  function createToast(container, toast) {
+    var el = document.createElement("div");
+    el.className = "toast" + (toast.placeClass ? " " + toast.placeClass : "");
+    el.textContent = toast.text;
+    container.appendChild(el);
+
+    // Trigger reflow then fade in
+    el.offsetHeight;
+    el.classList.add("toast-visible");
+
+    setTimeout(function () {
+      el.classList.remove("toast-visible");
+      el.classList.add("toast-exit");
+      setTimeout(function () {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, TOAST_FADE);
+    }, TOAST_DURATION);
+  }
+
   // Fast-poll until data arrives, then switch to normal refresh interval
   fetchData();
   var startupPoll = setInterval(function () {
