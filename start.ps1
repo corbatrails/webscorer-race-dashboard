@@ -19,6 +19,17 @@ if (-not (Test-Path "venv")) {
 & .\venv\Scripts\Activate.ps1
 pip install -q -r requirements.txt
 
+# Download pinned JS vendor dependencies
+$vendorJson = Get-Content "static/vendor/vendor.json" | ConvertFrom-Json
+foreach ($dep in $vendorJson.PSObject.Properties) {
+    $info = $dep.Value
+    $dest = Join-Path "static/vendor" $info.file
+    if (-not (Test-Path $dest)) {
+        Write-Host "Downloading $($dep.Name) v$($info.version)..."
+        Invoke-WebRequest -Uri $info.url -OutFile $dest -UseBasicParsing
+    }
+}
+
 # Check for .env
 if (-not (Test-Path ".env")) {
   Write-Error "ERROR: .env file not found. Copy .env.example to .env and fill in your credentials."

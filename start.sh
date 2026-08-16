@@ -19,6 +19,21 @@ fi
 source venv/bin/activate
 pip install -q -r requirements.txt
 
+# Download pinned JS vendor dependencies
+VENDOR_DIR="static/vendor"
+if command -v python3 &>/dev/null; then PY=python3; else PY=python; fi
+$PY -c "
+import json, urllib.request, os
+vendor_dir = '$VENDOR_DIR'
+with open(os.path.join(vendor_dir, 'vendor.json')) as f:
+    deps = json.load(f)
+for name, info in deps.items():
+    dest = os.path.join(vendor_dir, info['file'])
+    if not os.path.exists(dest):
+        print(f'Downloading {name} v{info[\"version\"]}...')
+        urllib.request.urlretrieve(info['url'], dest)
+"
+
 # Check for .env
 if [ ! -f ".env" ]; then
     echo "ERROR: .env file not found. Copy .env.example to .env and fill in your credentials."
