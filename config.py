@@ -28,4 +28,5 @@ def load_config():
         "show_summary": os.environ.get("SHOW_SUMMARY", "true").lower() == "true",
         "show_overall_results": os.environ.get("SHOW_OVERALL_RESULTS", "true").lower() == "true",
         "show_category_results": os.environ.get("SHOW_CATEGORY_RESULTS", "true").lower() == "true",
+        "chart_bucket_minutes": int(os.environ.get("CHART_BUCKET_MINUTES", "15")),
     }
