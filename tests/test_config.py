@@ -49,6 +49,7 @@ def test_load_config_defaults(mock_dotenv, monkeypatch):
 
 @patch("config.load_dotenv")
 def test_load_config_missing_api_id(mock_dotenv, monkeypatch):
+    monkeypatch.delenv("DATA_FILE", raising=False)
     monkeypatch.delenv("WEBSCORER_API_ID", raising=False)
     monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
     with pytest.raises(SystemExit):
@@ -57,6 +58,7 @@ def test_load_config_missing_api_id(mock_dotenv, monkeypatch):
 
 @patch("config.load_dotenv")
 def test_load_config_missing_api_token(mock_dotenv, monkeypatch):
+    monkeypatch.delenv("DATA_FILE", raising=False)
     monkeypatch.setenv("WEBSCORER_API_ID", "12345")
     monkeypatch.delenv("WEBSCORER_API_TOKEN", raising=False)
     with pytest.raises(SystemExit):
