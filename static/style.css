@@ -384,18 +384,15 @@ body {
 }
 
 .toast {
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 1vh 2vw;
   border-radius: 0.5vh;
   font-size: 2.5vh;
   opacity: 0;
   transition: opacity 0.3s ease;
   white-space: nowrap;
-}
-
-[data-theme="light"] .toast {
-  background: rgba(30, 30, 30, 0.9);
 }
 
 .toast.toast-visible {
