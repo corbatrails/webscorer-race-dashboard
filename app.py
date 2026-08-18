@@ -50,6 +50,7 @@ def create_app(config=None, start_polling=True):
                 "pinned_leaders": app.config["dashboard"].get("pinned_leaders", 3),
                 "show_summary": app.config["dashboard"].get("show_summary", True),
                 "chart_bucket_minutes": app.config["dashboard"].get("chart_bucket_minutes", 15),
+                "show_toasts": app.config["dashboard"].get("show_toasts", True),
             })
 
     if start_polling:

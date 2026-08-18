@@ -6,6 +6,7 @@
   var scrollAnimationId = null;
   var advanceTimer = null;
   var lastData = null;
+  var knownFinishedBibs = null;
 
   function fetchData() {
     fetch("/api/data")
@@ -21,6 +22,7 @@
         };
         var wasEmpty = !summaryPage && categories.length === 0;
         buildPageList(data);
+        detectNewFinishers(data);
         // Only render on first data arrival; ongoing animations pick up new data on next advance
         if (wasEmpty && (summaryPage || categories.length > 0)) {
           renderCurrentPage();
@@ -361,6 +363,117 @@
     var div = document.createElement("div");
     div.appendChild(document.createTextNode(str));
     return div.innerHTML;
+  }
+
+  var TOAST_DURATION = 5000;
+  var TOAST_FADE = 300;
+
+  function showToasts(toasts) {
+    var container = document.getElementById("toast-container");
+    if (!container) return;
+    for (var i = 0; i < toasts.length; i++) {
+      createToast(container, toasts[i]);
+    }
+  }
+
+  function createToast(container, toast) {
+    var el = document.createElement("div");
+    el.className = "toast" + (toast.placeClass ? " " + toast.placeClass : "");
+    el.textContent = toast.text;
+    container.appendChild(el);
+
+    // Trigger reflow then fade in
+    el.offsetHeight;
+    el.classList.add("toast-visible");
+
+    setTimeout(function () {
+      el.classList.remove("toast-visible");
+      el.classList.add("toast-exit");
+      setTimeout(function () {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      }, TOAST_FADE);
+    }, TOAST_DURATION);
+  }
+
+  function detectNewFinishers(data) {
+    if (!data.show_toasts) return;
+
+    var currentFinished = {};
+    var pages = data.pages || [];
+
+    // Collect all currently finished bibs and their best category placement
+    for (var i = 0; i < pages.length; i++) {
+      var page = pages[i];
+      if (page.type !== "category") continue;
+      var racers = page.racers || [];
+      for (var j = 0; j < racers.length; j++) {
+        var r = racers[j];
+        if (!isFinished(r)) continue;
+        var bib = r.Bib;
+        if (!bib) continue;
+
+        if (!currentFinished[bib]) {
+          currentFinished[bib] = { name: r.Name, bib: bib, catPlace: null, catName: "" };
+        }
+
+        // Track best category placement (lowest place on a category-tier page)
+        if (page.tier === "category") {
+          var place = parseInt(r.Place) || 0;
+          if (place >= 1 && place <= 3) {
+            var existing = currentFinished[bib].catPlace;
+            if (!existing || place < existing) {
+              currentFinished[bib].catPlace = place;
+              currentFinished[bib].catName = page.title;
+            }
+          }
+        }
+      }
+    }
+
+    // First poll — establish baseline silently
+    if (knownFinishedBibs === null) {
+      knownFinishedBibs = {};
+      for (var bib in currentFinished) {
+        knownFinishedBibs[bib] = true;
+      }
+      return;
+    }
+
+    // Find new finishers
+    var podiumToasts = [];
+    var otherCount = 0;
+
+    for (var bib in currentFinished) {
+      if (knownFinishedBibs[bib]) continue;
+      var f = currentFinished[bib];
+      if (f.catPlace) {
+        var medal = f.catPlace === 1 ? "\uD83E\uDD47" : f.catPlace === 2 ? "\uD83E\uDD48" : "\uD83E\uDD49";
+        var ordinal = f.catPlace === 1 ? "1st" : f.catPlace === 2 ? "2nd" : "3rd";
+        podiumToasts.push({
+          text: medal + " " + f.name + " \u2014 " + ordinal + " " + f.catName,
+          placeClass: "toast-place-" + f.catPlace
+        });
+      } else {
+        otherCount++;
+      }
+    }
+
+    // Build toast list: podium first, then batch
+    var toasts = podiumToasts.slice();
+    if (otherCount > 0) {
+      var word = otherCount === 1 ? "racer" : "racers";
+      toasts.push({ text: otherCount + " " + word + " finished since last update", placeClass: "" });
+    }
+
+    if (toasts.length > 0) {
+      showToasts(toasts);
+    }
+
+    // Update known set
+    knownFinishedBibs = {};
+    for (var bib in currentFinished) {
+      knownFinishedBibs[bib] = true;
+    }
   }
 
   // Fast-poll until data arrives, then switch to normal refresh interval

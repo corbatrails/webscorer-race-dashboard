@@ -39,4 +39,5 @@ def load_config():
         "show_category_results": os.environ.get("SHOW_CATEGORY_RESULTS", "true").lower() == "true",
         "chart_bucket_minutes": int(os.environ.get("CHART_BUCKET_MINUTES", "15")),
         "color_scheme": color_scheme_raw if color_scheme_raw in ("dark", "light") else "dark",
+        "show_toasts": os.environ.get("SHOW_TOASTS", "true").lower() == "true",
     }

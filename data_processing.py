@@ -99,6 +99,7 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
         name = _group_name(grouping, tier)
         distance_buckets[distance][tier].append({
             "name": name,
+            "tier": tier,
             "racers": racers,
             "leaders": racers[:3],
         })
@@ -222,6 +223,7 @@ def build_pages(dashboard_data, max_rows=18):
         pages.append({
             "type": "category",
             "title": category["name"],
+            "tier": category["tier"],
             "racers": category["racers"],
         })
 

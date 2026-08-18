@@ -450,6 +450,18 @@ def test_distance_stats_empty_results():
     assert result["distance_stats"] == []
 
 
+def test_build_pages_includes_tier():
+    data = process_race_data(MOCK_API_RESPONSE)
+    pages = build_pages(data)
+    # Summary page has no tier
+    assert "tier" not in pages[0]
+    # Overall group
+    assert pages[1]["tier"] == "overall"
+    # Category groups
+    assert pages[2]["tier"] == "category"
+    assert pages[3]["tier"] == "category"
+
+
 def test_distance_stats_error_response():
     response = {"Error": "PRO Results subscription required"}
     result = process_race_data(response)

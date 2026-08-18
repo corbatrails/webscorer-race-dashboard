@@ -111,6 +111,24 @@ def test_color_scheme_light(mock_dotenv, monkeypatch):
 
 
 @patch("config.load_dotenv")
+def test_load_config_show_toasts_default(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.delenv("SHOW_TOASTS", raising=False)
+    cfg = load_config()
+    assert cfg["show_toasts"] is True
+
+
+@patch("config.load_dotenv")
+def test_load_config_show_toasts_disabled(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.setenv("SHOW_TOASTS", "false")
+    cfg = load_config()
+    assert cfg["show_toasts"] is False
+
+
+@patch("config.load_dotenv")
 def test_color_scheme_invalid_falls_back_to_dark(mock_dotenv, monkeypatch):
     monkeypatch.setenv("WEBSCORER_API_ID", "123")
     monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
