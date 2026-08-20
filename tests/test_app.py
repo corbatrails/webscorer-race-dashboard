@@ -118,3 +118,14 @@ def test_api_data_includes_finish_chart(mock_fetch, app, client):
     assert response.status_code == 200
     data = json.loads(response.data)
     assert "finish_chart" in data
+
+
+@patch("app.fetch_race_results")
+def test_api_data_includes_pinned_leaders_on_overall_results(mock_fetch, app, client):
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    with app.app_context():
+        from app import poll_once
+        poll_once(app)
+    response = client.get("/api/data")
+    data = json.loads(response.data)
+    assert data["pinned_leaders_on_overall_results"] is False
