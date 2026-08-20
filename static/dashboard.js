@@ -18,7 +18,8 @@
           scrollSpeed: data.scroll_speed,
           scrollPauseTime: data.scroll_pause_time,
           pinnedLeaders: data.pinned_leaders,
-          showSummary: data.show_summary !== false
+          showSummary: data.show_summary !== false,
+          pinnedLeadersOnOverallResults: data.pinned_leaders_on_overall_results === true
         };
         var wasEmpty = !summaryPage && categories.length === 0;
         buildPageList(data);
@@ -202,10 +203,13 @@
 
   function renderCategory(category, catIndex, data) {
     var racers = category.racers || [];
+    var showPodiumStyling = category.tier !== "overall" || config.pinnedLeadersOnOverallResults;
     var pinnedCount = 0;
-    for (var i = 0; i < Math.min(config.pinnedLeaders, racers.length); i++) {
-      if (isFinished(racers[i])) pinnedCount++;
-      else break;
+    if (showPodiumStyling) {
+      for (var i = 0; i < Math.min(config.pinnedLeaders, racers.length); i++) {
+        if (isFinished(racers[i])) pinnedCount++;
+        else break;
+      }
     }
     var pinned = racers.slice(0, pinnedCount);
     var scrolling = racers.slice(pinnedCount);
@@ -233,7 +237,7 @@
       html += "<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>";
       html += "<tbody>";
       for (var i = 0; i < pinned.length; i++) {
-        html += renderRacerRow(pinned[i]);
+        html += renderRacerRow(pinned[i], showPodiumStyling);
       }
       html += "</tbody></table>";
     }
@@ -247,7 +251,7 @@
       }
       html += "<tbody>";
       for (var j = 0; j < scrolling.length; j++) {
-        html += renderRacerRow(scrolling[j]);
+        html += renderRacerRow(scrolling[j], showPodiumStyling);
       }
       html += "</tbody></table>";
       html += "</div>";
@@ -257,12 +261,14 @@
     return html;
   }
 
-  function renderRacerRow(r) {
+  function renderRacerRow(r, showPodiumStyling) {
     var placeClass = "";
-    var place = parseInt(r.Place) || 0;
-    if (place === 1) placeClass = " place-1";
-    else if (place === 2) placeClass = " place-2";
-    else if (place === 3) placeClass = " place-3";
+    if (showPodiumStyling) {
+      var place = parseInt(r.Place) || 0;
+      if (place === 1) placeClass = " place-1";
+      else if (place === 2) placeClass = " place-2";
+      else if (place === 3) placeClass = " place-3";
+    }
     var html = "<tr>";
     html += '<td class="' + placeClass + '">' + (r.Place || "") + "</td>";
     html += "<td>" + escapeHtml(r.Bib || "") + "</td>";

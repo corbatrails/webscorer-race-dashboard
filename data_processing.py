@@ -220,9 +220,12 @@ def build_pages(dashboard_data, max_rows=18):
     pages = [{"type": "summary", "title": "Summary", "data": dashboard_data}]
 
     for category in dashboard_data.get("categories", []):
+        title = category["name"]
+        if category["tier"] == "overall" and title != "Overall":
+            title = f"Overall - {title}"
         pages.append({
             "type": "category",
-            "title": category["name"],
+            "title": title,
             "tier": category["tier"],
             "racers": category["racers"],
         })
