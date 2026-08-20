@@ -7,6 +7,7 @@
   var advanceTimer = null;
   var lastData = null;
   var knownFinishedBibs = null;
+  var finishChart = null;
 
   function fetchData() {
     fetch("/api/data")
@@ -321,6 +322,12 @@
     var canvas = document.getElementById("finish-chart");
     if (!canvas || !chartData) return;
 
+    // Previous canvas element is discarded on each re-render; destroy its chart to avoid leaking instances
+    if (finishChart) {
+      finishChart.destroy();
+      finishChart = null;
+    }
+
     var style = getComputedStyle(document.body);
     var textMuted = style.getPropertyValue('--text-muted').trim();
 
@@ -334,7 +341,7 @@
       });
     }
 
-    new Chart(canvas, {
+    finishChart = new Chart(canvas, {
       type: "bar",
       data: {
         labels: chartData.labels,
