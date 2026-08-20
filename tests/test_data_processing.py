@@ -137,6 +137,34 @@ def test_build_pages_basic():
     assert len(pages) == 4
 
 
+def test_build_pages_prefixes_overall_distance_title():
+    data = process_race_data({
+        "RaceInfo": {},
+        "Results": [{
+            "Grouping": {"Distance": "Mid Course (45 miles)", "Overall": True},
+            "Racers": [],
+        }],
+    })
+
+    pages = build_pages(data)
+
+    assert pages[1]["title"] == "Overall - Mid Course (45 miles)"
+
+
+def test_build_pages_keeps_overall_fallback_title():
+    data = process_race_data({
+        "RaceInfo": {},
+        "Results": [{
+            "Grouping": {"Overall": True},
+            "Racers": [],
+        }],
+    })
+
+    pages = build_pages(data)
+
+    assert pages[1]["title"] == "Overall"
+
+
 def test_build_pages_large_category_unsplit():
     many_racers = [{"Place": i, "Bib": str(i), "Name": f"Racer {i}", "Time": "00:20:00"} for i in range(1, 26)]
     response = {
