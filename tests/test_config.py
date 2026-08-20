@@ -135,3 +135,21 @@ def test_color_scheme_invalid_falls_back_to_dark(mock_dotenv, monkeypatch):
     monkeypatch.setenv("COLOR_SCHEME", "neon")
     cfg = load_config()
     assert cfg["color_scheme"] == "dark"
+
+
+@patch("config.load_dotenv")
+def test_load_config_pinned_leaders_on_overall_results_default(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.delenv("PINNED_LEADERS_ON_OVERALL_RESULTS", raising=False)
+    cfg = load_config()
+    assert cfg["pinned_leaders_on_overall_results"] is False
+
+
+@patch("config.load_dotenv")
+def test_load_config_pinned_leaders_on_overall_results_enabled(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.setenv("PINNED_LEADERS_ON_OVERALL_RESULTS", "true")
+    cfg = load_config()
+    assert cfg["pinned_leaders_on_overall_results"] is True

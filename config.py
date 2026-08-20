@@ -37,6 +37,7 @@ def load_config():
         "show_summary": os.environ.get("SHOW_SUMMARY", "true").lower() == "true",
         "show_overall_results": os.environ.get("SHOW_OVERALL_RESULTS", "true").lower() == "true",
         "show_category_results": os.environ.get("SHOW_CATEGORY_RESULTS", "true").lower() == "true",
+        "pinned_leaders_on_overall_results": os.environ.get("PINNED_LEADERS_ON_OVERALL_RESULTS", "false").lower() == "true",
         "chart_bucket_minutes": int(os.environ.get("CHART_BUCKET_MINUTES", "15")),
         "color_scheme": color_scheme_raw if color_scheme_raw in ("dark", "light") else "dark",
         "show_toasts": os.environ.get("SHOW_TOASTS", "true").lower() == "true",
