@@ -224,3 +224,5 @@ __marimo__/
 .vscode/settings.json
 
 static/vendor/*.js
+
+.worktrees/
