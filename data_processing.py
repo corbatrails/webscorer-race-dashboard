@@ -46,6 +46,13 @@ def _result_match_key(distance, category, gender, bib):
     )
 
 
+def _place_sort_key(racer):
+    place = _match_value(racer.get("Place"))
+    if place.isdigit():
+        return (0, int(place))
+    return (1, 0)
+
+
 def _add_category_places(results):
     category_places = {}
 
@@ -110,7 +117,7 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
 
     for group in results:
         grouping = group.get("Grouping", {})
-        racers = group.get("Racers", [])
+        racers = sorted(group.get("Racers", []), key=_place_sort_key)
 
         if grouping.get("Overall"):
             dist_name = grouping.get("Distance") or "Overall"

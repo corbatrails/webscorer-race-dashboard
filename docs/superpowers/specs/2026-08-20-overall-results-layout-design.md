@@ -74,9 +74,10 @@ Overall pages are sorted by Overall placement, even when the detailed layout als
 adds category context for recognition and award awareness; it must not regroup or reorder
 the Overall page by category, gender, team, or category placement.
 
-The implementation should preserve WebScorer's racer order within each result group.
-Category-placement enrichment may add `CategoryPlace` to Overall racers, but it must not
-sort or otherwise reorder any racer list.
+The implementation should sort each result group by numeric `Place` before pages are built
+because WebScorer API rows can arrive in bib order. Category-placement enrichment may add
+`CategoryPlace` to Overall racers, but it must not cause Overall pages to be sorted by
+category placement.
 
 ## Visual Emphasis
 
@@ -172,8 +173,8 @@ Backend tests should cover:
   otherwise consistent.
 - Bibs are not cross-matched between distances.
 - Missing category matches leave `CategoryPlace` blank or absent without errors.
-- Overall racer order is preserved after category-placement enrichment, even when category
-  placement order differs from overall placement order.
+- Overall racer rows are sorted by numeric Overall `Place`, even when API rows arrive in
+  bib order and category placement order differs from overall placement order.
 
 Manual frontend verification should cover:
 
@@ -198,7 +199,8 @@ Included:
 Excluded:
 
 - Gender normalization or mapping.
-- Changes to result ordering, time calculation, or status classification.
+- Changes to result ordering beyond sorting each result group by its own numeric `Place`.
+- Changes to time calculation or status classification.
 - Changes to which Overall/category pages are shown.
 - Changes to podium toast behavior.
 - Adding a JavaScript test framework.

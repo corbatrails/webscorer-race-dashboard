@@ -22,11 +22,12 @@
 - Missing category-placement data renders as a blank cell and must not hide a row or break a page.
 - Overall pages remain sorted by Overall placement; detailed mode must not sort by `Cat Place`, category, gender, or team.
 - Category pages remain sorted by category placement.
-- Preserve WebScorer's racer order within each result group.
+- Sort each result group by numeric `Place` before pages are built because WebScorer API rows can arrive in bib order.
 - Detailed Overall pages apply medal icons and podium colors to `Cat Place` for category places 1-3, not to the `Overall` column.
 - `PINNED_LEADERS_ON_OVERALL_RESULTS` controls Overall leader pinning, but detailed Overall category-place medal styling does not depend on that setting.
 - Existing pinned-leader and podium-styling rules remain unchanged.
-- Do not change result ordering, time calculation, status classification, page visibility behavior, or toast behavior.
+- Do not change result ordering beyond sorting each result group by its own numeric `Place`.
+- Do not change time calculation, status classification, page visibility behavior, or toast behavior.
 - Do not add a JavaScript test framework.
 
 ---
@@ -367,25 +368,25 @@
       assert "Gender" not in result["categories"][0]["racers"][0]
   ```
 
-  Add an order-preservation test:
+    Add an Overall placement sorting test:
 
   ```python
-  def test_process_race_data_preserves_overall_racer_order_after_category_place_enrichment():
+    def test_process_race_data_sorts_overall_racers_by_place_after_category_place_enrichment():
       response = {
           "RaceInfo": {"RaceId": 404, "Name": "Race", "Date": "", "Sport": "Cycling"},
           "Results": [
               {
                   "Grouping": {"Distance": "Long", "Overall": True},
                   "Racers": [
-                      {"Place": "1", "Bib": "20", "Name": "First Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
-                      {"Place": "2", "Bib": "21", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
+              {"Place": "44", "Bib": "8001", "Name": "Bib Sorted", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:10:00"},
+              {"Place": "2", "Bib": "8002", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
                   ],
               },
               {
                   "Grouping": {"Distance": "Long", "Category": "Open", "Gender": "X"},
                   "Racers": [
-                      {"Place": "2", "Bib": "20", "Name": "First Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
-                      {"Place": "1", "Bib": "21", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
+              {"Place": "31", "Bib": "8001", "Name": "Bib Sorted", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:10:00"},
+              {"Place": "1", "Bib": "8002", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
                   ],
               },
           ],
@@ -394,9 +395,9 @@
       result = process_race_data(response)
 
       overall_racers = result["categories"][0]["racers"]
-      assert [racer["Bib"] for racer in overall_racers] == ["20", "21"]
-      assert [racer["Place"] for racer in overall_racers] == ["1", "2"]
-      assert [racer["CategoryPlace"] for racer in overall_racers] == ["2", "1"]
+        assert [racer["Bib"] for racer in overall_racers] == ["8002", "8001"]
+        assert [racer["Place"] for racer in overall_racers] == ["2", "44"]
+        assert [racer["CategoryPlace"] for racer in overall_racers] == ["1", "31"]
   ```
 
 - [ ] **Step 2: Run the new enrichment tests and verify they fail**
@@ -415,7 +416,9 @@
 
   ```python
   def _match_value(value):
-      return str(value or "").strip()
+      if value is None:
+        return ""
+      return str(value).strip()
 
 
   def _result_match_key(distance, category, gender, bib):
@@ -425,6 +428,13 @@
           _match_value(gender),
           _match_value(bib),
       )
+
+
+      def _place_sort_key(racer):
+        place = _match_value(racer.get("Place"))
+        if place.isdigit():
+          return (0, int(place))
+        return (1, 0)
 
 
   def _add_category_places(results):
@@ -440,7 +450,7 @@
               category = grouping.get("Category") or racer.get("Category")
               gender = grouping.get("Gender") if grouping.get("Gender") is not None else racer.get("Gender")
               key = _result_match_key(distance, category, gender, racer.get("Bib"))
-              category_places[key] = racer.get("Place", "")
+              category_places[key] = _match_value(racer.get("Place"))
 
       for group in results:
           grouping = group.get("Grouping", {})
@@ -471,6 +481,18 @@
   ```python
       _add_category_places(results)
   ```
+
+        In the main group loop, replace:
+
+        ```python
+          racers = group.get("Racers", [])
+        ```
+
+        with:
+
+        ```python
+          racers = sorted(group.get("Racers", []), key=_place_sort_key)
+        ```
 
 - [ ] **Step 5: Run data-processing tests and commit**
 
