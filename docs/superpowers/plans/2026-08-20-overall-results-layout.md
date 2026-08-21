@@ -334,6 +334,34 @@
       assert result["categories"][0]["racers"][0]["Gender"] == ""
   ```
 
+      Add a missing-gender matching test:
+
+      ```python
+      def test_process_race_data_category_place_matches_missing_gender():
+        response = {
+          "RaceInfo": {"RaceId": 403, "Name": "Race", "Date": "", "Sport": "Cycling"},
+          "Results": [
+            {
+              "Grouping": {"Distance": "Long", "Overall": True},
+              "Racers": [
+                {"Place": "12", "Bib": "12", "Name": "Pat", "Distance": "Long", "Category": "Open", "Time": "1:08:00"},
+              ],
+            },
+            {
+              "Grouping": {"Distance": "Long", "Category": "Open"},
+              "Racers": [
+                {"Place": "4", "Bib": "12", "Name": "Pat", "Distance": "Long", "Category": "Open", "Time": "1:08:00"},
+              ],
+            },
+          ],
+        }
+
+        result = process_race_data(response)
+
+        assert result["categories"][0]["racers"][0]["CategoryPlace"] == "4"
+        assert "Gender" not in result["categories"][0]["racers"][0]
+      ```
+
 - [ ] **Step 2: Run the new enrichment tests and verify they fail**
 
   Run:
