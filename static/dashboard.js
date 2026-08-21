@@ -430,12 +430,12 @@
     var html = '<div class="progress-bars-row">';
     for (var i = 0; i < distanceStats.length; i++) {
       var stat = distanceStats[i];
-      var pct = stat.total > 0 ? Math.round((stat.finished / stat.total) * 100) : 0;
+      var pct = stat.total > 0 ? Math.round((stat.resolved / stat.total) * 100) : 0;
       html += '<div class="progress-bar-item">';
       html += '<div class="progress-bar-label">' + escapeHtml(stat.name) + '</div>';
       html += '<div class="progress-bar-track">';
       html += '<div class="progress-bar-fill" style="width:' + pct + '%;background:' + colors[i] + '"></div>';
-      html += '<div class="progress-bar-count">' + stat.finished + '/' + stat.total + '</div>';
+      html += '<div class="progress-bar-count">' + stat.resolved + '/' + stat.total + '</div>';
       html += '</div>';
       html += '</div>';
     }

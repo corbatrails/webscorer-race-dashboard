@@ -610,15 +610,15 @@ def test_distance_stats_multi_distance():
     }
     result = process_race_data(response)
     assert result["distance_stats"] == [
-        {"name": "Long", "total": 3, "finished": 1},
-        {"name": "Short", "total": 2, "finished": 2},
+        {"name": "Long", "total": 3, "finished": 1, "resolved": 2},
+        {"name": "Short", "total": 2, "finished": 2, "resolved": 2},
     ]
 
 
 def test_distance_stats_single_distance():
     result = process_race_data(MOCK_API_RESPONSE)
     assert result["distance_stats"] == [
-        {"name": "Overall", "total": 11, "finished": 6},
+        {"name": "Overall", "total": 11, "finished": 6, "resolved": 9},
     ]
 
 
