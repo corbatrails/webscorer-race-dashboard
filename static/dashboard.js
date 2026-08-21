@@ -20,7 +20,8 @@
           scrollPauseTime: data.scroll_pause_time,
           pinnedLeaders: data.pinned_leaders,
           showSummary: data.show_summary !== false,
-          pinnedLeadersOnOverallResults: data.pinned_leaders_on_overall_results === true
+          pinnedLeadersOnOverallResults: data.pinned_leaders_on_overall_results === true,
+          overallResultsLayout: data.overall_results_layout || "standard",
         };
         var wasEmpty = !summaryPage && categories.length === 0;
         buildPageList(data);
@@ -226,6 +227,10 @@
     var pinned = racers.slice(0, pinnedCount);
     var scrolling = racers.slice(pinnedCount).filter(hasResult);
 
+    var resultLayout = getResultColumns(category);
+    var columns = resultLayout.columns;
+    var layoutClass = resultLayout.layoutClass;
+
     if (racers.length === 0 || (pinned.length === 0 && scrolling.length === 0)) {
       var emptyHtml = '<div class="page active" data-empty="true">';
       emptyHtml += renderEventHeader(data);
@@ -235,6 +240,7 @@
       emptyHtml += '<span>Category ' + (catIndex + 1) + " of " + categories.length + "</span>";
       emptyHtml += "</div>";
       emptyHtml += "</div>";
+      emptyHtml += renderResultHeader(columns, layoutClass);
       emptyHtml += '<p style="font-size:3vh;color:var(--text-dim);text-align:center;margin-top:10vh">No results yet</p>';
       emptyHtml += "</div>";
       return emptyHtml;
@@ -251,16 +257,14 @@
     html += "</div>";
     html += "</div>";
 
-    html += '<table class="results-table results-header-table">';
-    html += '<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>';
-    html += '</table>';
+    html += renderResultHeader(columns, layoutClass);
 
     // Pinned leaders table (only shown when at least one racer has finished)
     if (pinned.length > 0) {
-      html += '<table class="results-table pinned-table">';
+      html += '<table class="results-table pinned-table ' + layoutClass + '">';
       html += "<tbody>";
       for (var i = 0; i < pinned.length; i++) {
-        html += renderRacerRow(pinned[i], showPodiumStyling);
+        html += renderRacerRow(pinned[i], showPodiumStyling, columns);
       }
       html += "</tbody></table>";
     }
@@ -268,10 +272,10 @@
     // Scrolling results
     if (scrolling.length > 0) {
       html += '<div id="scroll-container" class="scroll-container">';
-      html += '<table class="results-table scroll-table">';
+      html += '<table class="results-table scroll-table ' + layoutClass + '">';
       html += "<tbody>";
       for (var j = 0; j < scrolling.length; j++) {
-        html += renderRacerRow(scrolling[j], showPodiumStyling);
+        html += renderRacerRow(scrolling[j], showPodiumStyling, columns);
       }
       html += "</tbody></table>";
       html += "</div>";
@@ -281,7 +285,55 @@
     return html;
   }
 
-  function renderRacerRow(r, showPodiumStyling) {
+  function getStandardResultColumns() {
+    return [
+      { header: "Place", className: "col-place", value: function (r) { return r.Place || ""; } },
+      { header: "Bib", className: "col-bib", value: function (r) { return r.Bib || ""; } },
+      { header: "Name", className: "col-name", value: function (r) { return r.Name || ""; } },
+      { header: "Time", className: "col-time", value: function (r) { return r.Time || ""; } },
+      { header: "Team", className: "col-team", value: function (r) { return r.TeamName || ""; } },
+    ];
+  }
+
+  function getDetailedOverallResultColumns() {
+    return [
+      { header: "Overall", className: "col-overall", value: function (r) { return r.Place || ""; } },
+      { header: "Bib", className: "col-bib", value: function (r) { return r.Bib || ""; } },
+      { header: "Name", className: "col-name", value: function (r) { return r.Name || ""; } },
+      { header: "Time", className: "col-time", value: function (r) { return r.Time || ""; } },
+      { header: "Cat Place", className: "col-category-place", value: function (r) { return r.CategoryPlace || ""; } },
+      { header: "Category", className: "col-category", value: function (r) { return r.Category || ""; } },
+      { header: "Gender", className: "col-gender", value: function (r) { return r.Gender || ""; } },
+      { header: "Team", className: "col-team", value: function (r) { return r.TeamName || ""; } },
+    ];
+  }
+
+  function getResultColumns(category) {
+    if (category.tier === "overall" && config.overallResultsLayout === "detailed") {
+      return {
+        columns: getDetailedOverallResultColumns(),
+        layoutClass: "results-table-overall-detail"
+      };
+    }
+
+    return {
+      columns: getStandardResultColumns(),
+      layoutClass: "results-table-standard"
+    };
+  }
+
+  function renderResultHeader(columns, layoutClass) {
+    var html = '<table class="results-table results-header-table ' + layoutClass + '">';
+    html += "<thead><tr>";
+    for (var i = 0; i < columns.length; i++) {
+      html += '<th class="' + columns[i].className + '">' + escapeHtml(columns[i].header) + "</th>";
+    }
+    html += "</tr></thead>";
+    html += "</table>";
+    return html;
+  }
+
+  function renderRacerRow(r, showPodiumStyling, columns) {
     var placeClass = "";
     var medal = "";
     if (showPodiumStyling) {
@@ -297,12 +349,18 @@
         medal = " \uD83E\uDD49";
       }
     }
+
     var html = "<tr>";
-    html += '<td class="' + placeClass + '">' + (r.Place || "") + medal + "</td>";
-    html += "<td>" + escapeHtml(r.Bib || "") + "</td>";
-    html += "<td>" + escapeHtml(r.Name || "") + "</td>";
-    html += "<td>" + escapeHtml(r.TeamName || "") + "</td>";
-    html += "<td>" + escapeHtml(r.Time || "") + "</td>";
+    for (var i = 0; i < columns.length; i++) {
+      var column = columns[i];
+      var cellClass = column.className;
+      var value = column.value(r);
+      if (i === 0) {
+        cellClass += placeClass;
+        value = value + medal;
+      }
+      html += '<td class="' + cellClass + '">' + escapeHtml(value) + "</td>";
+    }
     html += "</tr>";
     return html;
   }
