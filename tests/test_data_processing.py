@@ -233,6 +233,29 @@ def test_process_race_data_sorts_overall_racers_by_place_after_category_place_en
     assert [racer["CategoryPlace"] for racer in overall_racers] == ["1", "31"]
 
 
+def test_process_race_data_sorts_category_racers_by_place_with_non_placed_last():
+    response = {
+        "RaceInfo": {"RaceId": 405, "Name": "Race", "Date": "", "Sport": "Cycling"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "Long", "Category": "Open", "Gender": "X"},
+                "Racers": [
+                    {"Place": "-", "Bib": "8001", "Name": "Pending", "Time": "-"},
+                    {"Place": "12", "Bib": "8002", "Name": "Twelfth", "Time": "1:12:00"},
+                    {"Place": "3", "Bib": "8003", "Name": "Third", "Time": "1:03:00"},
+                    {"Place": "", "Bib": "8004", "Name": "No Place", "Time": "DNF"},
+                ],
+            },
+        ],
+    }
+
+    result = process_race_data(response)
+
+    category_racers = result["categories"][0]["racers"]
+    assert [racer["Bib"] for racer in category_racers] == ["8003", "8002", "8001", "8004"]
+    assert [racer["Place"] for racer in category_racers] == ["3", "12", "-", ""]
+
+
 def test_process_race_data_empty_results():
     response = {
         "RaceInfo": {"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"},
