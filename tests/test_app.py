@@ -30,6 +30,7 @@ def reset_cache():
             "race_name": "",
             "race_date": "",
             "race_sport": "",
+            "finish_chart": None,
         })
 
 
@@ -141,3 +142,14 @@ def test_api_data_includes_overall_results_layout(mock_fetch, app, client):
     response = client.get("/api/data")
     data = json.loads(response.data)
     assert data["overall_results_layout"] == "detailed"
+
+
+def test_api_data_defaults_overall_results_layout_to_standard():
+    application = create_app({}, start_polling=False)
+    application.config["TESTING"] = True
+    client = application.test_client()
+
+    response = client.get("/api/data")
+
+    data = json.loads(response.data)
+    assert data["overall_results_layout"] == "standard"
