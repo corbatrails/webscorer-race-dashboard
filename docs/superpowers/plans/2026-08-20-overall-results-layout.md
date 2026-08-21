@@ -23,6 +23,8 @@
 - Overall pages remain sorted by Overall placement; detailed mode must not sort by `Cat Place`, category, gender, or team.
 - Category pages remain sorted by category placement.
 - Preserve WebScorer's racer order within each result group.
+- Detailed Overall pages apply medal icons and podium colors to `Cat Place` for category places 1-3, not to the `Overall` column.
+- `PINNED_LEADERS_ON_OVERALL_RESULTS` controls Overall leader pinning, but detailed Overall category-place medal styling does not depend on that setting.
 - Existing pinned-leader and podium-styling rules remain unchanged.
 - Do not change result ordering, time calculation, status classification, page visibility behavior, or toast behavior.
 - Do not add a JavaScript test framework.

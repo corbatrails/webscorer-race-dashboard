@@ -78,6 +78,19 @@ The implementation should preserve WebScorer's racer order within each result gr
 Category-placement enrichment may add `CategoryPlace` to Overall racers, but it must not
 sort or otherwise reorder any racer list.
 
+## Visual Emphasis
+
+Detailed Overall pages should de-emphasize Overall leaders when the race does not award an
+Overall podium. Overall placement remains visible and remains the sort key, but medal icons
+and gold/silver/bronze coloring should apply to the `Cat Place` cell for category places
+1-3. This makes the award signal match what racers and spectators care about: category
+podiums.
+
+The existing `PINNED_LEADERS_ON_OVERALL_RESULTS` setting continues to control whether
+Overall pages pin leaders. It must not be required for detailed Overall pages to show
+category-placement medal styling. Category pages keep their existing medal treatment on
+the `Place` column.
+
 ## Data Enrichment
 
 Sample API dumps show that Overall rows already include `Distance`, `Category`, `Gender`,

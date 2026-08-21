@@ -216,9 +216,11 @@
 
   function renderCategory(category, catIndex, data) {
     var racers = category.racers || [];
-    var showPodiumStyling = category.tier !== "overall" || config.pinnedLeadersOnOverallResults;
+    var isDetailedOverall = category.tier === "overall" && config.overallResultsLayout === "detailed";
+    var shouldPinLeaders = category.tier !== "overall" || config.pinnedLeadersOnOverallResults;
+    var showPodiumStyling = shouldPinLeaders || isDetailedOverall;
     var pinnedCount = 0;
-    if (showPodiumStyling) {
+    if (shouldPinLeaders) {
       for (var i = 0; i < Math.min(config.pinnedLeaders, racers.length); i++) {
         if (isFinished(racers[i])) pinnedCount++;
         else break;
@@ -287,7 +289,7 @@
 
   function getStandardResultColumns() {
     return [
-      { header: "Place", className: "col-place", value: function (r) { return r.Place || ""; } },
+      { header: "Place", className: "col-place", value: function (r) { return r.Place || ""; }, podiumValue: function (r) { return r.Place; } },
       { header: "Bib", className: "col-bib", value: function (r) { return r.Bib || ""; } },
       { header: "Name", className: "col-name", value: function (r) { return r.Name || ""; } },
       { header: "Time", className: "col-time", value: function (r) { return r.Time || ""; } },
@@ -301,7 +303,7 @@
       { header: "Bib", className: "col-bib", value: function (r) { return r.Bib || ""; } },
       { header: "Name", className: "col-name", value: function (r) { return r.Name || ""; } },
       { header: "Time", className: "col-time", value: function (r) { return r.Time || ""; } },
-      { header: "Cat Place", className: "col-category-place", value: function (r) { return r.CategoryPlace || ""; } },
+      { header: "Cat Place", className: "col-category-place", value: function (r) { return r.CategoryPlace || ""; }, podiumValue: function (r) { return r.CategoryPlace; } },
       { header: "Category", className: "col-category", value: function (r) { return r.Category || ""; } },
       { header: "Gender", className: "col-gender", value: function (r) { return r.Gender || ""; } },
       { header: "Team", className: "col-team", value: function (r) { return r.TeamName || ""; } },
@@ -333,31 +335,38 @@
     return html;
   }
 
+  function getPodiumMarker(placeValue) {
+    var place = parseInt(placeValue) || 0;
+    if (place === 1) {
+      return { className: " place-1", medal: " \uD83E\uDD47" };
+    }
+    if (place === 2) {
+      return { className: " place-2", medal: " \uD83E\uDD48" };
+    }
+    if (place === 3) {
+      return { className: " place-3", medal: " \uD83E\uDD49" };
+    }
+    return { className: "", medal: "" };
+  }
+
   function renderRacerRow(r, showPodiumStyling, columns) {
-    var placeClass = "";
-    var medal = "";
-    if (showPodiumStyling) {
-      var place = parseInt(r.Place) || 0;
-      if (place === 1) {
-        placeClass = " place-1";
-        medal = " \uD83E\uDD47";
-      } else if (place === 2) {
-        placeClass = " place-2";
-        medal = " \uD83E\uDD48";
-      } else if (place === 3) {
-        placeClass = " place-3";
-        medal = " \uD83E\uDD49";
+    var podiumColumnIndex = -1;
+    for (var i = 0; i < columns.length; i++) {
+      if (columns[i].podiumValue) {
+        podiumColumnIndex = i;
+        break;
       }
     }
+    var podiumMarker = showPodiumStyling && podiumColumnIndex >= 0 ? getPodiumMarker(columns[podiumColumnIndex].podiumValue(r)) : getPodiumMarker(0);
 
     var html = "<tr>";
-    for (var i = 0; i < columns.length; i++) {
-      var column = columns[i];
+    for (var j = 0; j < columns.length; j++) {
+      var column = columns[j];
       var cellClass = column.className;
       var value = column.value(r);
-      if (i === 0) {
-        cellClass += placeClass;
-        value = value + medal;
+      if (j === podiumColumnIndex) {
+        cellClass += podiumMarker.className;
+        value = value + podiumMarker.medal;
       }
       html += '<td class="' + cellClass + '">' + escapeHtml(value) + "</td>";
     }
