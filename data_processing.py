@@ -122,20 +122,29 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
         if grouping.get("Overall"):
             dist_name = grouping.get("Distance") or "Overall"
             if dist_name not in distance_stats_map:
-                distance_stats_map[dist_name] = {"name": dist_name, "total": 0, "finished": 0}
+                distance_stats_map[dist_name] = {
+                    "name": dist_name,
+                    "total": 0,
+                    "finished": 0,
+                    "resolved": 0,
+                }
             distance_stats_map[dist_name]["total"] += len(racers)
             total_racers += len(racers)
             for racer in racers:
                 status = _classify_racer(racer)
                 if status == "DNS":
                     total_dns += 1
+                    distance_stats_map[dist_name]["resolved"] += 1
                 elif status == "DNF":
                     total_dnf += 1
+                    distance_stats_map[dist_name]["resolved"] += 1
                 elif status == "DSQ":
                     total_dsq += 1
+                    distance_stats_map[dist_name]["resolved"] += 1
                 elif status == "FINISHED":
                     total_finished += 1
                     distance_stats_map[dist_name]["finished"] += 1
+                    distance_stats_map[dist_name]["resolved"] += 1
 
         tier = _classify_group(grouping)
         if tier is None:
