@@ -48,6 +48,7 @@ def app():
         "show_overall_results": True,
         "show_category_results": True,
         "color_scheme": "dark",
+        "overall_results_layout": "detailed",
     }
     application = create_app(test_config, start_polling=False)
     application.config["TESTING"] = True
@@ -129,3 +130,14 @@ def test_api_data_includes_pinned_leaders_on_overall_results(mock_fetch, app, cl
     response = client.get("/api/data")
     data = json.loads(response.data)
     assert data["pinned_leaders_on_overall_results"] is False
+
+
+@patch("app.fetch_race_results")
+def test_api_data_includes_overall_results_layout(mock_fetch, app, client):
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    with app.app_context():
+        from app import poll_once
+        poll_once(app)
+    response = client.get("/api/data")
+    data = json.loads(response.data)
+    assert data["overall_results_layout"] == "detailed"
