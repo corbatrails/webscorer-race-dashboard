@@ -153,3 +153,30 @@ def test_load_config_pinned_leaders_on_overall_results_enabled(mock_dotenv, monk
     monkeypatch.setenv("PINNED_LEADERS_ON_OVERALL_RESULTS", "true")
     cfg = load_config()
     assert cfg["pinned_leaders_on_overall_results"] is True
+
+
+@patch("config.load_dotenv")
+def test_load_config_overall_results_layout_default(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.delenv("OVERALL_RESULTS_LAYOUT", raising=False)
+    cfg = load_config()
+    assert cfg["overall_results_layout"] == "standard"
+
+
+@patch("config.load_dotenv")
+def test_load_config_overall_results_layout_detailed(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.setenv("OVERALL_RESULTS_LAYOUT", "detailed")
+    cfg = load_config()
+    assert cfg["overall_results_layout"] == "detailed"
+
+
+@patch("config.load_dotenv")
+def test_load_config_overall_results_layout_invalid_falls_back_to_standard(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.setenv("OVERALL_RESULTS_LAYOUT", "wide")
+    cfg = load_config()
+    assert cfg["overall_results_layout"] == "standard"
