@@ -103,6 +103,107 @@ def test_process_race_data_categories():
     assert len(cat2["leaders"]) == 3
 
 
+def test_process_race_data_adds_category_place_to_overall_racers():
+    response = {
+        "RaceInfo": {"RaceId": 400, "Name": "Race", "Date": "", "Sport": "Cycling"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "Long", "Overall": True},
+                "Racers": [
+                    {"Place": "7", "Bib": "10", "Name": "Alex", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "Long", "Category": "Open", "Gender": "X"},
+                "Racers": [
+                    {"Place": "2", "Bib": "10", "Name": "Alex", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
+                ],
+            },
+        ],
+    }
+
+    result = process_race_data(response)
+
+    overall = result["categories"][0]
+    assert overall["tier"] == "overall"
+    assert overall["racers"][0]["CategoryPlace"] == "2"
+    assert overall["racers"][0]["Gender"] == "X"
+
+
+def test_process_race_data_category_place_does_not_cross_match_distances():
+    response = {
+        "RaceInfo": {"RaceId": 401, "Name": "Race", "Date": "", "Sport": "Cycling"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "Long", "Overall": True},
+                "Racers": [
+                    {"Place": "5", "Bib": "10", "Name": "Alex", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "Short", "Category": "Open", "Gender": "X"},
+                "Racers": [
+                    {"Place": "1", "Bib": "10", "Name": "Alex", "Distance": "Short", "Category": "Open", "Gender": "X", "Time": "0:30:00"},
+                ],
+            },
+        ],
+    }
+
+    result = process_race_data(response)
+
+    assert "CategoryPlace" not in result["categories"][0]["racers"][0]
+
+
+def test_process_race_data_category_place_matches_blank_gender():
+    response = {
+        "RaceInfo": {"RaceId": 402, "Name": "Race", "Date": "", "Sport": "Cycling"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "Long", "Overall": True},
+                "Racers": [
+                    {"Place": "9", "Bib": "11", "Name": "Sam", "Distance": "Long", "Category": "Open", "Gender": "", "Time": "1:05:00"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "Long", "Category": "Open", "Gender": ""},
+                "Racers": [
+                    {"Place": "3", "Bib": "11", "Name": "Sam", "Distance": "Long", "Category": "Open", "Gender": "", "Time": "1:05:00"},
+                ],
+            },
+        ],
+    }
+
+    result = process_race_data(response)
+
+    assert result["categories"][0]["racers"][0]["CategoryPlace"] == "3"
+    assert result["categories"][0]["racers"][0]["Gender"] == ""
+
+
+def test_process_race_data_category_place_matches_missing_gender_as_blank():
+    response = {
+        "RaceInfo": {"RaceId": 403, "Name": "Race", "Date": "", "Sport": "Cycling"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "Long", "Overall": True},
+                "Racers": [
+                    {"Place": "12", "Bib": "12", "Name": "Riley", "Distance": "Long", "Category": "Open", "Time": "1:10:00"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "Long", "Category": "Open"},
+                "Racers": [
+                    {"Place": "4", "Bib": "12", "Name": "Riley", "Distance": "Long", "Category": "Open", "Time": "1:10:00"},
+                ],
+            },
+        ],
+    }
+
+    result = process_race_data(response)
+
+    assert result["categories"][0]["racers"][0]["CategoryPlace"] == "4"
+    assert "Gender" not in result["categories"][0]["racers"][0]
+
+
 def test_process_race_data_empty_results():
     response = {
         "RaceInfo": {"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"},

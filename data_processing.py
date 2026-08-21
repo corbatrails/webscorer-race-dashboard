@@ -31,6 +31,50 @@ def _group_name(grouping, tier):
     return " ".join(parts)
 
 
+def _match_value(value):
+    return str(value or "").strip()
+
+
+def _result_match_key(distance, category, gender, bib):
+    return (
+        _match_value(distance),
+        _match_value(category),
+        _match_value(gender),
+        _match_value(bib),
+    )
+
+
+def _add_category_places(results):
+    category_places = {}
+
+    for group in results:
+        grouping = group.get("Grouping", {})
+        if _classify_group(grouping) != "category":
+            continue
+
+        for racer in group.get("Racers", []):
+            distance = grouping.get("Distance") or racer.get("Distance")
+            category = grouping.get("Category") or racer.get("Category")
+            gender = grouping.get("Gender") if grouping.get("Gender") is not None else racer.get("Gender")
+            key = _result_match_key(distance, category, gender, racer.get("Bib"))
+            category_places[key] = racer.get("Place", "")
+
+    for group in results:
+        grouping = group.get("Grouping", {})
+        if _classify_group(grouping) != "overall":
+            continue
+
+        for racer in group.get("Racers", []):
+            key = _result_match_key(
+                racer.get("Distance"),
+                racer.get("Category"),
+                racer.get("Gender"),
+                racer.get("Bib"),
+            )
+            if key in category_places:
+                racer["CategoryPlace"] = category_places[key]
+
+
 def process_race_data(api_response, show_overall_results=True, show_category_results=True):
     if "Error" in api_response:
         return {
@@ -49,6 +93,7 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
 
     info = api_response.get("RaceInfo", {})
     results = api_response.get("Results", [])
+    _add_category_places(results)
 
     total_racers = 0
     total_finished = 0
