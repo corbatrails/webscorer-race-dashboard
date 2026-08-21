@@ -47,6 +47,7 @@ def load_config():
         "show_summary": os.environ.get("SHOW_SUMMARY", "true").lower() == "true",
         "show_overall_results": os.environ.get("SHOW_OVERALL_RESULTS", "true").lower() == "true",
         "show_category_results": os.environ.get("SHOW_CATEGORY_RESULTS", "true").lower() == "true",
+        "show_demographics": os.environ.get("SHOW_DEMOGRAPHICS", "false").lower() == "true",
         "pinned_leaders_on_overall_results": os.environ.get("PINNED_LEADERS_ON_OVERALL_RESULTS", "false").lower() == "true",
         "overall_results_layout": _normalize_overall_results_layout(
             os.environ.get("OVERALL_RESULTS_LAYOUT", "standard")
