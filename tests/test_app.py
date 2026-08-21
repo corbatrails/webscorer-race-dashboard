@@ -168,3 +168,59 @@ def test_api_data_includes_display_unfinished_result_page_toggles():
     data = json.loads(response.data)
     assert data["display_unfinished_in_category"] is True
     assert data["display_unfinished_in_overall"] is True
+
+
+def test_format_config_lines_includes_all_config_options():
+    from app import _format_config_lines
+
+    config = {
+        "data_file": "api_dump.json",
+        "api_id": "12345",
+        "api_token": "abc123de",
+        "race_id": "999",
+        "refresh_interval": 60,
+        "summary_display_time": 20,
+        "scroll_speed": 100,
+        "scroll_pause_time": 2,
+        "pinned_leaders": 3,
+        "show_summary": True,
+        "show_overall_results": True,
+        "show_category_results": True,
+        "pinned_leaders_on_overall_results": False,
+        "overall_results_layout": "detailed",
+        "display_unfinished_in_category": True,
+        "display_unfinished_in_overall": False,
+        "chart_bucket_minutes": 15,
+        "color_scheme": "dark",
+        "show_toasts": True,
+    }
+
+    output = "\n".join(_format_config_lines(config, "Race Name", "Race Date"))
+
+    expected_labels = [
+        "Data file:",
+        "API ID:",
+        "API Token:",
+        "Race ID:",
+        "Race Name:",
+        "Race Date:",
+        "Refresh:",
+        "Summary time:",
+        "Scroll speed:",
+        "Scroll pause:",
+        "Pinned leaders:",
+        "Show summary:",
+        "Show Overall results:",
+        "Show category results:",
+        "Pinned leaders on Overall:",
+        "Overall results layout:",
+        "Display unfinished in category:",
+        "Display unfinished in Overall:",
+        "Chart bucket minutes:",
+        "Color scheme:",
+        "Show toasts:",
+    ]
+    for label in expected_labels:
+        assert label in output
+    assert "abc123de" not in output
+    assert "abc*****" in output

@@ -144,6 +144,40 @@ def select_race(api_id, api_token):
         print(f"Please enter a number between 1 and {len(races)}")
 
 
+def _mask_token(token):
+    if not token:
+        return "-"
+    return token[:3] + "*" * max(len(token) - 3, 0)
+
+
+def _format_config_lines(config, race_name, race_date):
+    return [
+        "",
+        "--- Configuration ---",
+        f"  Data file:                      {config.get('data_file') or '-'}",
+        f"  API ID:                         {config.get('api_id') or '-'}",
+        f"  API Token:                      {_mask_token(config.get('api_token'))}",
+        f"  Race ID:                        {config.get('race_id') or '-'}",
+        f"  Race Name:                      {race_name}",
+        f"  Race Date:                      {race_date}",
+        f"  Refresh:                        {config['refresh_interval']}s",
+        f"  Summary time:                   {config['summary_display_time']}s",
+        f"  Scroll speed:                   {config['scroll_speed']}px/s",
+        f"  Scroll pause:                   {config['scroll_pause_time']}s",
+        f"  Pinned leaders:                 {config['pinned_leaders']}",
+        f"  Show summary:                   {config['show_summary']}",
+        f"  Show Overall results:           {config['show_overall_results']}",
+        f"  Show category results:          {config['show_category_results']}",
+        f"  Pinned leaders on Overall:      {config['pinned_leaders_on_overall_results']}",
+        f"  Overall results layout:         {config['overall_results_layout']}",
+        f"  Display unfinished in category: {config['display_unfinished_in_category']}",
+        f"  Display unfinished in Overall:  {config['display_unfinished_in_overall']}",
+        f"  Chart bucket minutes:           {config['chart_bucket_minutes']}",
+        f"  Color scheme:                   {config['color_scheme']}",
+        f"  Show toasts:                    {config['show_toasts']}",
+    ]
+
+
 def main():
     config = load_config()
 
@@ -183,21 +217,8 @@ def main():
         pass
 
     app = create_app(config, start_polling=True)
-    print(f"\n--- Configuration ---")
-    if config.get("data_file"):
-        print(f"  Data file:       {config['data_file']}")
-    else:
-        token = config["api_token"]
-        print(f"  API ID:          {config['api_id']}")
-        print(f"  API Token:       {token[:3]}{'*' * (len(token) - 3)}")
-        print(f"  Race ID:         {config['race_id']}")
-    print(f"  Race Name:       {race_name}")
-    print(f"  Race Date:       {race_date}")
-    print(f"  Refresh:         {config['refresh_interval']}s")
-    print(f"  Summary time:    {config['summary_display_time']}s")
-    print(f"  Scroll speed:    {config['scroll_speed']}px/s")
-    print(f"  Scroll pause:    {config['scroll_pause_time']}s")
-    print(f"  Pinned leaders:  {config['pinned_leaders']}")
+    for line in _format_config_lines(config, race_name, race_date):
+        print(line)
     print(f"\nDashboard running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=False)
 
