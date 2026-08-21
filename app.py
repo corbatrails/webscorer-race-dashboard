@@ -123,7 +123,7 @@ def select_race(api_id, api_token):
 
     print("\nAvailable races:")
     for i, race in enumerate(races, 1):
-        print(f"  {i}. {race['Name']} ({race.get('Date', 'N/A')}) - {race.get('Sport', '')}")
+        print(f"  {i}. [{race['RaceId']}] {race['Name']} ({race.get('Date', 'N/A')}) - {race.get('Sport', '')}")
 
     while True:
         try:

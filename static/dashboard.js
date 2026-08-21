@@ -107,15 +107,21 @@
   }
 
   function startScroll() {
+    var page = document.querySelector(".page.active");
+    if (page && page.getAttribute("data-empty") === "true") {
+      advanceTimer = setTimeout(advance, config.scrollPauseTime * 2 * 1000);
+      return;
+    }
+
     var scrollContainer = document.getElementById("scroll-container");
     if (!scrollContainer) {
-      advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
+      advanceTimer = setTimeout(advance, config.scrollPauseTime * 2 * 1000);
       return;
     }
 
     var scrollDistance = scrollContainer.scrollHeight - scrollContainer.clientHeight;
     if (scrollDistance <= 0) {
-      advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
+      advanceTimer = setTimeout(advance, config.scrollPauseTime * 2 * 1000);
       return;
     }
 
@@ -202,6 +208,11 @@
     return t && t !== "-" && t !== "DNS" && t !== "DNF" && t !== "DSQ";
   }
 
+  function hasResult(racer) {
+    var t = (racer.Time || "").trim().toUpperCase();
+    return t === "DNS" || t === "DNF" || t === "DSQ" || isFinished(racer);
+  }
+
   function renderCategory(category, catIndex, data) {
     var racers = category.racers || [];
     var showPodiumStyling = category.tier !== "overall" || config.pinnedLeadersOnOverallResults;
@@ -213,7 +224,21 @@
       }
     }
     var pinned = racers.slice(0, pinnedCount);
-    var scrolling = racers.slice(pinnedCount);
+    var scrolling = racers.slice(pinnedCount).filter(hasResult);
+
+    if (racers.length === 0 || (pinned.length === 0 && scrolling.length === 0)) {
+      var emptyHtml = '<div class="page active" data-empty="true">';
+      emptyHtml += renderEventHeader(data);
+      emptyHtml += '<div class="category-header">';
+      emptyHtml += '<div class="category-title">' + escapeHtml(category.title) + "</div>";
+      emptyHtml += '<div class="category-meta">';
+      emptyHtml += '<span>Category ' + (catIndex + 1) + " of " + categories.length + "</span>";
+      emptyHtml += "</div>";
+      emptyHtml += "</div>";
+      emptyHtml += '<p style="font-size:3vh;color:var(--text-dim);text-align:center;margin-top:10vh">No results yet</p>';
+      emptyHtml += "</div>";
+      return emptyHtml;
+    }
 
     var html = '<div class="page active">';
 
@@ -229,12 +254,6 @@
     html += '<table class="results-table results-header-table">';
     html += '<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>';
     html += '</table>';
-
-    if (racers.length === 0) {
-      html += '<p style="font-size:3vh;color:var(--text-dim);text-align:center;margin-top:10vh">No results yet</p>';
-      html += "</div>";
-      return html;
-    }
 
     // Pinned leaders table (only shown when at least one racer has finished)
     if (pinned.length > 0) {
@@ -264,14 +283,22 @@
 
   function renderRacerRow(r, showPodiumStyling) {
     var placeClass = "";
+    var medal = "";
     if (showPodiumStyling) {
       var place = parseInt(r.Place) || 0;
-      if (place === 1) placeClass = " place-1";
-      else if (place === 2) placeClass = " place-2";
-      else if (place === 3) placeClass = " place-3";
+      if (place === 1) {
+        placeClass = " place-1";
+        medal = " \uD83E\uDD47";
+      } else if (place === 2) {
+        placeClass = " place-2";
+        medal = " \uD83E\uDD48";
+      } else if (place === 3) {
+        placeClass = " place-3";
+        medal = " \uD83E\uDD49";
+      }
     }
     var html = "<tr>";
-    html += '<td class="' + placeClass + '">' + (r.Place || "") + "</td>";
+    html += '<td class="' + placeClass + '">' + (r.Place || "") + medal + "</td>";
     html += "<td>" + escapeHtml(r.Bib || "") + "</td>";
     html += "<td>" + escapeHtml(r.Name || "") + "</td>";
     html += "<td>" + escapeHtml(r.TeamName || "") + "</td>";
