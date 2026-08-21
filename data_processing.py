@@ -32,7 +32,9 @@ def _group_name(grouping, tier):
 
 
 def _match_value(value):
-    return str(value or "").strip()
+    if value is None:
+        return ""
+    return str(value).strip()
 
 
 def _result_match_key(distance, category, gender, bib):
@@ -57,7 +59,7 @@ def _add_category_places(results):
             category = grouping.get("Category") or racer.get("Category")
             gender = grouping.get("Gender") if grouping.get("Gender") is not None else racer.get("Gender")
             key = _result_match_key(distance, category, gender, racer.get("Bib"))
-            category_places[key] = racer.get("Place", "")
+            category_places[key] = _match_value(racer.get("Place"))
 
     for group in results:
         grouping = group.get("Grouping", {})
