@@ -138,6 +138,18 @@ definition for a given page so headers stay aligned with rows. Existing pinned-l
 podium-styling rules remain unchanged; the Overall podium toggle still controls whether
 Overall leaders are pinned and medal-colored.
 
+Result pages should only enter the rotation when they have at least one displayable row:
+a finished time, `DNS`, `DNF`, or `DSQ`. Registered racers with blank time or `-` are in
+progress and should not make an Overall or category result page appear. This rule applies
+to Overall and category pages in both standard and detailed layouts.
+
+The summary page is separate from this filtering and remains controlled only by
+`SHOW_SUMMARY`. A race with no displayable result rows may still show the summary page
+because it contains useful registration and progress information. When a refresh makes a
+previously empty result page eligible, the page should join the rotation on the next
+natural advance; the current page should not be interrupted just because eligibility
+changed.
+
 ## Layout and Fit
 
 The CSS currently assumes five fixed columns. Implementation should add layout-specific
@@ -182,6 +194,10 @@ Manual frontend verification should cover:
 - Overall pages in standard mode render `Place | Bib | Name | Time | Team`.
 - Overall pages in detailed mode render `Overall | Bib | Name | Time | Cat Place |
   Category | Gender | Team`.
+- Result pages with only blank or `-` times are skipped while the summary page remains
+  governed by `SHOW_SUMMARY`.
+- Newly eligible result pages join the rotation after data refresh without interrupting
+  the currently displayed page.
 - Header alignment remains correct for fixed headers, pinned rows, and scrolling rows.
 - Detailed Overall pages remain readable at 1080p, with truncation favoring `Team` before
   core placement, identity, time, and category-placement information.

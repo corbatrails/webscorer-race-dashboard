@@ -25,6 +25,10 @@
 - Sort each result group by numeric `Place` before pages are built because WebScorer API rows can arrive in bib order.
 - Detailed Overall pages apply medal icons and podium colors to `Cat Place` for category places 1-3, not to the `Overall` column.
 - `PINNED_LEADERS_ON_OVERALL_RESULTS` controls Overall leader pinning, but detailed Overall category-place medal styling does not depend on that setting.
+- Result pages with no displayable rows are skipped for both Overall and category pages in standard and detailed layouts.
+- A displayable result row has a finished time, `DNS`, `DNF`, or `DSQ`; blank time and `-` are in progress and do not make a page eligible.
+- Summary page visibility remains controlled only by `SHOW_SUMMARY`.
+- Data refresh can add newly eligible result pages to the next natural rotation advance, but must not interrupt the currently displayed page just because page eligibility changed.
 - Existing pinned-leader and podium-styling rules remain unchanged.
 - Do not change result ordering beyond sorting each result group by its own numeric `Place`.
 - Do not change time calculation, status classification, page visibility behavior, or toast behavior.
@@ -880,6 +884,8 @@
   - Header remains fixed above the scroll container.
   - Pinned leaders and medal coloring still follow `PINNED_LEADERS_ON_OVERALL_RESULTS`.
   - Team truncates before core identity, time, category, or placement information becomes unreadable.
+  - Overall and category result pages with no displayable rows are skipped.
+  - A result page that becomes eligible after refresh joins on a natural page advance rather than interrupting the current page.
 
 - [ ] **Step 5: Manually verify standard and category pages**
 

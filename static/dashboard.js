@@ -8,6 +8,7 @@
   var lastData = null;
   var knownFinishedBibs = null;
   var finishChart = null;
+  var hasRenderedPage = false;
 
   function fetchData() {
     fetch("/api/data")
@@ -23,11 +24,11 @@
           pinnedLeadersOnOverallResults: data.pinned_leaders_on_overall_results === true,
           overallResultsLayout: data.overall_results_layout || "standard",
         };
-        var wasEmpty = !summaryPage && categories.length === 0;
+        var previousTotalPages = getTotalPages();
         buildPageList(data);
         detectNewFinishers(data);
         // Only render on first data arrival; ongoing animations pick up new data on next advance
-        if (wasEmpty && (summaryPage || categories.length > 0)) {
+        if (!hasRenderedPage || (previousTotalPages === 0 && getTotalPages() > 0)) {
           renderCurrentPage();
         }
       })
@@ -49,10 +50,18 @@
       var page = data.pages[i];
       if (page.type === "summary" && config.showSummary) {
         summaryPage = page;
-      } else if (page.type === "category") {
+      } else if (page.type === "category" && pageHasResults(page)) {
         categories.push(page);
       }
     }
+  }
+
+  function pageHasResults(page) {
+    var racers = page.racers || [];
+    for (var i = 0; i < racers.length; i++) {
+      if (hasResult(racers[i])) return true;
+    }
+    return false;
   }
 
   function getTotalPages() {
@@ -62,6 +71,7 @@
   function renderCurrentPage() {
     stopAnimations();
     var container = document.getElementById("dashboard");
+    hasRenderedPage = true;
 
     if (!summaryPage && categories.length === 0) {
       container.innerHTML = renderWaiting(lastData);
@@ -92,7 +102,13 @@
 
   function advance() {
     stopAnimations();
-    currentIndex = (currentIndex + 1) % getTotalPages();
+    var totalPages = getTotalPages();
+    if (totalPages === 0) {
+      currentIndex = 0;
+      renderCurrentPage();
+      return;
+    }
+    currentIndex = (currentIndex + 1) % totalPages;
     renderCurrentPage();
   }
 
