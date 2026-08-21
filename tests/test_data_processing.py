@@ -339,6 +339,22 @@ def test_build_pages_empty():
     assert pages[0]["type"] == "summary"
 
 
+def test_build_pages_includes_demographics_page_when_provided():
+    dashboard_data = process_race_data(MOCK_API_RESPONSE)
+    demographics = {"total_registrants": 5}
+    pages = build_pages(dashboard_data, demographics=demographics)
+    assert pages[0]["type"] == "summary"
+    assert pages[1]["type"] == "demographics"
+    assert pages[1]["data"] == demographics
+    assert pages[1]["title"] == "Demographics"
+
+
+def test_build_pages_omits_demographics_page_when_none():
+    dashboard_data = process_race_data(MOCK_API_RESPONSE)
+    pages = build_pages(dashboard_data, demographics=None)
+    assert all(p["type"] != "demographics" for p in pages)
+
+
 def test_process_race_data_counts_only_overall_groups():
     """Totals come from Overall groups only, not summed across all groups."""
     result = process_race_data(MOCK_API_RESPONSE)

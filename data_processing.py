@@ -402,9 +402,12 @@ def build_demographics_data(api_response):
     }
 
 
-def build_pages(dashboard_data, max_rows=18):
+def build_pages(dashboard_data, demographics=None, max_rows=18):
     """Build page list. Categories are sent whole; the frontend splits by viewport size."""
     pages = [{"type": "summary", "title": "Summary", "data": dashboard_data}]
+
+    if demographics:
+        pages.append({"type": "demographics", "title": "Demographics", "data": demographics})
 
     for category in dashboard_data.get("categories", []):
         title = category["name"]
