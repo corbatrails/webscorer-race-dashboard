@@ -20,6 +20,9 @@
 - Display API-provided `Gender` values verbatim, including `X`, blank, or future values.
 - Do not normalize, map, or switch on gender for display.
 - Missing category-placement data renders as a blank cell and must not hide a row or break a page.
+- Overall pages remain sorted by Overall placement; detailed mode must not sort by `Cat Place`, category, gender, or team.
+- Category pages remain sorted by category placement.
+- Preserve WebScorer's racer order within each result group.
 - Existing pinned-leader and podium-styling rules remain unchanged.
 - Do not change result ordering, time calculation, status classification, page visibility behavior, or toast behavior.
 - Do not add a JavaScript test framework.
@@ -334,33 +337,65 @@
       assert result["categories"][0]["racers"][0]["Gender"] == ""
   ```
 
-      Add a missing-gender matching test:
+  Add a missing-gender matching test:
 
-      ```python
-      def test_process_race_data_category_place_matches_missing_gender():
-        response = {
+  ```python
+  def test_process_race_data_category_place_matches_missing_gender_as_blank():
+      response = {
           "RaceInfo": {"RaceId": 403, "Name": "Race", "Date": "", "Sport": "Cycling"},
           "Results": [
-            {
-              "Grouping": {"Distance": "Long", "Overall": True},
-              "Racers": [
-                {"Place": "12", "Bib": "12", "Name": "Pat", "Distance": "Long", "Category": "Open", "Time": "1:08:00"},
-              ],
-            },
-            {
-              "Grouping": {"Distance": "Long", "Category": "Open"},
-              "Racers": [
-                {"Place": "4", "Bib": "12", "Name": "Pat", "Distance": "Long", "Category": "Open", "Time": "1:08:00"},
-              ],
-            },
+              {
+                  "Grouping": {"Distance": "Long", "Overall": True},
+                  "Racers": [
+                      {"Place": "12", "Bib": "12", "Name": "Riley", "Distance": "Long", "Category": "Open", "Time": "1:10:00"},
+                  ],
+              },
+              {
+                  "Grouping": {"Distance": "Long", "Category": "Open"},
+                  "Racers": [
+                      {"Place": "4", "Bib": "12", "Name": "Riley", "Distance": "Long", "Category": "Open", "Time": "1:10:00"},
+                  ],
+              },
           ],
-        }
+      }
 
-        result = process_race_data(response)
+      result = process_race_data(response)
 
-        assert result["categories"][0]["racers"][0]["CategoryPlace"] == "4"
-        assert "Gender" not in result["categories"][0]["racers"][0]
-      ```
+      assert result["categories"][0]["racers"][0]["CategoryPlace"] == "4"
+      assert "Gender" not in result["categories"][0]["racers"][0]
+  ```
+
+  Add an order-preservation test:
+
+  ```python
+  def test_process_race_data_preserves_overall_racer_order_after_category_place_enrichment():
+      response = {
+          "RaceInfo": {"RaceId": 404, "Name": "Race", "Date": "", "Sport": "Cycling"},
+          "Results": [
+              {
+                  "Grouping": {"Distance": "Long", "Overall": True},
+                  "Racers": [
+                      {"Place": "1", "Bib": "20", "Name": "First Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
+                      {"Place": "2", "Bib": "21", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
+                  ],
+              },
+              {
+                  "Grouping": {"Distance": "Long", "Category": "Open", "Gender": "X"},
+                  "Racers": [
+                      {"Place": "2", "Bib": "20", "Name": "First Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
+                      {"Place": "1", "Bib": "21", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
+                  ],
+              },
+          ],
+      }
+
+      result = process_race_data(response)
+
+      overall_racers = result["categories"][0]["racers"]
+      assert [racer["Bib"] for racer in overall_racers] == ["20", "21"]
+      assert [racer["Place"] for racer in overall_racers] == ["1", "2"]
+      assert [racer["CategoryPlace"] for racer in overall_racers] == ["2", "1"]
+  ```
 
 - [ ] **Step 2: Run the new enrichment tests and verify they fail**
 

@@ -66,6 +66,18 @@ Overall | Bib | Name | Time | Cat Place | Category | Gender | Team
 the racer's placement within their category result group. `Category`, `Gender`, and
 `Team` are displayed from the API racer row without gender mapping or value conversion.
 
+## Sorting
+
+Result pages should remain sorted by the placement value that defines the current page.
+Overall pages are sorted by Overall placement, even when the detailed layout also shows
+`Cat Place`. Category pages are sorted by category placement. The detailed Overall layout
+adds category context for recognition and award awareness; it must not regroup or reorder
+the Overall page by category, gender, team, or category placement.
+
+The implementation should preserve WebScorer's racer order within each result group.
+Category-placement enrichment may add `CategoryPlace` to Overall racers, but it must not
+sort or otherwise reorder any racer list.
+
 ## Data Enrichment
 
 Sample API dumps show that Overall rows already include `Distance`, `Category`, `Gender`,
@@ -147,6 +159,8 @@ Backend tests should cover:
   otherwise consistent.
 - Bibs are not cross-matched between distances.
 - Missing category matches leave `CategoryPlace` blank or absent without errors.
+- Overall racer order is preserved after category-placement enrichment, even when category
+  placement order differs from overall placement order.
 
 Manual frontend verification should cover:
 

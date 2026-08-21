@@ -204,6 +204,35 @@ def test_process_race_data_category_place_matches_missing_gender_as_blank():
     assert "Gender" not in result["categories"][0]["racers"][0]
 
 
+def test_process_race_data_preserves_overall_racer_order_after_category_place_enrichment():
+    response = {
+        "RaceInfo": {"RaceId": 404, "Name": "Race", "Date": "", "Sport": "Cycling"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "Long", "Overall": True},
+                "Racers": [
+                    {"Place": "1", "Bib": "20", "Name": "First Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
+                    {"Place": "2", "Bib": "21", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "Long", "Category": "Open", "Gender": "X"},
+                "Racers": [
+                    {"Place": "2", "Bib": "20", "Name": "First Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
+                    {"Place": "1", "Bib": "21", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
+                ],
+            },
+        ],
+    }
+
+    result = process_race_data(response)
+
+    overall_racers = result["categories"][0]["racers"]
+    assert [racer["Bib"] for racer in overall_racers] == ["20", "21"]
+    assert [racer["Place"] for racer in overall_racers] == ["1", "2"]
+    assert [racer["CategoryPlace"] for racer in overall_racers] == ["2", "1"]
+
+
 def test_process_race_data_empty_results():
     response = {
         "RaceInfo": {"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"},
