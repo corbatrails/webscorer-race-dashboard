@@ -1,4 +1,4 @@
-from data_processing import _classify_racer, _classify_group, _group_name, process_race_data, build_pages, build_finish_chart_data
+from data_processing import _classify_racer, _classify_group, _group_name, process_race_data, build_pages, build_finish_chart_data, build_demographics_data
 
 
 def test_classify_group_overall():
@@ -566,6 +566,143 @@ def test_build_finish_chart_skips_category_groups():
     # Only 1 finisher counted (from Overall), not 2
     total = sum(result["datasets"][0]["data"])
     assert total == 1
+
+
+DEMOGRAPHICS_API_RESPONSE = {
+    "RaceInfo": {"Name": "Test Race"},
+    "Results": [
+        {
+            "Grouping": {"Distance": "Short (5K)", "Overall": True},
+            "Racers": [
+                {"Bib": "1", "Name": "A", "Age": 25, "Gender": "Male", "TeamName": "Team X", "Distance": "Short (5K)"},
+                {"Bib": "2", "Name": "B", "Age": 34, "Gender": "Female", "TeamName": "Team X", "Distance": "Short (5K)"},
+                {"Bib": "3", "Name": "C", "Age": 45, "Gender": "Male", "TeamName": None, "Distance": "Short (5K)"},
+            ],
+        },
+        {
+            "Grouping": {"Distance": "Long (10K)", "Overall": True},
+            "Racers": [
+                {"Bib": "4", "Name": "D", "Age": 62, "Gender": "Female", "TeamName": None, "Distance": "Long (10K)"},
+                {"Bib": "5", "Name": "E", "Age": 19, "Gender": "Male", "TeamName": "Team Y", "Distance": "Long (10K)"},
+            ],
+        },
+    ],
+}
+
+
+def test_build_demographics_normal_data():
+    result = build_demographics_data(DEMOGRAPHICS_API_RESPONSE)
+    assert result["total_registrants"] == 5
+
+    age = result["age"]
+    assert age["average"] == 37.0
+    assert age["median"] == 34
+    assert age["min"] == 19
+    assert age["max"] == 62
+    assert age["labels"] == ["<20", "20-29", "30-39", "40-49", "50-59", "60-69", "70+"]
+    assert age["counts"] == [1, 1, 1, 1, 0, 1, 0]
+
+    gender = result["gender"]
+    assert gender["labels"] == ["Male", "Female"]
+    assert gender["counts"] == [3, 2]
+
+    distance = result["distance"]
+    assert distance["labels"] == ["Short (5K)", "Long (10K)"]
+    assert distance["counts"] == [3, 2]
+
+    teams = result["teams"]
+    assert teams["solo_count"] == 2
+    assert teams["team_count"] == 3
+    assert teams["top_teams"] == [
+        {"name": "Team X", "count": 2},
+        {"name": "Team Y", "count": 1},
+    ]
+
+
+def test_build_demographics_missing_age_excluded_from_age_stats():
+    response = {
+        "RaceInfo": {"Name": "Test"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "5K", "Overall": True},
+                "Racers": [
+                    {"Bib": "1", "Name": "A", "Age": 30, "Gender": "Male", "TeamName": None, "Distance": "5K"},
+                    {"Bib": "2", "Name": "B", "Gender": "Male", "TeamName": None, "Distance": "5K"},
+                ],
+            },
+        ],
+    }
+    result = build_demographics_data(response)
+    assert result["total_registrants"] == 2
+    assert result["age"]["average"] == 30.0
+    assert sum(result["age"]["counts"]) == 1
+
+
+def test_build_demographics_missing_gender_bucketed_as_unknown():
+    response = {
+        "RaceInfo": {"Name": "Test"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "5K", "Overall": True},
+                "Racers": [
+                    {"Bib": "1", "Name": "A", "Age": 30, "TeamName": None, "Distance": "5K"},
+                    {"Bib": "2", "Name": "B", "Age": 31, "Gender": "", "TeamName": None, "Distance": "5K"},
+                ],
+            },
+        ],
+    }
+    result = build_demographics_data(response)
+    assert result["gender"]["labels"] == ["Unknown"]
+    assert result["gender"]["counts"] == [2]
+
+
+def test_build_demographics_no_teams():
+    response = {
+        "RaceInfo": {"Name": "Test"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "5K", "Overall": True},
+                "Racers": [
+                    {"Bib": "1", "Name": "A", "Age": 30, "Gender": "Male", "TeamName": None, "Distance": "5K"},
+                    {"Bib": "2", "Name": "B", "Age": 31, "Gender": "Female", "TeamName": None, "Distance": "5K"},
+                ],
+            },
+        ],
+    }
+    result = build_demographics_data(response)
+    assert result["teams"]["solo_count"] == 2
+    assert result["teams"]["team_count"] == 0
+    assert result["teams"]["top_teams"] == []
+
+
+def test_build_demographics_skips_category_groups():
+    response = {
+        "RaceInfo": {"Name": "Test"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "5K", "Overall": True},
+                "Racers": [
+                    {"Bib": "1", "Name": "A", "Age": 30, "Gender": "Male", "TeamName": None, "Distance": "5K"},
+                ],
+            },
+            {
+                "Grouping": {"Distance": "5K", "Category": "Male"},
+                "Racers": [
+                    {"Bib": "1", "Name": "A", "Age": 30, "Gender": "Male", "TeamName": None, "Distance": "5K"},
+                ],
+            },
+        ],
+    }
+    result = build_demographics_data(response)
+    assert result["total_registrants"] == 1
+
+
+def test_build_demographics_no_racers_returns_none():
+    assert build_demographics_data({"RaceInfo": {"Name": "Test"}, "Results": []}) is None
+
+
+def test_build_demographics_error_response_returns_none():
+    assert build_demographics_data({"Error": "PRO Results subscription required"}) is None
 
 
 def test_process_race_data_filter_category_off():

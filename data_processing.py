@@ -269,6 +269,139 @@ def build_finish_chart_data(api_response, bucket_minutes=15):
     return {"labels": labels, "datasets": datasets}
 
 
+_AGE_BUCKETS = [
+    (0, 19, "<20"),
+    (20, 29, "20-29"),
+    (30, 39, "30-39"),
+    (40, 49, "40-49"),
+    (50, 59, "50-59"),
+    (60, 69, "60-69"),
+    (70, 999, "70+"),
+]
+
+
+def _as_age_int(age):
+    if isinstance(age, bool):
+        return None
+    if isinstance(age, int):
+        return age
+    if isinstance(age, float):
+        return int(age)
+    if isinstance(age, str) and age.strip().isdigit():
+        return int(age.strip())
+    return None
+
+
+def _build_age_stats(ages):
+    labels = [label for _, _, label in _AGE_BUCKETS]
+    if not ages:
+        return {
+            "average": None,
+            "median": None,
+            "min": None,
+            "max": None,
+            "labels": labels,
+            "counts": [0] * len(labels),
+        }
+
+    counts = [0] * len(_AGE_BUCKETS)
+    for age in ages:
+        for i, (low, high, _) in enumerate(_AGE_BUCKETS):
+            if low <= age <= high:
+                counts[i] += 1
+                break
+
+    sorted_ages = sorted(ages)
+    n = len(sorted_ages)
+    if n % 2 == 1:
+        median = sorted_ages[n // 2]
+    else:
+        median = (sorted_ages[n // 2 - 1] + sorted_ages[n // 2]) / 2
+
+    return {
+        "average": round(sum(ages) / len(ages), 1),
+        "median": median,
+        "min": min(ages),
+        "max": max(ages),
+        "labels": labels,
+        "counts": counts,
+    }
+
+
+def _build_gender_stats(gender_counts):
+    ordered = sorted(gender_counts.items(), key=lambda item: (-item[1], item[0]))
+    return {
+        "labels": [label for label, _ in ordered],
+        "counts": [count for _, count in ordered],
+    }
+
+
+def _build_team_stats(solo_count, team_counts):
+    ordered = sorted(team_counts.items(), key=lambda item: (-item[1], item[0]))
+    top_teams = [{"name": name, "count": count} for name, count in ordered[:5]]
+    return {
+        "solo_count": solo_count,
+        "team_count": sum(team_counts.values()),
+        "top_teams": top_teams,
+    }
+
+
+def build_demographics_data(api_response):
+    if "Error" in api_response:
+        return None
+
+    results = api_response.get("Results", [])
+
+    total_registrants = 0
+    ages = []
+    gender_counts = {}
+    distance_order = []
+    distance_counts = {}
+    solo_count = 0
+    team_counts = {}
+
+    for group in results:
+        grouping = group.get("Grouping", {})
+        if not grouping.get("Overall"):
+            continue
+
+        distance = grouping.get("Distance") or "Overall"
+        if distance not in distance_counts:
+            distance_order.append(distance)
+            distance_counts[distance] = 0
+
+        for racer in group.get("Racers", []):
+            total_registrants += 1
+            distance_counts[distance] += 1
+
+            age = _as_age_int(racer.get("Age"))
+            if age is not None:
+                ages.append(age)
+
+            gender = (racer.get("Gender") or "").strip() or "Unknown"
+            gender_counts[gender] = gender_counts.get(gender, 0) + 1
+
+            team = (racer.get("TeamName") or "").strip()
+            if team:
+                team_counts[team] = team_counts.get(team, 0) + 1
+            else:
+                solo_count += 1
+
+    if total_registrants == 0:
+        return None
+
+    return {
+        "total_registrants": total_registrants,
+        "age": _build_age_stats(ages),
+        "gender": _build_gender_stats(gender_counts),
+        "distance": {
+            "labels": distance_order,
+            "counts": [distance_counts[d] for d in distance_order],
+        },
+        "teams": _build_team_stats(solo_count, team_counts),
+    }
+
+
 def build_pages(dashboard_data, max_rows=18):
     """Build page list. Categories are sent whole; the frontend splits by viewport size."""
     pages = [{"type": "summary", "title": "Summary", "data": dashboard_data}]
