@@ -226,6 +226,10 @@
     html += "</div>";
     html += "</div>";
 
+    html += '<table class="results-table results-header-table">';
+    html += '<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>';
+    html += '</table>';
+
     if (racers.length === 0) {
       html += '<p style="font-size:3vh;color:var(--text-dim);text-align:center;margin-top:10vh">No results yet</p>';
       html += "</div>";
@@ -235,7 +239,6 @@
     // Pinned leaders table (only shown when at least one racer has finished)
     if (pinned.length > 0) {
       html += '<table class="results-table pinned-table">';
-      html += "<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>";
       html += "<tbody>";
       for (var i = 0; i < pinned.length; i++) {
         html += renderRacerRow(pinned[i], showPodiumStyling);
@@ -247,9 +250,6 @@
     if (scrolling.length > 0) {
       html += '<div id="scroll-container" class="scroll-container">';
       html += '<table class="results-table scroll-table">';
-      if (pinned.length === 0) {
-        html += "<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>";
-      }
       html += "<tbody>";
       for (var j = 0; j < scrolling.length; j++) {
         html += renderRacerRow(scrolling[j], showPodiumStyling);
