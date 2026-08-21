@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from flask import Flask, render_template, jsonify
 from webscorer_client import fetch_race_list, fetch_race_results
-from data_processing import process_race_data, build_pages, build_finish_chart_data
+from data_processing import process_race_data, build_pages, build_finish_chart_data, build_demographics_data
 from config import load_config
 
 _cache = {
@@ -49,6 +49,7 @@ def create_app(config=None, start_polling=True):
                 "scroll_pause_time": app.config["dashboard"].get("scroll_pause_time", 2),
                 "pinned_leaders": app.config["dashboard"].get("pinned_leaders", 3),
                 "show_summary": app.config["dashboard"].get("show_summary", True),
+                "show_demographics": app.config["dashboard"].get("show_demographics", False),
                 "chart_bucket_minutes": app.config["dashboard"].get("chart_bucket_minutes", 15),
                 "show_toasts": app.config["dashboard"].get("show_toasts", True),
                 "overall_results_layout": app.config["dashboard"].get("overall_results_layout", "standard"),
@@ -86,7 +87,8 @@ def poll_once(app):
             show_overall_results=cfg.get("show_overall_results", True),
             show_category_results=cfg.get("show_category_results", True),
         )
-        pages = build_pages(data)
+        demographics = build_demographics_data(raw)
+        pages = build_pages(data, demographics)
         finish_chart = build_finish_chart_data(raw, cfg.get("chart_bucket_minutes", 15))
         with _cache_lock:
             _cache["pages"] = pages
@@ -166,6 +168,7 @@ def _format_config_lines(config, race_name, race_date):
         f"  Scroll pause:                   {config['scroll_pause_time']}s",
         f"  Pinned leaders:                 {config['pinned_leaders']}",
         f"  Show summary:                   {config['show_summary']}",
+        f"  Show demographics:              {config.get('show_demographics', False)}",
         f"  Show Overall results:           {config['show_overall_results']}",
         f"  Show category results:          {config['show_category_results']}",
         f"  Pinned leaders on Overall:      {config['pinned_leaders_on_overall_results']}",
