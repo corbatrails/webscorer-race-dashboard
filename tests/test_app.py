@@ -8,9 +8,17 @@ MOCK_RACE_RESULTS = {
     "RaceInfo": {"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"},
     "Results": [
         {
-            "Grouping": {"Category": "Open"},
+            "Grouping": {"Overall": True, "Category": "Open", "Distance": "5K"},
             "Racers": [
-                {"Place": 1, "Bib": "101", "Name": "Alice", "Time": "00:18:30"},
+                {
+                    "Place": 1,
+                    "Bib": "101",
+                    "Name": "Alice",
+                    "Time": "00:18:30",
+                    "Age": "31",
+                    "Gender": "F",
+                    "TeamName": "Corba Trails",
+                },
             ],
         }
     ],
@@ -144,6 +152,38 @@ def test_api_data_includes_overall_results_layout(mock_fetch, app, client):
     assert data["overall_results_layout"] == "detailed"
 
 
+@patch("app.fetch_race_results")
+def test_api_data_includes_show_demographics_default_false(mock_fetch, app, client):
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    with app.app_context():
+        from app import poll_once
+        poll_once(app)
+    response = client.get("/api/data")
+    data = json.loads(response.data)
+    assert data["show_demographics"] is False
+
+
+def test_api_data_show_demographics_true_when_configured():
+    application = create_app({"show_demographics": True}, start_polling=False)
+    application.config["TESTING"] = True
+    client = application.test_client()
+    response = client.get("/api/data")
+    data = json.loads(response.data)
+    assert data["show_demographics"] is True
+
+
+@patch("app.fetch_race_results")
+def test_poll_once_includes_demographics_page(mock_fetch, app, client):
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    with app.app_context():
+        from app import poll_once
+        poll_once(app)
+    response = client.get("/api/data")
+    data = json.loads(response.data)
+    types = [p["type"] for p in data["pages"]]
+    assert "demographics" in types
+
+
 def test_api_data_defaults_overall_results_layout_to_standard():
     application = create_app({}, start_polling=False)
     application.config["TESTING"] = True
@@ -184,6 +224,7 @@ def test_format_config_lines_includes_all_config_options():
         "scroll_pause_time": 2,
         "pinned_leaders": 3,
         "show_summary": True,
+        "show_demographics": False,
         "show_overall_results": True,
         "show_category_results": True,
         "pinned_leaders_on_overall_results": False,
@@ -210,6 +251,7 @@ def test_format_config_lines_includes_all_config_options():
         "Scroll pause:",
         "Pinned leaders:",
         "Show summary:",
+        "Show demographics:",
         "Show Overall results:",
         "Show category results:",
         "Pinned leaders on Overall:",

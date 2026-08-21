@@ -52,6 +52,7 @@ Set these in your `.env` file:
 | `WEBSCORER_RACE_ID` | No | — | Race ID (prompts if omitted) |
 | `REFRESH_INTERVAL` | No | 60 | Seconds between API polls |
 | `PAGE_ROTATION_INTERVAL` | No | 20 | Seconds per dashboard page |
+| `SHOW_DEMOGRAPHICS` | No | false | Show the demographics page (age/gender/distance/team breakdown) |
 
 ## Requirements
 

@@ -2,12 +2,16 @@
   var currentIndex = 0;
   var categories = [];
   var summaryPage = null;
+  var demographicsPage = null;
   var config = {};
   var scrollAnimationId = null;
   var advanceTimer = null;
   var lastData = null;
   var knownFinishedBibs = null;
   var finishChart = null;
+  var ageChart = null;
+  var genderChart = null;
+  var distanceChart = null;
   var hasRenderedPage = false;
 
   function fetchData() {
@@ -21,6 +25,7 @@
           scrollPauseTime: data.scroll_pause_time,
           pinnedLeaders: data.pinned_leaders,
           showSummary: data.show_summary !== false,
+          showDemographics: data.show_demographics === true,
           pinnedLeadersOnOverallResults: data.pinned_leaders_on_overall_results === true,
           overallResultsLayout: data.overall_results_layout || "standard",
           displayUnfinishedInCategory: data.display_unfinished_in_category === true,
@@ -42,16 +47,20 @@
   function buildPageList(data) {
     if (data.waiting && data.pages.length === 0) {
       summaryPage = null;
+      demographicsPage = null;
       categories = [];
       return;
     }
 
     summaryPage = null;
+    demographicsPage = null;
     categories = [];
     for (var i = 0; i < data.pages.length; i++) {
       var page = data.pages[i];
       if (page.type === "summary" && config.showSummary) {
         summaryPage = page;
+      } else if (page.type === "demographics" && config.showDemographics) {
+        demographicsPage = page;
       } else if (page.type === "category" && pageHasResults(page)) {
         categories.push(page);
       }
@@ -67,7 +76,7 @@
   }
 
   function getTotalPages() {
-    return (summaryPage ? 1 : 0) + categories.length;
+    return (summaryPage ? 1 : 0) + (demographicsPage ? 1 : 0) + categories.length;
   }
 
   function renderCurrentPage() {
@@ -75,13 +84,16 @@
     var container = document.getElementById("dashboard");
     hasRenderedPage = true;
 
-    if (!summaryPage && categories.length === 0) {
+    if (!summaryPage && !demographicsPage && categories.length === 0) {
       container.innerHTML = renderWaiting(lastData);
       return;
     }
 
     var totalPages = getTotalPages();
     if (currentIndex >= totalPages) currentIndex = 0;
+
+    var summaryOffset = summaryPage ? 1 : 0;
+    var demographicsIndex = summaryOffset;
 
     var html;
     if (summaryPage && currentIndex === 0) {
@@ -92,8 +104,14 @@
         renderFinishChart(lastData.finish_chart);
       }
       advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
+    } else if (demographicsPage && currentIndex === demographicsIndex) {
+      html = renderDemographics(demographicsPage);
+      html += renderProgressDots(totalPages, currentIndex);
+      container.innerHTML = html;
+      renderDemographicsCharts(demographicsPage.data);
+      advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
     } else {
-      var catIndex = summaryPage ? currentIndex - 1 : currentIndex;
+      var catIndex = currentIndex - summaryOffset - (demographicsPage ? 1 : 0);
       var category = categories[catIndex];
       html = renderCategory(category, catIndex, lastData);
       html += renderProgressDots(totalPages, currentIndex);
@@ -441,6 +459,123 @@
     }
     html += '</div>';
     return html;
+  }
+
+  function renderDemographics(page) {
+    var d = page.data;
+    var age = d.age;
+    var html = '<div class="page active demographics-page">';
+
+    html += renderEventHeader(lastData);
+
+    html += '<div class="summary-stats-row">';
+    html += '<div class="stat-card stat-card-primary"><div class="stat-value">' + d.total_registrants + '</div><div class="stat-label">Total Registrants</div></div>';
+    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + (age.average != null ? age.average : "\u2014") + '</div><div class="stat-label">Avg Age</div></div>';
+    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + (age.median != null ? age.median : "\u2014") + '</div><div class="stat-label">Median Age</div></div>';
+    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + (age.min != null ? age.min + "\u2013" + age.max : "\u2014") + '</div><div class="stat-label">Age Range</div></div>';
+    html += "</div>";
+
+    html += '<div class="demographics-grid">';
+    html += '<div class="demographics-panel"><canvas id="demographics-age-chart"></canvas></div>';
+    html += '<div class="demographics-panel"><canvas id="demographics-gender-chart"></canvas></div>';
+    html += '<div class="demographics-panel"><canvas id="demographics-distance-chart"></canvas></div>';
+    html += '<div class="demographics-panel demographics-teams-panel">';
+    html += '<div class="demographics-teams-summary">' + d.teams.solo_count + ' solo &middot; ' + d.teams.team_count + ' on teams</div>';
+    if (d.teams.top_teams.length > 0) {
+      html += '<ol class="demographics-teams-list">';
+      for (var i = 0; i < d.teams.top_teams.length; i++) {
+        var t = d.teams.top_teams[i];
+        html += '<li><span class="team-name">' + escapeHtml(t.name) + '</span><span class="team-count">' + t.count + '</span></li>';
+      }
+      html += '</ol>';
+    } else {
+      html += '<div class="chart-placeholder">No teams registered</div>';
+    }
+    html += '</div>';
+    html += '</div>';
+
+    html += '</div>';
+    return html;
+  }
+
+  function renderDemographicsCharts(demographics) {
+    if (!demographics) return;
+
+    if (ageChart) { ageChart.destroy(); ageChart = null; }
+    if (genderChart) { genderChart.destroy(); genderChart = null; }
+    if (distanceChart) { distanceChart.destroy(); distanceChart = null; }
+
+    var style = getComputedStyle(document.body);
+    var textMuted = style.getPropertyValue('--text-muted').trim();
+
+    var ageCanvas = document.getElementById("demographics-age-chart");
+    if (ageCanvas) {
+      ageChart = new Chart(ageCanvas, {
+        type: "bar",
+        data: {
+          labels: demographics.age.labels,
+          datasets: [{ data: demographics.age.counts, backgroundColor: generateChartColors(1)[0] }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: { legend: { display: false }, title: { display: true, text: "Age", color: textMuted } },
+          scales: {
+            x: { ticks: { color: textMuted }, grid: { color: textMuted + "33" } },
+            y: { beginAtZero: true, ticks: { color: textMuted, stepSize: 1 }, grid: { color: textMuted + "33" } },
+          },
+        },
+      });
+    }
+
+    var genderCanvas = document.getElementById("demographics-gender-chart");
+    if (genderCanvas) {
+      var genderColors = generateChartColors(demographics.gender.labels.length);
+      genderChart = new Chart(genderCanvas, {
+        type: "doughnut",
+        data: {
+          labels: demographics.gender.labels,
+          datasets: [{ data: demographics.gender.counts, backgroundColor: genderColors }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: {
+            legend: { position: "bottom", labels: { color: textMuted } },
+            title: { display: true, text: "Gender", color: textMuted },
+          },
+        },
+      });
+    }
+
+    var distanceCanvas = document.getElementById("demographics-distance-chart");
+    if (distanceCanvas) {
+      distanceChart = new Chart(distanceCanvas, {
+        type: "bar",
+        data: {
+          labels: demographics.distance.labels,
+          datasets: [{ data: demographics.distance.counts, backgroundColor: generateChartColors(demographics.distance.labels.length) }],
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: { legend: { display: false }, title: { display: true, text: "Distance", color: textMuted } },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: { color: textMuted, stepSize: 1 },
+              grid: { color: textMuted + "33" },
+              title: { display: true, text: "Registrants", color: textMuted },
+            },
+            y: { ticks: { color: textMuted }, grid: { color: textMuted + "33" } },
+          },
+        },
+      });
+    }
   }
 
   function renderFinishChart(chartData) {

@@ -202,3 +202,21 @@ def test_load_config_display_unfinished_result_pages_enabled(mock_dotenv, monkey
     cfg = load_config()
     assert cfg["display_unfinished_in_category"] is True
     assert cfg["display_unfinished_in_overall"] is True
+
+
+@patch("config.load_dotenv")
+def test_load_config_show_demographics_default_false(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.delenv("SHOW_DEMOGRAPHICS", raising=False)
+    cfg = load_config()
+    assert cfg["show_demographics"] is False
+
+
+@patch("config.load_dotenv")
+def test_load_config_show_demographics_true(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.setenv("SHOW_DEMOGRAPHICS", "true")
+    cfg = load_config()
+    assert cfg["show_demographics"] is True
