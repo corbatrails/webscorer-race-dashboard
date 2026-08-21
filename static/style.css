@@ -197,7 +197,9 @@ body {
 .demographics-teams-list {
   list-style: none;
   font-size: 2.2vh;
-  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .demographics-teams-list li {
