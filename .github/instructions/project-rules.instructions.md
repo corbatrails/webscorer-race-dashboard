@@ -9,4 +9,5 @@ alwaysApply: true
 
 - `.env.example` must always list the same properties as `.env` (and vice-versa). The example file should show default values; `.env` holds the active/custom values.
 - All agentic development must occur in a git worktree so multiple agents can run concurrently without conflicts.
+- Configuration output must always include the full universe of supported configuration options.
 

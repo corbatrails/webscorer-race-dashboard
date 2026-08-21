@@ -8,6 +8,7 @@
   var lastData = null;
   var knownFinishedBibs = null;
   var finishChart = null;
+  var hasRenderedPage = false;
 
   function fetchData() {
     fetch("/api/data")
@@ -20,13 +21,16 @@
           scrollPauseTime: data.scroll_pause_time,
           pinnedLeaders: data.pinned_leaders,
           showSummary: data.show_summary !== false,
-          pinnedLeadersOnOverallResults: data.pinned_leaders_on_overall_results === true
+          pinnedLeadersOnOverallResults: data.pinned_leaders_on_overall_results === true,
+          overallResultsLayout: data.overall_results_layout || "standard",
+          displayUnfinishedInCategory: data.display_unfinished_in_category === true,
+          displayUnfinishedInOverall: data.display_unfinished_in_overall === true,
         };
-        var wasEmpty = !summaryPage && categories.length === 0;
+        var previousTotalPages = getTotalPages();
         buildPageList(data);
         detectNewFinishers(data);
         // Only render on first data arrival; ongoing animations pick up new data on next advance
-        if (wasEmpty && (summaryPage || categories.length > 0)) {
+        if (!hasRenderedPage || (previousTotalPages === 0 && getTotalPages() > 0)) {
           renderCurrentPage();
         }
       })
@@ -48,10 +52,18 @@
       var page = data.pages[i];
       if (page.type === "summary" && config.showSummary) {
         summaryPage = page;
-      } else if (page.type === "category") {
+      } else if (page.type === "category" && pageHasResults(page)) {
         categories.push(page);
       }
     }
+  }
+
+  function pageHasResults(page) {
+    var racers = page.racers || [];
+    for (var i = 0; i < racers.length; i++) {
+      if (shouldDisplayRacer(page, racers[i])) return true;
+    }
+    return false;
   }
 
   function getTotalPages() {
@@ -61,6 +73,7 @@
   function renderCurrentPage() {
     stopAnimations();
     var container = document.getElementById("dashboard");
+    hasRenderedPage = true;
 
     if (!summaryPage && categories.length === 0) {
       container.innerHTML = renderWaiting(lastData);
@@ -91,7 +104,13 @@
 
   function advance() {
     stopAnimations();
-    currentIndex = (currentIndex + 1) % getTotalPages();
+    var totalPages = getTotalPages();
+    if (totalPages === 0) {
+      currentIndex = 0;
+      renderCurrentPage();
+      return;
+    }
+    currentIndex = (currentIndex + 1) % totalPages;
     renderCurrentPage();
   }
 
@@ -213,18 +232,37 @@
     return t === "DNS" || t === "DNF" || t === "DSQ" || isFinished(racer);
   }
 
+  function isUnfinished(racer) {
+    var t = (racer.Time || "").trim();
+    return t === "" || t === "-";
+  }
+
+  function shouldDisplayUnfinished(category) {
+    return category.tier === "overall" ? config.displayUnfinishedInOverall : config.displayUnfinishedInCategory;
+  }
+
+  function shouldDisplayRacer(category, racer) {
+    return hasResult(racer) || (shouldDisplayUnfinished(category) && isUnfinished(racer));
+  }
+
   function renderCategory(category, catIndex, data) {
     var racers = category.racers || [];
-    var showPodiumStyling = category.tier !== "overall" || config.pinnedLeadersOnOverallResults;
+    var isDetailedOverall = category.tier === "overall" && config.overallResultsLayout === "detailed";
+    var shouldPinLeaders = category.tier !== "overall" || config.pinnedLeadersOnOverallResults;
+    var showPodiumStyling = shouldPinLeaders || isDetailedOverall;
     var pinnedCount = 0;
-    if (showPodiumStyling) {
+    if (shouldPinLeaders) {
       for (var i = 0; i < Math.min(config.pinnedLeaders, racers.length); i++) {
         if (isFinished(racers[i])) pinnedCount++;
         else break;
       }
     }
     var pinned = racers.slice(0, pinnedCount);
-    var scrolling = racers.slice(pinnedCount).filter(hasResult);
+    var scrolling = racers.slice(pinnedCount).filter(function (racer) { return shouldDisplayRacer(category, racer); });
+
+    var resultLayout = getResultColumns(category);
+    var columns = resultLayout.columns;
+    var layoutClass = resultLayout.layoutClass;
 
     if (racers.length === 0 || (pinned.length === 0 && scrolling.length === 0)) {
       var emptyHtml = '<div class="page active" data-empty="true">';
@@ -235,6 +273,7 @@
       emptyHtml += '<span>Category ' + (catIndex + 1) + " of " + categories.length + "</span>";
       emptyHtml += "</div>";
       emptyHtml += "</div>";
+      emptyHtml += renderResultHeader(columns, layoutClass);
       emptyHtml += '<p style="font-size:3vh;color:var(--text-dim);text-align:center;margin-top:10vh">No results yet</p>';
       emptyHtml += "</div>";
       return emptyHtml;
@@ -251,16 +290,14 @@
     html += "</div>";
     html += "</div>";
 
-    html += '<table class="results-table results-header-table">';
-    html += '<thead><tr><th>Place</th><th>Bib</th><th>Name</th><th>Team</th><th>Time</th></tr></thead>';
-    html += '</table>';
+    html += renderResultHeader(columns, layoutClass);
 
     // Pinned leaders table (only shown when at least one racer has finished)
     if (pinned.length > 0) {
-      html += '<table class="results-table pinned-table">';
+      html += '<table class="results-table pinned-table ' + layoutClass + '">';
       html += "<tbody>";
       for (var i = 0; i < pinned.length; i++) {
-        html += renderRacerRow(pinned[i], showPodiumStyling);
+        html += renderRacerRow(pinned[i], showPodiumStyling, columns);
       }
       html += "</tbody></table>";
     }
@@ -268,10 +305,10 @@
     // Scrolling results
     if (scrolling.length > 0) {
       html += '<div id="scroll-container" class="scroll-container">';
-      html += '<table class="results-table scroll-table">';
+      html += '<table class="results-table scroll-table ' + layoutClass + '">';
       html += "<tbody>";
       for (var j = 0; j < scrolling.length; j++) {
-        html += renderRacerRow(scrolling[j], showPodiumStyling);
+        html += renderRacerRow(scrolling[j], showPodiumStyling, columns);
       }
       html += "</tbody></table>";
       html += "</div>";
@@ -281,28 +318,89 @@
     return html;
   }
 
-  function renderRacerRow(r, showPodiumStyling) {
-    var placeClass = "";
-    var medal = "";
-    if (showPodiumStyling) {
-      var place = parseInt(r.Place) || 0;
-      if (place === 1) {
-        placeClass = " place-1";
-        medal = " \uD83E\uDD47";
-      } else if (place === 2) {
-        placeClass = " place-2";
-        medal = " \uD83E\uDD48";
-      } else if (place === 3) {
-        placeClass = " place-3";
-        medal = " \uD83E\uDD49";
+  function getStandardResultColumns() {
+    return [
+      { header: "Place", className: "col-place", value: function (r) { return r.Place || ""; }, podiumValue: function (r) { return r.Place; } },
+      { header: "Bib", className: "col-bib", value: function (r) { return r.Bib || ""; } },
+      { header: "Name", className: "col-name", value: function (r) { return r.Name || ""; } },
+      { header: "Time", className: "col-time", value: function (r) { return r.Time || ""; } },
+      { header: "Team", className: "col-team", value: function (r) { return r.TeamName || ""; } },
+    ];
+  }
+
+  function getDetailedOverallResultColumns() {
+    return [
+      { header: "Overall", className: "col-overall", value: function (r) { return r.Place || ""; } },
+      { header: "Bib", className: "col-bib", value: function (r) { return r.Bib || ""; } },
+      { header: "Name", className: "col-name", value: function (r) { return r.Name || ""; } },
+      { header: "Time", className: "col-time", value: function (r) { return r.Time || ""; } },
+      { header: "Cat Place", className: "col-category-place", value: function (r) { return r.CategoryPlace || ""; }, podiumValue: function (r) { return r.CategoryPlace; } },
+      { header: "Category", className: "col-category", value: function (r) { return r.Category || ""; } },
+      { header: "Gender", className: "col-gender", value: function (r) { return r.Gender || ""; } },
+      { header: "Team", className: "col-team", value: function (r) { return r.TeamName || ""; } },
+    ];
+  }
+
+  function getResultColumns(category) {
+    if (category.tier === "overall" && config.overallResultsLayout === "detailed") {
+      return {
+        columns: getDetailedOverallResultColumns(),
+        layoutClass: "results-table-overall-detail"
+      };
+    }
+
+    return {
+      columns: getStandardResultColumns(),
+      layoutClass: "results-table-standard"
+    };
+  }
+
+  function renderResultHeader(columns, layoutClass) {
+    var html = '<table class="results-table results-header-table ' + layoutClass + '">';
+    html += "<thead><tr>";
+    for (var i = 0; i < columns.length; i++) {
+      html += '<th class="' + columns[i].className + '">' + escapeHtml(columns[i].header) + "</th>";
+    }
+    html += "</tr></thead>";
+    html += "</table>";
+    return html;
+  }
+
+  function getPodiumMarker(placeValue) {
+    var place = parseInt(placeValue) || 0;
+    if (place === 1) {
+      return { className: " place-1", medal: " \uD83E\uDD47" };
+    }
+    if (place === 2) {
+      return { className: " place-2", medal: " \uD83E\uDD48" };
+    }
+    if (place === 3) {
+      return { className: " place-3", medal: " \uD83E\uDD49" };
+    }
+    return { className: "", medal: "" };
+  }
+
+  function renderRacerRow(r, showPodiumStyling, columns) {
+    var podiumColumnIndex = -1;
+    for (var i = 0; i < columns.length; i++) {
+      if (columns[i].podiumValue) {
+        podiumColumnIndex = i;
+        break;
       }
     }
+    var podiumMarker = showPodiumStyling && podiumColumnIndex >= 0 ? getPodiumMarker(columns[podiumColumnIndex].podiumValue(r)) : getPodiumMarker(0);
+
     var html = "<tr>";
-    html += '<td class="' + placeClass + '">' + (r.Place || "") + medal + "</td>";
-    html += "<td>" + escapeHtml(r.Bib || "") + "</td>";
-    html += "<td>" + escapeHtml(r.Name || "") + "</td>";
-    html += "<td>" + escapeHtml(r.TeamName || "") + "</td>";
-    html += "<td>" + escapeHtml(r.Time || "") + "</td>";
+    for (var j = 0; j < columns.length; j++) {
+      var column = columns[j];
+      var cellClass = column.className;
+      var value = column.value(r);
+      if (j === podiumColumnIndex) {
+        cellClass += podiumMarker.className;
+        value = value + podiumMarker.medal;
+      }
+      html += '<td class="' + cellClass + '">' + escapeHtml(value) + "</td>";
+    }
     html += "</tr>";
     return html;
   }

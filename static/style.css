@@ -198,29 +198,56 @@ body {
   table-layout: fixed;
 }
 
-.results-table th:nth-child(1),
-.results-table td:nth-child(1) {
+.results-table-standard .col-place {
   width: 7%;
 }
 
-.results-table th:nth-child(2),
-.results-table td:nth-child(2) {
+.results-table-standard .col-bib {
   width: 8%;
 }
 
-.results-table th:nth-child(3),
-.results-table td:nth-child(3) {
+.results-table-standard .col-name {
   width: 35%;
 }
 
-.results-table th:nth-child(4),
-.results-table td:nth-child(4) {
+.results-table-standard .col-time {
+  width: 20%;
+}
+
+.results-table-standard .col-team {
   width: 30%;
 }
 
-.results-table th:nth-child(5),
-.results-table td:nth-child(5) {
-  width: 20%;
+.results-table-overall-detail .col-overall {
+  width: 8%;
+}
+
+.results-table-overall-detail .col-bib {
+  width: 7%;
+}
+
+.results-table-overall-detail .col-name {
+  width: 24%;
+}
+
+.results-table-overall-detail .col-time {
+  width: 14%;
+}
+
+.results-table-overall-detail .col-category-place {
+  width: 9%;
+}
+
+.results-table-overall-detail .col-category {
+  width: 22%;
+}
+
+.results-table-overall-detail .col-gender {
+  width: 6%;
+}
+
+.results-table-overall-detail .col-team {
+  width: 10%;
 }
 
 .results-table th {

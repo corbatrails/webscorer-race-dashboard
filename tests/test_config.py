@@ -153,3 +153,52 @@ def test_load_config_pinned_leaders_on_overall_results_enabled(mock_dotenv, monk
     monkeypatch.setenv("PINNED_LEADERS_ON_OVERALL_RESULTS", "true")
     cfg = load_config()
     assert cfg["pinned_leaders_on_overall_results"] is True
+
+
+@patch("config.load_dotenv")
+def test_load_config_overall_results_layout_default(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.delenv("OVERALL_RESULTS_LAYOUT", raising=False)
+    cfg = load_config()
+    assert cfg["overall_results_layout"] == "standard"
+
+
+@patch("config.load_dotenv")
+def test_load_config_overall_results_layout_detailed(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.setenv("OVERALL_RESULTS_LAYOUT", "detailed")
+    cfg = load_config()
+    assert cfg["overall_results_layout"] == "detailed"
+
+
+@patch("config.load_dotenv")
+def test_load_config_overall_results_layout_invalid_falls_back_to_standard(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.setenv("OVERALL_RESULTS_LAYOUT", "wide")
+    cfg = load_config()
+    assert cfg["overall_results_layout"] == "standard"
+
+
+@patch("config.load_dotenv")
+def test_load_config_display_unfinished_result_pages_defaults(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.delenv("DISPLAY_UNFINISHED_IN_CATEGORY", raising=False)
+    monkeypatch.delenv("DISPLAY_UNFINISHED_IN_OVERALL", raising=False)
+    cfg = load_config()
+    assert cfg["display_unfinished_in_category"] is False
+    assert cfg["display_unfinished_in_overall"] is False
+
+
+@patch("config.load_dotenv")
+def test_load_config_display_unfinished_result_pages_enabled(mock_dotenv, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+    monkeypatch.setenv("DISPLAY_UNFINISHED_IN_CATEGORY", "true")
+    monkeypatch.setenv("DISPLAY_UNFINISHED_IN_OVERALL", "true")
+    cfg = load_config()
+    assert cfg["display_unfinished_in_category"] is True
+    assert cfg["display_unfinished_in_overall"] is True
