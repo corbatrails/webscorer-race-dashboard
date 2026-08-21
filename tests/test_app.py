@@ -153,3 +153,18 @@ def test_api_data_defaults_overall_results_layout_to_standard():
 
     data = json.loads(response.data)
     assert data["overall_results_layout"] == "standard"
+
+
+def test_api_data_includes_display_unfinished_result_page_toggles():
+    application = create_app({
+        "display_unfinished_in_category": True,
+        "display_unfinished_in_overall": True,
+    }, start_polling=False)
+    application.config["TESTING"] = True
+    client = application.test_client()
+
+    response = client.get("/api/data")
+
+    data = json.loads(response.data)
+    assert data["display_unfinished_in_category"] is True
+    assert data["display_unfinished_in_overall"] is True

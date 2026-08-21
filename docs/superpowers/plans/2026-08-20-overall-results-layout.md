@@ -27,6 +27,9 @@
 - `PINNED_LEADERS_ON_OVERALL_RESULTS` controls Overall leader pinning, but detailed Overall category-place medal styling does not depend on that setting.
 - Result pages with no displayable rows are skipped for both Overall and category pages in standard and detailed layouts.
 - A displayable result row has a finished time, `DNS`, `DNF`, or `DSQ`; blank time and `-` are in progress and do not make a page eligible.
+- `DISPLAY_UNFINISHED_IN_CATEGORY=false` and `DISPLAY_UNFINISHED_IN_OVERALL=false` default to hiding unfinished-only result pages.
+- `DISPLAY_UNFINISHED_IN_CATEGORY=true` allows category pages to enter rotation and display rows whose `Time` is blank or `-`.
+- `DISPLAY_UNFINISHED_IN_OVERALL=true` allows Overall pages to enter rotation and display rows whose `Time` is blank or `-`.
 - Summary page visibility remains controlled only by `SHOW_SUMMARY`.
 - Data refresh can add newly eligible result pages to the next natural rotation advance, but must not interrupt the currently displayed page just because page eligibility changed.
 - Existing pinned-leader and podium-styling rules remain unchanged.
@@ -40,8 +43,8 @@
 
 - `config.py`: parse and validate `OVERALL_RESULTS_LAYOUT`.
 - `.env`: add `OVERALL_RESULTS_LAYOUT=standard` using the same property set as `.env.example` while preserving local secret values.
-- `.env.example`: document `OVERALL_RESULTS_LAYOUT=standard` with the other display toggles.
-- `app.py`: include `overall_results_layout` in `/api/data`.
+- `.env.example`: document `OVERALL_RESULTS_LAYOUT=standard`, `DISPLAY_UNFINISHED_IN_CATEGORY=false`, and `DISPLAY_UNFINISHED_IN_OVERALL=false` with the other display toggles.
+- `app.py`: include `overall_results_layout`, `display_unfinished_in_category`, and `display_unfinished_in_overall` in `/api/data`.
 - `data_processing.py`: add category-placement enrichment helpers and call them from `process_race_data`.
 - `static/dashboard.js`: add `overallResultsLayout` to frontend config and render result tables from column definitions.
 - `static/style.css`: add layout-specific width rules for five-column standard tables and eight-column detailed Overall tables.
@@ -885,6 +888,8 @@
   - Pinned leaders and medal coloring still follow `PINNED_LEADERS_ON_OVERALL_RESULTS`.
   - Team truncates before core identity, time, category, or placement information becomes unreadable.
   - Overall and category result pages with no displayable rows are skipped.
+  - With `DISPLAY_UNFINISHED_IN_OVERALL=true`, Overall pages with only blank or `-` times are displayed; with it `false`, they are skipped.
+  - With `DISPLAY_UNFINISHED_IN_CATEGORY=true`, category pages with only blank or `-` times are displayed; with it `false`, they are skipped.
   - A result page that becomes eligible after refresh joins on a natural page advance rather than interrupting the current page.
 
 - [ ] **Step 5: Manually verify standard and category pages**

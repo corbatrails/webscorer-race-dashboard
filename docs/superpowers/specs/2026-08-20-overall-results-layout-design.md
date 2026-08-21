@@ -143,6 +143,20 @@ a finished time, `DNS`, `DNF`, or `DSQ`. Registered racers with blank time or `-
 progress and should not make an Overall or category result page appear. This rule applies
 to Overall and category pages in both standard and detailed layouts.
 
+Two optional toggles can include in-progress rows in result pages before racers have a
+displayable result:
+
+```text
+DISPLAY_UNFINISHED_IN_CATEGORY=false
+DISPLAY_UNFINISHED_IN_OVERALL=false
+```
+
+Both default to `false`. When `DISPLAY_UNFINISHED_IN_CATEGORY=true`, category pages may
+enter the rotation and display racers whose `Time` is blank or `-`. When
+`DISPLAY_UNFINISHED_IN_OVERALL=true`, Overall pages may do the same. The toggles are
+independent so an event can show unfinished rows for one result-page tier without showing
+them for the other.
+
 The summary page is separate from this filtering and remains controlled only by
 `SHOW_SUMMARY`. A race with no displayable result rows may still show the summary page
 because it contains useful registration and progress information. When a refresh makes a
@@ -196,6 +210,9 @@ Manual frontend verification should cover:
   Category | Gender | Team`.
 - Result pages with only blank or `-` times are skipped while the summary page remains
   governed by `SHOW_SUMMARY`.
+- When `DISPLAY_UNFINISHED_IN_CATEGORY` or `DISPLAY_UNFINISHED_IN_OVERALL` is enabled,
+  the matching page tier can display unfinished rows and enter rotation before results
+  arrive.
 - Newly eligible result pages join the rotation after data refresh without interrupting
   the currently displayed page.
 - Header alignment remains correct for fixed headers, pinned rows, and scrolling rows.

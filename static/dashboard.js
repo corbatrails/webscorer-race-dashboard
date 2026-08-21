@@ -23,6 +23,8 @@
           showSummary: data.show_summary !== false,
           pinnedLeadersOnOverallResults: data.pinned_leaders_on_overall_results === true,
           overallResultsLayout: data.overall_results_layout || "standard",
+          displayUnfinishedInCategory: data.display_unfinished_in_category === true,
+          displayUnfinishedInOverall: data.display_unfinished_in_overall === true,
         };
         var previousTotalPages = getTotalPages();
         buildPageList(data);
@@ -59,7 +61,7 @@
   function pageHasResults(page) {
     var racers = page.racers || [];
     for (var i = 0; i < racers.length; i++) {
-      if (hasResult(racers[i])) return true;
+      if (shouldDisplayRacer(page, racers[i])) return true;
     }
     return false;
   }
@@ -230,6 +232,19 @@
     return t === "DNS" || t === "DNF" || t === "DSQ" || isFinished(racer);
   }
 
+  function isUnfinished(racer) {
+    var t = (racer.Time || "").trim();
+    return t === "" || t === "-";
+  }
+
+  function shouldDisplayUnfinished(category) {
+    return category.tier === "overall" ? config.displayUnfinishedInOverall : config.displayUnfinishedInCategory;
+  }
+
+  function shouldDisplayRacer(category, racer) {
+    return hasResult(racer) || (shouldDisplayUnfinished(category) && isUnfinished(racer));
+  }
+
   function renderCategory(category, catIndex, data) {
     var racers = category.racers || [];
     var isDetailedOverall = category.tier === "overall" && config.overallResultsLayout === "detailed";
@@ -243,7 +258,7 @@
       }
     }
     var pinned = racers.slice(0, pinnedCount);
-    var scrolling = racers.slice(pinnedCount).filter(hasResult);
+    var scrolling = racers.slice(pinnedCount).filter(function (racer) { return shouldDisplayRacer(category, racer); });
 
     var resultLayout = getResultColumns(category);
     var columns = resultLayout.columns;

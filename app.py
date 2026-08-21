@@ -52,6 +52,12 @@ def create_app(config=None, start_polling=True):
                 "chart_bucket_minutes": app.config["dashboard"].get("chart_bucket_minutes", 15),
                 "show_toasts": app.config["dashboard"].get("show_toasts", True),
                 "overall_results_layout": app.config["dashboard"].get("overall_results_layout", "standard"),
+                "display_unfinished_in_category": app.config["dashboard"].get(
+                    "display_unfinished_in_category", False
+                ),
+                "display_unfinished_in_overall": app.config["dashboard"].get(
+                    "display_unfinished_in_overall", False
+                ),
                 "pinned_leaders_on_overall_results": app.config["dashboard"].get(
                     "pinned_leaders_on_overall_results", False
                 ),

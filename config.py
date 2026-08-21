@@ -51,6 +51,8 @@ def load_config():
         "overall_results_layout": _normalize_overall_results_layout(
             os.environ.get("OVERALL_RESULTS_LAYOUT", "standard")
         ),
+        "display_unfinished_in_category": os.environ.get("DISPLAY_UNFINISHED_IN_CATEGORY", "false").lower() == "true",
+        "display_unfinished_in_overall": os.environ.get("DISPLAY_UNFINISHED_IN_OVERALL", "false").lower() == "true",
         "chart_bucket_minutes": int(os.environ.get("CHART_BUCKET_MINUTES", "15")),
         "color_scheme": color_scheme_raw if color_scheme_raw in ("dark", "light") else "dark",
         "show_toasts": os.environ.get("SHOW_TOASTS", "true").lower() == "true",
