@@ -565,7 +565,12 @@
           animation: false,
           plugins: { legend: { display: false }, title: { display: true, text: "Distance", color: textMuted } },
           scales: {
-            x: { beginAtZero: true, ticks: { color: textMuted, stepSize: 1 }, grid: { color: textMuted + "33" } },
+            x: {
+              beginAtZero: true,
+              ticks: { color: textMuted, stepSize: 1 },
+              grid: { color: textMuted + "33" },
+              title: { display: true, text: "Registrants", color: textMuted },
+            },
             y: { ticks: { color: textMuted }, grid: { color: textMuted + "33" } },
           },
         },
