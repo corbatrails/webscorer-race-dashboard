@@ -56,7 +56,7 @@
 
 ## Task 4: Migrate `build_finish_chart_data`
 
-- [ ] **Step 1:** Add tests: past-midnight finish and next-day wave start, unparseable time skipped, label wrap.
+- [ ] **Step 1:** Add tests: past-midnight finish keeps buckets in order, next-day wave start counted, unparseable time skipped.
 - [ ] **Step 2:** Rewrite over `snapshot["racers"]` reading `finish_tod_seconds` and `snapshot["race"]["start_seconds"]`; adapter in tests; `app.py` passes the snapshot.
 - [ ] **Step 3:** Goldens unchanged. Commit `refactor: build finish chart from the racer snapshot`.
 

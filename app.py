@@ -91,7 +91,7 @@ def poll_once(app):
         )
         demographics = build_demographics_data(raw)
         pages = build_pages(data, demographics)
-        finish_chart = build_finish_chart_data(raw, cfg.get("chart_bucket_minutes", 15))
+        finish_chart = build_finish_chart_data(snapshot, cfg.get("chart_bucket_minutes", 15))
         with _cache_lock:
             _cache["pages"] = pages
             _cache["last_refresh"] = datetime.now().strftime("%H:%M:%S")

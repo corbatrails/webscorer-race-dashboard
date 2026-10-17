@@ -94,9 +94,9 @@ This is what makes filtering cheap later (rank any subset), at the cost of trust
 `finish_tod_seconds` is **not wrapped**: it is seconds since midnight of the race-start day and may exceed 86400. Reasons: the chart's bucket math is `(finish - floor_hour) // bucket`, which only works on a monotonic timeline; the existing code already adds raw seconds. Two details:
 
 1. A racer `StartTime` is a time of day with no date. If it is more than 12 hours earlier than the race start time of day (a wave starting at `00:05` in a race that began at `23:50`), it belongs to the next day and 86400 is added at normalization. Before this, such racers silently fell outside every bucket and vanished from the chart.
-2. Chart x-axis labels use `hour % 24`, so a bucket 25 hours after midnight reads `1:15`, not `25:15`.
+2. Chart x-axis labels keep today's behavior and run past 24 (`24:00`, `24:30`). The live dump has three finishers with a 10-hour elapsed time that land in a `24:00` bucket, so this is visible in real data; wrapping the label to `0:00` is a cosmetic follow-up, not part of a no-behavior-change phase.
 
-Both only affect races that cross midnight, which none of the dumps do.
+The start rollover only affects races whose wave starts cross midnight, which none of the dumps do.
 
 ### Missing or unparseable times
 
@@ -136,7 +136,7 @@ Fixtures are derived from the real dumps by keeping a small stratified subset (t
 | Category pages for a dump whose category times contradict its overall times (only `api_dump_443486_finished.json`) | The overall listing is the source of truth, see above. |
 | Rows contain only frontend fields | Stops leaking emails/lap data to the browser; frontend untouched. |
 | Non-placed racers always show `Place` `"-"` | The API already sends `"-"`; only synthetic `""` inputs differ. |
-| Races crossing midnight bucket correctly and label hours mod 24 | Previously dropped or labelled `24:xx`. |
+| Wave starts after midnight (next-day `StartTime`) are counted in the chart | Previously dropped from every bucket. |
 | Unparseable times no longer abort the poll cycle | Previously `ValueError` made the data stale. |
 
 Everything else (counts, page order and titles, leaders, progress-bar stats, chart labels and counts, demographics buckets) must match the golden files.

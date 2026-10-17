@@ -1,4 +1,5 @@
-from data_processing import _classify_racer, _classify_group, _group_name, build_pages, build_finish_chart_data, build_demographics_data
+from data_processing import _classify_racer, _classify_group, _group_name, build_pages, build_demographics_data
+from data_processing import build_finish_chart_data as _build_finish_chart_data
 from data_processing import process_race_data as _process_race_data
 from normalizer import normalize_webscorer
 
@@ -6,6 +7,10 @@ from normalizer import normalize_webscorer
 def process_race_data(api_response, **kwargs):
     """Feed raw API fixtures through the normalizer, as app.py does."""
     return _process_race_data(normalize_webscorer(api_response), **kwargs)
+
+
+def build_finish_chart_data(api_response, **kwargs):
+    return _build_finish_chart_data(normalize_webscorer(api_response), **kwargs)
 
 
 def test_classify_group_overall():
@@ -599,6 +604,78 @@ def test_build_finish_chart_skips_category_groups():
     # Only 1 finisher counted (from Overall), not 2
     total = sum(result["datasets"][0]["data"])
     assert total == 1
+
+
+def _midnight_response(racers, start="Saturday, August 9, 2026 11:30 PM (GMT-5)"):
+    return {
+        "RaceInfo": {"Name": "Night", "StartTime": start},
+        "Results": [{"Grouping": {"Distance": "5K", "Overall": True}, "Racers": racers}],
+    }
+
+
+def test_build_finish_chart_finish_past_midnight_keeps_buckets_in_order():
+    response = _midnight_response([
+        {"Name": "A", "Time": "0:20:00.0", "StartTime": "23:30:00.0"},
+        {"Name": "B", "Time": "0:45:00.0", "StartTime": "23:30:00.0"},
+        {"Name": "C", "Time": "1:10:00.0", "StartTime": "23:30:00.0"},
+    ])
+    result = build_finish_chart_data(response, bucket_minutes=30)
+    # 23:50 -> 23:30 bucket; 00:15 and 00:40 (next day) -> 24:00 and 24:30 buckets
+    assert result["labels"] == ["23:00", "23:30", "24:00", "24:30"]
+    assert result["datasets"][0]["data"] == [0, 1, 1, 1]
+
+
+def test_build_finish_chart_next_day_wave_start_is_counted():
+    response = _midnight_response([
+        {"Name": "A", "Time": "0:20:00.0", "StartTime": "23:30:00.0"},
+        {"Name": "B", "Time": "0:20:00.0", "StartTime": "00:05:00.0"},
+    ])
+    result = build_finish_chart_data(response, bucket_minutes=30)
+    assert sum(result["datasets"][0]["data"]) == 2
+
+
+def test_build_finish_chart_unparseable_time_is_skipped_not_fatal():
+    response = {
+        "RaceInfo": {"Name": "Test", "StartTime": "Saturday, August 9, 2026 2:00 PM (GMT-5)"},
+        "Results": [{
+            "Grouping": {"Distance": "5K", "Overall": True},
+            "Racers": [
+                {"Name": "A", "Time": "0:20:00.0", "StartTime": "14:00:00.0"},
+                {"Name": "B", "Time": "20 min", "StartTime": "14:00:00.0"},
+            ],
+        }],
+    }
+    result = build_finish_chart_data(response, bucket_minutes=15)
+    assert sum(result["datasets"][0]["data"]) == 1
+
+
+def test_build_finish_chart_error_snapshot_returns_none():
+    assert build_finish_chart_data({"Error": "nope"}) is None
+
+
+def test_build_finish_chart_reads_finish_tod_from_snapshot():
+    from data_processing import build_finish_chart_data as projection
+
+    def racer(distance, finish):
+        return {
+            "bib": "1", "name": "A", "team": "", "distance": distance, "category": "", "gender": "",
+            "age": None, "status": "FINISHED", "time_display": "x", "elapsed_seconds": 1.0,
+            "start_seconds": 0.0, "finish_tod_seconds": finish, "source_place": "", "in_overall": True,
+            "category_groups": [],
+        }
+
+    snapshot = {
+        "error": None,
+        "race": {"name": "", "date": "", "sport": "", "start_seconds": 3600},
+        "groups": [
+            {"tier": "overall", "distance": "Long", "category": "", "gender": ""},
+            {"tier": "overall", "distance": "Short", "category": "", "gender": ""},
+        ],
+        "racers": [racer("Long", 3600 + 100), racer("Long", 3600 + 1000), racer("Short", 3600 + 100)],
+    }
+    result = projection(snapshot, bucket_minutes=15)
+    assert result["labels"] == ["1:00", "1:15"]
+    assert result["datasets"] == [{"label": "Long", "data": [1, 1]}, {"label": "Short", "data": [1, 0]}]
 
 
 DEMOGRAPHICS_API_RESPONSE = {
