@@ -1,0 +1,784 @@
+{
+ "chart_bucket_minutes": 15,
+ "display_unfinished_in_category": false,
+ "display_unfinished_in_overall": false,
+ "error": null,
+ "finish_chart": {
+  "datasets": [
+   {
+    "data": [0, 0, 0, 0, 4, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "label": "12.5K"
+   },
+   {
+    "data": [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "label": "25K"
+   },
+   {
+    "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 2, 0, 0, 0, 0, 1, 1],
+    "label": "50K"
+   },
+   {
+    "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0],
+    "label": "50K Relay"
+   },
+   {
+    "data": [0, 1, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "label": "5K"
+   },
+   {
+    "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0],
+    "label": "Marathon"
+   }
+  ],
+  "labels": ["8:00", "8:15", "8:30", "8:45", "9:00", "9:15", "9:30", "9:45", "10:00", "10:15", "10:30", "10:45", "11:00", "11:15", "11:30", "11:45", "12:00", "12:15", "12:30", "12:45", "13:00", "13:15", "13:30", "13:45", "14:00", "14:15"]
+ },
+ "is_stale": false,
+ "overall_results_layout": "standard",
+ "pages": [
+  {
+   "data": {
+    "categories": [
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "269", "Name": "", "Time": "51:11.6", "TeamName": "Blake Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "2", "Bib": "214", "Name": "", "Time": "53:03.2", "TeamName": "Casey Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+       {"Place": "3", "Bib": "165", "Name": "", "Time": "59:25.5", "TeamName": "Drew Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "3"}
+      ],
+      "name": "12.5K",
+      "racers": [
+       {"Place": "1", "Bib": "269", "Name": "", "Time": "51:11.6", "TeamName": "Blake Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "2", "Bib": "214", "Name": "", "Time": "53:03.2", "TeamName": "Casey Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+       {"Place": "3", "Bib": "165", "Name": "", "Time": "59:25.5", "TeamName": "Drew Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "3"},
+       {"Place": "4", "Bib": "255", "Name": "", "Time": "1:00:04.0", "TeamName": "Emery Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "4"},
+       {"Place": "5", "Bib": "305", "Name": "", "Time": "1:23:42.6", "TeamName": "Finley Alder", "Category": "Masters", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "6", "Bib": "319", "Name": "", "Time": "1:25:29.0", "TeamName": "Gray Alder", "Category": "Youth", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "-", "Bib": "135", "Name": "", "Time": "DNS", "TeamName": "Harper Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "207", "Name": "", "Time": "DNS", "TeamName": "Indigo Alder", "Category": "Masters", "Gender": "Male", "CategoryPlace": "-"}
+      ],
+      "tier": "overall"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "305", "Name": "", "Time": "1:23:42.6", "TeamName": "Finley Alder", "Category": "Masters", "Gender": "Female"}
+      ],
+      "name": "Masters Female",
+      "racers": [
+       {"Place": "1", "Bib": "305", "Name": "", "Time": "1:23:42.6", "TeamName": "Finley Alder", "Category": "Masters", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "207", "Name": "", "Time": "DNS", "TeamName": "Indigo Alder", "Category": "Masters", "Gender": "Male"}
+      ],
+      "name": "Masters Male",
+      "racers": [
+       {"Place": "-", "Bib": "207", "Name": "", "Time": "DNS", "TeamName": "Indigo Alder", "Category": "Masters", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "135", "Name": "", "Time": "DNS", "TeamName": "Harper Alder", "Category": "Open", "Gender": "Female"}
+      ],
+      "name": "Open Female",
+      "racers": [
+       {"Place": "-", "Bib": "135", "Name": "", "Time": "DNS", "TeamName": "Harper Alder", "Category": "Open", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "269", "Name": "", "Time": "51:11.6", "TeamName": "Blake Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "2", "Bib": "214", "Name": "", "Time": "53:03.2", "TeamName": "Casey Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "3", "Bib": "165", "Name": "", "Time": "59:25.5", "TeamName": "Drew Alder", "Category": "Open", "Gender": "Male"}
+      ],
+      "name": "Open Male",
+      "racers": [
+       {"Place": "1", "Bib": "269", "Name": "", "Time": "51:11.6", "TeamName": "Blake Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "2", "Bib": "214", "Name": "", "Time": "53:03.2", "TeamName": "Casey Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "3", "Bib": "165", "Name": "", "Time": "59:25.5", "TeamName": "Drew Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "4", "Bib": "255", "Name": "", "Time": "1:00:04.0", "TeamName": "Emery Alder", "Category": "Open", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "319", "Name": "", "Time": "1:25:29.0", "TeamName": "Gray Alder", "Category": "Youth", "Gender": "Female"}
+      ],
+      "name": "Youth Female",
+      "racers": [
+       {"Place": "1", "Bib": "319", "Name": "", "Time": "1:25:29.0", "TeamName": "Gray Alder", "Category": "Youth", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "160", "Name": "", "Time": "1:48:48.3", "TeamName": "Jordan Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "2", "Bib": "178", "Name": "", "Time": "2:14:07.7", "TeamName": "Kai Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+       {"Place": "3", "Bib": "221", "Name": "", "Time": "2:15:05.2", "TeamName": "Logan Alder", "Category": "Youth", "Gender": "Male", "CategoryPlace": "1"}
+      ],
+      "name": "25K",
+      "racers": [
+       {"Place": "1", "Bib": "160", "Name": "", "Time": "1:48:48.3", "TeamName": "Jordan Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "2", "Bib": "178", "Name": "", "Time": "2:14:07.7", "TeamName": "Kai Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+       {"Place": "3", "Bib": "221", "Name": "", "Time": "2:15:05.2", "TeamName": "Logan Alder", "Category": "Youth", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "4", "Bib": "117", "Name": "", "Time": "2:17:55.4", "TeamName": "Morgan Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "5", "Bib": "153", "Name": "", "Time": "2:44:12.7", "TeamName": "Noel Alder", "Category": "Masters", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "-", "Bib": "132", "Name": "", "Time": "DNF", "TeamName": "Oakley Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "157", "Name": "", "Time": "DNS", "TeamName": "Parker Alder", "Category": "Masters", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "246", "Name": "", "Time": "DNS", "TeamName": "Quinn Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"}
+      ],
+      "tier": "overall"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "153", "Name": "", "Time": "2:44:12.7", "TeamName": "Noel Alder", "Category": "Masters", "Gender": "Female"}
+      ],
+      "name": "Masters Female",
+      "racers": [
+       {"Place": "1", "Bib": "153", "Name": "", "Time": "2:44:12.7", "TeamName": "Noel Alder", "Category": "Masters", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "157", "Name": "", "Time": "DNS", "TeamName": "Parker Alder", "Category": "Masters", "Gender": "Male"}
+      ],
+      "name": "Masters Male",
+      "racers": [
+       {"Place": "-", "Bib": "157", "Name": "", "Time": "DNS", "TeamName": "Parker Alder", "Category": "Masters", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "117", "Name": "", "Time": "2:17:55.4", "TeamName": "Morgan Alder", "Category": "Open", "Gender": "Female"},
+       {"Place": "-", "Bib": "132", "Name": "", "Time": "DNF", "TeamName": "Oakley Alder", "Category": "Open", "Gender": "Female"},
+       {"Place": "-", "Bib": "246", "Name": "", "Time": "DNS", "TeamName": "Quinn Alder", "Category": "Open", "Gender": "Female"}
+      ],
+      "name": "Open Female",
+      "racers": [
+       {"Place": "1", "Bib": "117", "Name": "", "Time": "2:17:55.4", "TeamName": "Morgan Alder", "Category": "Open", "Gender": "Female"},
+       {"Place": "-", "Bib": "132", "Name": "", "Time": "DNF", "TeamName": "Oakley Alder", "Category": "Open", "Gender": "Female"},
+       {"Place": "-", "Bib": "246", "Name": "", "Time": "DNS", "TeamName": "Quinn Alder", "Category": "Open", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "160", "Name": "", "Time": "1:48:48.3", "TeamName": "Jordan Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "2", "Bib": "178", "Name": "", "Time": "2:14:07.7", "TeamName": "Kai Alder", "Category": "Open", "Gender": "Male"}
+      ],
+      "name": "Open Male",
+      "racers": [
+       {"Place": "1", "Bib": "160", "Name": "", "Time": "1:48:48.3", "TeamName": "Jordan Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "2", "Bib": "178", "Name": "", "Time": "2:14:07.7", "TeamName": "Kai Alder", "Category": "Open", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "221", "Name": "", "Time": "2:15:05.2", "TeamName": "Logan Alder", "Category": "Youth", "Gender": "Male"}
+      ],
+      "name": "Youth Male",
+      "racers": [
+       {"Place": "1", "Bib": "221", "Name": "", "Time": "2:15:05.2", "TeamName": "Logan Alder", "Category": "Youth", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "193", "Name": "", "Time": "4:01:16.9", "TeamName": "Reese Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "2", "Bib": "203", "Name": "", "Time": "4:23:51.4", "TeamName": "Sage Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+       {"Place": "3", "Bib": "274", "Name": "", "Time": "4:40:45.2", "TeamName": "Tatum Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"}
+      ],
+      "name": "50K",
+      "racers": [
+       {"Place": "1", "Bib": "193", "Name": "", "Time": "4:01:16.9", "TeamName": "Reese Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "2", "Bib": "203", "Name": "", "Time": "4:23:51.4", "TeamName": "Sage Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+       {"Place": "3", "Bib": "274", "Name": "", "Time": "4:40:45.2", "TeamName": "Tatum Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "4", "Bib": "167", "Name": "", "Time": "4:45:18.6", "TeamName": "Avery Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "3"},
+       {"Place": "5", "Bib": "288", "Name": "", "Time": "5:50:59.6", "TeamName": "Blake Birch", "Category": "Masters", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "6", "Bib": "295", "Name": "", "Time": "6:03:06.0", "TeamName": "Casey Birch", "Category": "Masters", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "-", "Bib": "266", "Name": "", "Time": "DNF", "TeamName": "Drew Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "188", "Name": "", "Time": "DNF", "TeamName": "Emery Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "127", "Name": "", "Time": "DNS", "TeamName": "Finley Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "150", "Name": "", "Time": "DNS", "TeamName": "Gray Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"}
+      ],
+      "tier": "overall"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "288", "Name": "", "Time": "5:50:59.6", "TeamName": "Blake Birch", "Category": "Masters", "Gender": "Female"}
+      ],
+      "name": "Masters Female",
+      "racers": [
+       {"Place": "1", "Bib": "288", "Name": "", "Time": "5:50:59.6", "TeamName": "Blake Birch", "Category": "Masters", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "295", "Name": "", "Time": "6:03:06.0", "TeamName": "Casey Birch", "Category": "Masters", "Gender": "Male"}
+      ],
+      "name": "Masters Male",
+      "racers": [
+       {"Place": "1", "Bib": "295", "Name": "", "Time": "6:03:06.0", "TeamName": "Casey Birch", "Category": "Masters", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "274", "Name": "", "Time": "4:40:45.2", "TeamName": "Tatum Alder", "Category": "Open", "Gender": "Female"},
+       {"Place": "-", "Bib": "188", "Name": "", "Time": "DNF", "TeamName": "Emery Birch", "Category": "Open", "Gender": "Female"},
+       {"Place": "-", "Bib": "150", "Name": "", "Time": "DNS", "TeamName": "Gray Birch", "Category": "Open", "Gender": "Female"}
+      ],
+      "name": "Open Female",
+      "racers": [
+       {"Place": "1", "Bib": "274", "Name": "", "Time": "4:40:45.2", "TeamName": "Tatum Alder", "Category": "Open", "Gender": "Female"},
+       {"Place": "-", "Bib": "188", "Name": "", "Time": "DNF", "TeamName": "Emery Birch", "Category": "Open", "Gender": "Female"},
+       {"Place": "-", "Bib": "150", "Name": "", "Time": "DNS", "TeamName": "Gray Birch", "Category": "Open", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "193", "Name": "", "Time": "4:01:16.9", "TeamName": "Reese Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "2", "Bib": "203", "Name": "", "Time": "4:23:51.4", "TeamName": "Sage Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "3", "Bib": "167", "Name": "", "Time": "4:45:18.6", "TeamName": "Avery Birch", "Category": "Open", "Gender": "Male"}
+      ],
+      "name": "Open Male",
+      "racers": [
+       {"Place": "1", "Bib": "193", "Name": "", "Time": "4:01:16.9", "TeamName": "Reese Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "2", "Bib": "203", "Name": "", "Time": "4:23:51.4", "TeamName": "Sage Alder", "Category": "Open", "Gender": "Male"},
+       {"Place": "3", "Bib": "167", "Name": "", "Time": "4:45:18.6", "TeamName": "Avery Birch", "Category": "Open", "Gender": "Male"},
+       {"Place": "-", "Bib": "266", "Name": "", "Time": "DNF", "TeamName": "Drew Birch", "Category": "Open", "Gender": "Male"},
+       {"Place": "-", "Bib": "127", "Name": "", "Time": "DNS", "TeamName": "Finley Birch", "Category": "Open", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "105", "Name": "", "Time": "4:29:52.4", "TeamName": "Harper Birch", "Category": "Relay", "Gender": ""},
+       {"Place": "2", "Bib": "101", "Name": "", "Time": "4:36:55.5", "TeamName": "Indigo Birch", "Category": "Relay", "Gender": ""}
+      ],
+      "name": "50K Relay",
+      "racers": [
+       {"Place": "1", "Bib": "105", "Name": "", "Time": "4:29:52.4", "TeamName": "Harper Birch", "Category": "Relay", "Gender": ""},
+       {"Place": "2", "Bib": "101", "Name": "", "Time": "4:36:55.5", "TeamName": "Indigo Birch", "Category": "Relay", "Gender": ""}
+      ],
+      "tier": "overall"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "105", "Name": "", "Time": "4:29:52.4", "TeamName": "Harper Birch", "Category": "Relay", "Gender": ""},
+       {"Place": "2", "Bib": "101", "Name": "", "Time": "4:36:55.5", "TeamName": "Indigo Birch", "Category": "Relay", "Gender": ""}
+      ],
+      "name": "Relay Male",
+      "racers": [
+       {"Place": "1", "Bib": "105", "Name": "", "Time": "4:29:52.4", "TeamName": "Harper Birch", "Category": "Relay", "Gender": ""},
+       {"Place": "2", "Bib": "101", "Name": "", "Time": "4:36:55.5", "TeamName": "Indigo Birch", "Category": "Relay", "Gender": ""}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "192", "Name": "", "Time": "22:15.1", "TeamName": "Jordan Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "2", "Bib": "124", "Name": "", "Time": "25:21.4", "TeamName": "Kai Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "3", "Bib": "287", "Name": "", "Time": "25:33.5", "TeamName": "Logan Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"}
+      ],
+      "name": "5K",
+      "racers": [
+       {"Place": "1", "Bib": "192", "Name": "", "Time": "22:15.1", "TeamName": "Jordan Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "2", "Bib": "124", "Name": "", "Time": "25:21.4", "TeamName": "Kai Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "3", "Bib": "287", "Name": "", "Time": "25:33.5", "TeamName": "Logan Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+       {"Place": "4", "Bib": "229", "Name": "", "Time": "25:34.0", "TeamName": "Morgan Birch", "Category": "Youth", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "5", "Bib": "254", "Name": "", "Time": "30:52.1", "TeamName": "Noel Birch", "Category": "Masters", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "-", "Bib": "128", "Name": "", "Time": "DNS", "TeamName": "Oakley Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "161", "Name": "", "Time": "DNS", "TeamName": "Parker Birch", "Category": "Masters", "Gender": "Female", "CategoryPlace": "-"}
+      ],
+      "tier": "overall"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "161", "Name": "", "Time": "DNS", "TeamName": "Parker Birch", "Category": "Masters", "Gender": "Female"}
+      ],
+      "name": "Masters Female",
+      "racers": [
+       {"Place": "-", "Bib": "161", "Name": "", "Time": "DNS", "TeamName": "Parker Birch", "Category": "Masters", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "254", "Name": "", "Time": "30:52.1", "TeamName": "Noel Birch", "Category": "Masters", "Gender": "Male"}
+      ],
+      "name": "Masters Male",
+      "racers": [
+       {"Place": "1", "Bib": "254", "Name": "", "Time": "30:52.1", "TeamName": "Noel Birch", "Category": "Masters", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "124", "Name": "", "Time": "25:21.4", "TeamName": "Kai Birch", "Category": "Open", "Gender": "Female"},
+       {"Place": "-", "Bib": "128", "Name": "", "Time": "DNS", "TeamName": "Oakley Birch", "Category": "Open", "Gender": "Female"}
+      ],
+      "name": "Open Female",
+      "racers": [
+       {"Place": "1", "Bib": "124", "Name": "", "Time": "25:21.4", "TeamName": "Kai Birch", "Category": "Open", "Gender": "Female"},
+       {"Place": "-", "Bib": "128", "Name": "", "Time": "DNS", "TeamName": "Oakley Birch", "Category": "Open", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "192", "Name": "", "Time": "22:15.1", "TeamName": "Jordan Birch", "Category": "Open", "Gender": "Male"},
+       {"Place": "2", "Bib": "287", "Name": "", "Time": "25:33.5", "TeamName": "Logan Birch", "Category": "Open", "Gender": "Male"}
+      ],
+      "name": "Open Male",
+      "racers": [
+       {"Place": "1", "Bib": "192", "Name": "", "Time": "22:15.1", "TeamName": "Jordan Birch", "Category": "Open", "Gender": "Male"},
+       {"Place": "2", "Bib": "287", "Name": "", "Time": "25:33.5", "TeamName": "Logan Birch", "Category": "Open", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "229", "Name": "", "Time": "25:34.0", "TeamName": "Morgan Birch", "Category": "Youth", "Gender": "Male"}
+      ],
+      "name": "Youth Male",
+      "racers": [
+       {"Place": "1", "Bib": "229", "Name": "", "Time": "25:34.0", "TeamName": "Morgan Birch", "Category": "Youth", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "169", "Name": "", "Time": "3:30:32.4", "TeamName": "Quinn Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "2", "Bib": "313", "Name": "", "Time": "3:55:16.8", "TeamName": "Reese Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+       {"Place": "3", "Bib": "143", "Name": "", "Time": "4:19:35.0", "TeamName": "Sage Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"}
+      ],
+      "name": "Marathon",
+      "racers": [
+       {"Place": "1", "Bib": "169", "Name": "", "Time": "3:30:32.4", "TeamName": "Quinn Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "2", "Bib": "313", "Name": "", "Time": "3:55:16.8", "TeamName": "Reese Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+       {"Place": "3", "Bib": "143", "Name": "", "Time": "4:19:35.0", "TeamName": "Sage Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "4", "Bib": "140", "Name": "", "Time": "4:32:06.6", "TeamName": "Tatum Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "2"},
+       {"Place": "5", "Bib": "247", "Name": "", "Time": "5:36:16.8", "TeamName": "Avery Cedar", "Category": "Masters", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "-", "Bib": "121", "Name": "", "Time": "DNS", "TeamName": "Blake Cedar", "Category": "Masters", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "172", "Name": "", "Time": "DNS", "TeamName": "Casey Cedar", "Category": "Open", "Gender": "Male", "CategoryPlace": "-"}
+      ],
+      "tier": "overall"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "247", "Name": "", "Time": "5:36:16.8", "TeamName": "Avery Cedar", "Category": "Masters", "Gender": "Female"}
+      ],
+      "name": "Masters Female",
+      "racers": [
+       {"Place": "1", "Bib": "247", "Name": "", "Time": "5:36:16.8", "TeamName": "Avery Cedar", "Category": "Masters", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "121", "Name": "", "Time": "DNS", "TeamName": "Blake Cedar", "Category": "Masters", "Gender": "Male"}
+      ],
+      "name": "Masters Male",
+      "racers": [
+       {"Place": "-", "Bib": "121", "Name": "", "Time": "DNS", "TeamName": "Blake Cedar", "Category": "Masters", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "143", "Name": "", "Time": "4:19:35.0", "TeamName": "Sage Birch", "Category": "Open", "Gender": "Female"},
+       {"Place": "2", "Bib": "140", "Name": "", "Time": "4:32:06.6", "TeamName": "Tatum Birch", "Category": "Open", "Gender": "Female"}
+      ],
+      "name": "Open Female",
+      "racers": [
+       {"Place": "1", "Bib": "143", "Name": "", "Time": "4:19:35.0", "TeamName": "Sage Birch", "Category": "Open", "Gender": "Female"},
+       {"Place": "2", "Bib": "140", "Name": "", "Time": "4:32:06.6", "TeamName": "Tatum Birch", "Category": "Open", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "169", "Name": "", "Time": "3:30:32.4", "TeamName": "Quinn Birch", "Category": "Open", "Gender": "Male"},
+       {"Place": "2", "Bib": "313", "Name": "", "Time": "3:55:16.8", "TeamName": "Reese Birch", "Category": "Open", "Gender": "Male"},
+       {"Place": "-", "Bib": "172", "Name": "", "Time": "DNS", "TeamName": "Casey Cedar", "Category": "Open", "Gender": "Male"}
+      ],
+      "name": "Open Male",
+      "racers": [
+       {"Place": "1", "Bib": "169", "Name": "", "Time": "3:30:32.4", "TeamName": "Quinn Birch", "Category": "Open", "Gender": "Male"},
+       {"Place": "2", "Bib": "313", "Name": "", "Time": "3:55:16.8", "TeamName": "Reese Birch", "Category": "Open", "Gender": "Male"},
+       {"Place": "-", "Bib": "172", "Name": "", "Time": "DNS", "TeamName": "Casey Cedar", "Category": "Open", "Gender": "Male"}
+      ],
+      "tier": "category"
+     }
+    ],
+    "distance_stats": [
+     {"finished": 6, "name": "12.5K", "resolved": 8, "total": 8},
+     {"finished": 5, "name": "25K", "resolved": 8, "total": 8},
+     {"finished": 6, "name": "50K", "resolved": 10, "total": 10},
+     {"finished": 2, "name": "50K Relay", "resolved": 2, "total": 2},
+     {"finished": 5, "name": "5K", "resolved": 7, "total": 7},
+     {"finished": 5, "name": "Marathon", "resolved": 7, "total": 7}
+    ],
+    "error": null,
+    "race_date": "Nov 1, 2025",
+    "race_name": "CORBA Fall Back Blast Trail Run 2025",
+    "race_sport": "Running - trail",
+    "total_dnf": 3,
+    "total_dns": 10,
+    "total_dsq": 0,
+    "total_finished": 29,
+    "total_racers": 42
+   },
+   "title": "Summary",
+   "type": "summary"
+  },
+  {
+   "data": {
+    "age": {
+     "average": 38.2,
+     "counts": [7, 5, 10, 8, 7, 3, 0],
+     "labels": ["<20", "20-29", "30-39", "40-49", "50-59", "60-69", "70+"],
+     "max": 65,
+     "median": 38.0,
+     "min": 12
+    },
+    "distance": {
+     "counts": [8, 8, 10, 2, 7, 7],
+     "labels": ["12.5K", "25K", "50K", "50K Relay", "5K", "Marathon"]
+    },
+    "gender": {
+     "counts": [23, 17, 2],
+     "labels": ["Male", "Female", "Unknown"]
+    },
+    "teams": {
+     "solo_count": 0,
+     "team_count": 42,
+     "top_teams": [
+      {"count": 1, "name": "Avery Birch"},
+      {"count": 1, "name": "Avery Cedar"},
+      {"count": 1, "name": "Blake Alder"},
+      {"count": 1, "name": "Blake Birch"},
+      {"count": 1, "name": "Blake Cedar"}
+     ]
+    },
+    "total_registrants": 42
+   },
+   "title": "Demographics",
+   "type": "demographics"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "269", "Name": "", "Time": "51:11.6", "TeamName": "Blake Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "2", "Bib": "214", "Name": "", "Time": "53:03.2", "TeamName": "Casey Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+    {"Place": "3", "Bib": "165", "Name": "", "Time": "59:25.5", "TeamName": "Drew Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "3"},
+    {"Place": "4", "Bib": "255", "Name": "", "Time": "1:00:04.0", "TeamName": "Emery Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "4"},
+    {"Place": "5", "Bib": "305", "Name": "", "Time": "1:23:42.6", "TeamName": "Finley Alder", "Category": "Masters", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "6", "Bib": "319", "Name": "", "Time": "1:25:29.0", "TeamName": "Gray Alder", "Category": "Youth", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "-", "Bib": "135", "Name": "", "Time": "DNS", "TeamName": "Harper Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "207", "Name": "", "Time": "DNS", "TeamName": "Indigo Alder", "Category": "Masters", "Gender": "Male", "CategoryPlace": "-"}
+   ],
+   "tier": "overall",
+   "title": "Overall - 12.5K",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "305", "Name": "", "Time": "1:23:42.6", "TeamName": "Finley Alder", "Category": "Masters", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Masters Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "207", "Name": "", "Time": "DNS", "TeamName": "Indigo Alder", "Category": "Masters", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Masters Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "135", "Name": "", "Time": "DNS", "TeamName": "Harper Alder", "Category": "Open", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Open Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "269", "Name": "", "Time": "51:11.6", "TeamName": "Blake Alder", "Category": "Open", "Gender": "Male"},
+    {"Place": "2", "Bib": "214", "Name": "", "Time": "53:03.2", "TeamName": "Casey Alder", "Category": "Open", "Gender": "Male"},
+    {"Place": "3", "Bib": "165", "Name": "", "Time": "59:25.5", "TeamName": "Drew Alder", "Category": "Open", "Gender": "Male"},
+    {"Place": "4", "Bib": "255", "Name": "", "Time": "1:00:04.0", "TeamName": "Emery Alder", "Category": "Open", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Open Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "319", "Name": "", "Time": "1:25:29.0", "TeamName": "Gray Alder", "Category": "Youth", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Youth Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "160", "Name": "", "Time": "1:48:48.3", "TeamName": "Jordan Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "2", "Bib": "178", "Name": "", "Time": "2:14:07.7", "TeamName": "Kai Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+    {"Place": "3", "Bib": "221", "Name": "", "Time": "2:15:05.2", "TeamName": "Logan Alder", "Category": "Youth", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "4", "Bib": "117", "Name": "", "Time": "2:17:55.4", "TeamName": "Morgan Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "5", "Bib": "153", "Name": "", "Time": "2:44:12.7", "TeamName": "Noel Alder", "Category": "Masters", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "-", "Bib": "132", "Name": "", "Time": "DNF", "TeamName": "Oakley Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "157", "Name": "", "Time": "DNS", "TeamName": "Parker Alder", "Category": "Masters", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "246", "Name": "", "Time": "DNS", "TeamName": "Quinn Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"}
+   ],
+   "tier": "overall",
+   "title": "Overall - 25K",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "153", "Name": "", "Time": "2:44:12.7", "TeamName": "Noel Alder", "Category": "Masters", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Masters Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "157", "Name": "", "Time": "DNS", "TeamName": "Parker Alder", "Category": "Masters", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Masters Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "117", "Name": "", "Time": "2:17:55.4", "TeamName": "Morgan Alder", "Category": "Open", "Gender": "Female"},
+    {"Place": "-", "Bib": "132", "Name": "", "Time": "DNF", "TeamName": "Oakley Alder", "Category": "Open", "Gender": "Female"},
+    {"Place": "-", "Bib": "246", "Name": "", "Time": "DNS", "TeamName": "Quinn Alder", "Category": "Open", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Open Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "160", "Name": "", "Time": "1:48:48.3", "TeamName": "Jordan Alder", "Category": "Open", "Gender": "Male"},
+    {"Place": "2", "Bib": "178", "Name": "", "Time": "2:14:07.7", "TeamName": "Kai Alder", "Category": "Open", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Open Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "221", "Name": "", "Time": "2:15:05.2", "TeamName": "Logan Alder", "Category": "Youth", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Youth Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "193", "Name": "", "Time": "4:01:16.9", "TeamName": "Reese Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "2", "Bib": "203", "Name": "", "Time": "4:23:51.4", "TeamName": "Sage Alder", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+    {"Place": "3", "Bib": "274", "Name": "", "Time": "4:40:45.2", "TeamName": "Tatum Alder", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "4", "Bib": "167", "Name": "", "Time": "4:45:18.6", "TeamName": "Avery Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "3"},
+    {"Place": "5", "Bib": "288", "Name": "", "Time": "5:50:59.6", "TeamName": "Blake Birch", "Category": "Masters", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "6", "Bib": "295", "Name": "", "Time": "6:03:06.0", "TeamName": "Casey Birch", "Category": "Masters", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "-", "Bib": "266", "Name": "", "Time": "DNF", "TeamName": "Drew Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "188", "Name": "", "Time": "DNF", "TeamName": "Emery Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "127", "Name": "", "Time": "DNS", "TeamName": "Finley Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "150", "Name": "", "Time": "DNS", "TeamName": "Gray Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"}
+   ],
+   "tier": "overall",
+   "title": "Overall - 50K",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "288", "Name": "", "Time": "5:50:59.6", "TeamName": "Blake Birch", "Category": "Masters", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Masters Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "295", "Name": "", "Time": "6:03:06.0", "TeamName": "Casey Birch", "Category": "Masters", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Masters Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "274", "Name": "", "Time": "4:40:45.2", "TeamName": "Tatum Alder", "Category": "Open", "Gender": "Female"},
+    {"Place": "-", "Bib": "188", "Name": "", "Time": "DNF", "TeamName": "Emery Birch", "Category": "Open", "Gender": "Female"},
+    {"Place": "-", "Bib": "150", "Name": "", "Time": "DNS", "TeamName": "Gray Birch", "Category": "Open", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Open Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "193", "Name": "", "Time": "4:01:16.9", "TeamName": "Reese Alder", "Category": "Open", "Gender": "Male"},
+    {"Place": "2", "Bib": "203", "Name": "", "Time": "4:23:51.4", "TeamName": "Sage Alder", "Category": "Open", "Gender": "Male"},
+    {"Place": "3", "Bib": "167", "Name": "", "Time": "4:45:18.6", "TeamName": "Avery Birch", "Category": "Open", "Gender": "Male"},
+    {"Place": "-", "Bib": "266", "Name": "", "Time": "DNF", "TeamName": "Drew Birch", "Category": "Open", "Gender": "Male"},
+    {"Place": "-", "Bib": "127", "Name": "", "Time": "DNS", "TeamName": "Finley Birch", "Category": "Open", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Open Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "105", "Name": "", "Time": "4:29:52.4", "TeamName": "Harper Birch", "Category": "Relay", "Gender": ""},
+    {"Place": "2", "Bib": "101", "Name": "", "Time": "4:36:55.5", "TeamName": "Indigo Birch", "Category": "Relay", "Gender": ""}
+   ],
+   "tier": "overall",
+   "title": "Overall - 50K Relay",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "105", "Name": "", "Time": "4:29:52.4", "TeamName": "Harper Birch", "Category": "Relay", "Gender": ""},
+    {"Place": "2", "Bib": "101", "Name": "", "Time": "4:36:55.5", "TeamName": "Indigo Birch", "Category": "Relay", "Gender": ""}
+   ],
+   "tier": "category",
+   "title": "Relay Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "192", "Name": "", "Time": "22:15.1", "TeamName": "Jordan Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "2", "Bib": "124", "Name": "", "Time": "25:21.4", "TeamName": "Kai Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "3", "Bib": "287", "Name": "", "Time": "25:33.5", "TeamName": "Logan Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+    {"Place": "4", "Bib": "229", "Name": "", "Time": "25:34.0", "TeamName": "Morgan Birch", "Category": "Youth", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "5", "Bib": "254", "Name": "", "Time": "30:52.1", "TeamName": "Noel Birch", "Category": "Masters", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "-", "Bib": "128", "Name": "", "Time": "DNS", "TeamName": "Oakley Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "161", "Name": "", "Time": "DNS", "TeamName": "Parker Birch", "Category": "Masters", "Gender": "Female", "CategoryPlace": "-"}
+   ],
+   "tier": "overall",
+   "title": "Overall - 5K",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "161", "Name": "", "Time": "DNS", "TeamName": "Parker Birch", "Category": "Masters", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Masters Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "254", "Name": "", "Time": "30:52.1", "TeamName": "Noel Birch", "Category": "Masters", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Masters Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "124", "Name": "", "Time": "25:21.4", "TeamName": "Kai Birch", "Category": "Open", "Gender": "Female"},
+    {"Place": "-", "Bib": "128", "Name": "", "Time": "DNS", "TeamName": "Oakley Birch", "Category": "Open", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Open Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "192", "Name": "", "Time": "22:15.1", "TeamName": "Jordan Birch", "Category": "Open", "Gender": "Male"},
+    {"Place": "2", "Bib": "287", "Name": "", "Time": "25:33.5", "TeamName": "Logan Birch", "Category": "Open", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Open Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "229", "Name": "", "Time": "25:34.0", "TeamName": "Morgan Birch", "Category": "Youth", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Youth Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "169", "Name": "", "Time": "3:30:32.4", "TeamName": "Quinn Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "2", "Bib": "313", "Name": "", "Time": "3:55:16.8", "TeamName": "Reese Birch", "Category": "Open", "Gender": "Male", "CategoryPlace": "2"},
+    {"Place": "3", "Bib": "143", "Name": "", "Time": "4:19:35.0", "TeamName": "Sage Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "4", "Bib": "140", "Name": "", "Time": "4:32:06.6", "TeamName": "Tatum Birch", "Category": "Open", "Gender": "Female", "CategoryPlace": "2"},
+    {"Place": "5", "Bib": "247", "Name": "", "Time": "5:36:16.8", "TeamName": "Avery Cedar", "Category": "Masters", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "-", "Bib": "121", "Name": "", "Time": "DNS", "TeamName": "Blake Cedar", "Category": "Masters", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "172", "Name": "", "Time": "DNS", "TeamName": "Casey Cedar", "Category": "Open", "Gender": "Male", "CategoryPlace": "-"}
+   ],
+   "tier": "overall",
+   "title": "Overall - Marathon",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "247", "Name": "", "Time": "5:36:16.8", "TeamName": "Avery Cedar", "Category": "Masters", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Masters Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "121", "Name": "", "Time": "DNS", "TeamName": "Blake Cedar", "Category": "Masters", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Masters Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "143", "Name": "", "Time": "4:19:35.0", "TeamName": "Sage Birch", "Category": "Open", "Gender": "Female"},
+    {"Place": "2", "Bib": "140", "Name": "", "Time": "4:32:06.6", "TeamName": "Tatum Birch", "Category": "Open", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Open Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "169", "Name": "", "Time": "3:30:32.4", "TeamName": "Quinn Birch", "Category": "Open", "Gender": "Male"},
+    {"Place": "2", "Bib": "313", "Name": "", "Time": "3:55:16.8", "TeamName": "Reese Birch", "Category": "Open", "Gender": "Male"},
+    {"Place": "-", "Bib": "172", "Name": "", "Time": "DNS", "TeamName": "Casey Cedar", "Category": "Open", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Open Male",
+   "type": "category"
+  }
+ ],
+ "pinned_leaders": 3,
+ "pinned_leaders_on_overall_results": false,
+ "race_date": "Nov 1, 2025",
+ "race_name": "CORBA Fall Back Blast Trail Run 2025",
+ "race_sport": "Running - trail",
+ "scroll_pause_time": 2,
+ "scroll_speed": 100,
+ "show_demographics": false,
+ "show_summary": true,
+ "show_toasts": true,
+ "summary_display_time": 20,
+ "waiting": false
+}
