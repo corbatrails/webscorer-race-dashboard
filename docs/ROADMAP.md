@@ -1,13 +1,13 @@
-# Race Dashboard: Platform & Refactor Roadmap
+# Race Dashboard — Platform & Refactor Roadmap
 
-> Status: **Proposed** · Owner: maintainers · Last updated: 2026-08-29
+> Status: **Proposed** · Owner: maintainers · Last updated: 2026-10-17
 >
 > This is a strategic roadmap, not an implementation plan. Each phase below is
 > delivered through the normal workflow: `brainstorming` → a design spec in
 > `docs/superpowers/specs/` → an implementation plan in
 > `docs/superpowers/plans/` → subagent/executing-plans implementation. Phases
-> are sized so each one ships working, testable software on its own and can be
-> reordered as priorities change.
+> are intentionally sized so each one ships working, testable software on its
+> own and can be reordered as priorities change.
 
 ## Why now
 
@@ -15,8 +15,8 @@ The dashboard was run live at a gravel race and drew a constant crowd. That
 success exposed the next set of constraints:
 
 1. **The data model fights us.** The app consumes WebScorer's response mostly
-   as-is, sometimes reading `Overall` groupings and sometimes `Category`
-   groupings, and re-derives the same facts in several places
+   as-is — sometimes reading `Overall` groupings, sometimes `Category`
+   groupings — and re-derives the same facts in several places
    (`process_race_data`, `build_finish_chart_data`, `build_demographics_data`
    each re-walk `Results` and re-classify racers). Presenting the data a new
    way means fighting the source structure instead of querying a clean list.
@@ -26,17 +26,17 @@ success exposed the next set of constraints:
    restarting the process while a crowd watches the TV.
 
 This roadmap addresses all three, in an order where each phase de-risks the
-next. **Phase 1 (normalization) is the keystone.** It's the change that makes
-everything after it easier and removes the day-to-day frustration of
-manipulating the data.
+next. **Phase 1 (normalization) is the keystone** — it's the change that makes
+everything after it easier, and it directly removes the day-to-day frustration
+of manipulating the data.
 
 ## North Star
 
 > A small, dependable race-day appliance that ingests results from **any**
 > supported timing platform into **one normalized, filterable list of
 > racers**, renders configurable views from that single source of truth, and
-> is controllable at race time from a **password-protected admin UI** that
-> applies changes live, with no restarts and no editing files on a Pi.
+> is fully controllable at race time from a **password-protected admin UI**
+> that applies changes live — no restarts, no editing files on a Pi.
 
 ## Guiding principles
 
@@ -50,7 +50,7 @@ manipulating the data.
   retires the ongoing `.env` ↔ `.env.example` sync burden.
 - **Live by default.** Config and data both refresh without a restart.
 - **Ship thin vertical slices.** Prefer a working end-to-end slice over a
-  perfect subsystem. Every phase leaves the app usable.
+  perfect subsystem. Every phase leaves the app fully usable.
 - **Test-first.** New pure functions (normalization, projections, config
   loading/merging) are covered by pytest before wiring into Flask.
 
@@ -81,12 +81,11 @@ flowchart LR
 ### The normalized model (keystone deliverable of Phase 1)
 
 A platform adapter produces a `RaceSnapshot`. The core of it is a **single flat
-list of `Racer` records**, with no groupings and no overall-vs-category
-duplication. Groupings become *attributes you filter on*, not *containers you
-iterate*.
+list of `Racer` records** — no groupings, no overall-vs-category duplication.
+Groupings become *attributes you filter on*, not *containers you iterate*.
 
 ```python
-# Illustrative shape, finalized in the Phase 1 spec.
+# Illustrative shape — finalized in the Phase 1 spec.
 RaceSnapshot = {
     "race": {
         "name": str,
@@ -108,8 +107,9 @@ Racer = {
     "team": str | None,
     "status": "FINISHED" | "IN_PROGRESS" | "DNS" | "DNF" | "DSQ",
     # --- facts needed to rank, parsed ONCE at normalization time ---
-    "elapsed_seconds": float | None,     # the racer's duration (their "Time"), the sort key
+    "elapsed_seconds": float | None,     # the racer's duration (their "Time") — the sort key
     "start_tod_seconds": float | None,   # time-of-day started, seconds since midnight (wave/individual starts)
+    "finish_tod_seconds": float | None,  # start_tod_seconds + elapsed_seconds, computed once; None unless FINISHED and start known
     "time_display": str | None,          # raw formatted string retained for display (e.g. "1:23:45")
     # --- platform's official place, kept ONLY to reconcile/validate, not to display ---
     "source_place": int | None,          # WebScorer's Place for this racer's native grouping
@@ -117,21 +117,23 @@ Racer = {
 ```
 
 **Place is derived, not stored.** In a flat list the same racer is
-simultaneously "3rd overall" and "1st in M40-49"; place is a function of *which
-grouping is on screen* × sort order, so each view computes it by filtering to
+simultaneously "3rd overall" and "1st in M40-49" — place is a function of *which
+grouping is on screen* × *sort order*, so each view computes it by filtering to
 the grouping, sorting by `(finished-first, elapsed_seconds asc)`, and assigning
 `1..N`. This is what lets us rank *any* grouping (including custom ones the
 platform never computed) and removes today's `_add_category_places` cross-copy
-hack. `source_place` is retained only as a reconciliation safety net. The Phase
+hack. `source_place` is retained only as a reconciliation safety net — the Phase
 1 characterization tests assert derived places match the platform's official
 numbers on real dumps, catching any tie/DSQ ordering differences.
 
-**Finish-time is derived too.** `finish_tod_seconds = start_tod_seconds +
-elapsed_seconds` is computed inside the finish-histogram projection rather than
-stored, so the model carries only the two parsed primitives and nothing that can
-drift out of sync.
+**Finish time is derived once, at normalization.** `finish_tod_seconds =
+start_tod_seconds + elapsed_seconds` is computed by the normalizer and stored on
+the racer, so the histogram, ticker, toasts, export and replay all read one
+value instead of each redoing the sum and its edge cases (e.g. a finish past
+midnight; the Phase 1 spec decides wrap vs. raw value). It can't drift: the
+snapshot is rebuilt every poll and the normalizer is its only writer.
 
-**`status` stays: it's the standardization boundary, not redundant data.**
+**`status` stays — it's the standardization boundary, not redundant data.**
 DNS/DNF/DSQ all share "no elapsed time," so status can't be reduced to a
 finish-time null-check, and the platform encodes it inline (WebScorer packs it
 into the `Time` string). The normalizer classifies **once** into a canonical
@@ -139,7 +141,8 @@ enum so page generators filter on `status` instead of re-implementing that
 business logic, and so a new platform's different representation (boolean flag,
 separate column, other sentinels) is translated in the adapter rather than
 leaking downstream. The normalizer guarantees the invariant
-`status == "FINISHED"` ⟺ `elapsed_seconds is not None`; `elapsed_seconds` answers
+`status == "FINISHED"` ⟺ `elapsed_seconds is not None` (and `finish_tod_seconds`
+is set whenever the start time is known); `elapsed_seconds` answers
 "how fast," `status` answers "did they finish / why not."
 
 Downstream, current logic collapses into small pure projections over
@@ -149,7 +152,7 @@ Downstream, current logic collapses into small pure projections over
 overall_by_distance(racers)     # replaces the Overall-grouping walk
 category_leaderboards(racers)   # replaces the Category-grouping walk
 finish_histogram(racers, ...)   # no more re-parsing StartTime/Time
-demographics(racers)            # filter status? No, count all registrants
+demographics(racers)            # filter status? no — count all registrants
 ```
 
 Time parsing, status classification, and place resolution happen **once** at
@@ -163,13 +166,13 @@ normalization time, not repeatedly per view. This is the concrete cure for
 Each phase is independently shippable and gets its own spec + plan.
 
 > **Ordering note:** Phases 1 (normalize) and 2 (config split) are technically
-> independent: they touch different files and could run in parallel. They're
+> independent — they touch different files and could run in parallel. They're
 > ordered by *value*, not dependency: normalization is the keystone and the
 > biggest day-to-day pain relief, so it goes first. Config split has no
 > dependents until the control plane (hot-reload, admin), so it lands right
 > before the work that needs it.
 
-### Phase 1: Normalize to a single filterable racer list (keystone)
+### Phase 1 — Normalize to a single filterable racer list (keystone)
 **Goal:** Introduce `RaceSnapshot` + flat `Racer` list and route **all** views
 through it. No behavior change visible on the TV; big change underneath.
 
@@ -195,7 +198,7 @@ before touching logic.
 
 ---
 
-### Phase 2: Config split (secrets vs. `config.yaml`)
+### Phase 2 — Config split (secrets vs. `config.yaml`)
 **Goal:** Move all non-secret config into a committable `config.yaml`; keep only
 secrets in `.env`. Small, low-risk, and unblocks the control plane (hot-reload,
 admin) that follows.
@@ -220,7 +223,7 @@ one-time migration note and a fallback that reads legacy `.env` keys.
 
 ---
 
-### Phase 3: Provider abstraction (make it pluggable)
+### Phase 3 — Provider abstraction (make it pluggable)
 **Goal:** Define the ingestion boundary so a new platform is one adapter, not a
 new pipeline. Ship with WebScorer as the reference adapter.
 
@@ -241,7 +244,7 @@ JSON + CSV) and no more.
 
 ---
 
-### Phase 4: Live config hot-reload
+### Phase 4 — Live config hot-reload
 **Goal:** Config changes take effect mid-run without a restart.
 
 - Watch `config.yaml` (mtime/poll) and re-merge on change.
@@ -260,7 +263,7 @@ atomic re-read + validation, and keep last-good config on parse failure.
 
 ---
 
-### Phase 5: Password-protected admin UI
+### Phase 5 — Password-protected admin UI
 **Goal:** A GUI to edit `config.yaml` live, secured by a single shared password
 (env-configured), intended for a trusted LAN.
 
@@ -271,7 +274,7 @@ atomic re-read + validation, and keep last-good config on parse failure.
   atomically, which Phase 4 picks up live.
 - Validation + inline errors; never expose secrets in the UI or API.
 - CSRF protection on writes; security headers; document the LAN-only threat
-  model in the README (no TLS/user accounts by design).
+  model explicitly in the README (no TLS/user accounts by design).
 
 **Exit criteria:** Operator can change intervals/toggles/layout from a phone on
 the race-day network and see the TV update within a cycle; auth + CSRF tested;
@@ -291,7 +294,7 @@ the same spec → plan flow.
 **High value**
 - **Snapshot record & replay.** Persist each poll's `RaceSnapshot` to disk;
   replay for demos, testing, and post-race review without hitting an API. Cheap
-  once Phase 1 exists and helpful for development.
+  once Phase 1 exists and hugely helpful for development.
 - **Manual refresh + connection health banner in admin.** A "refresh now"
   button and a clear API-status indicator (last success, error) so operators
   aren't guessing when data looks stale.
@@ -300,7 +303,7 @@ the same spec → plan flow.
 
 **Medium value**
 - **Recent finishers ticker.** A rolling "just finished" strip using
-  `finish_seconds`, ambient content between page rotations.
+  `finish_tod_seconds` — great ambient content between page rotations.
 - **Per-view filter/sort config from admin.** Expose the normalized model's
   filter/group-by so operators compose custom category pages live.
 - **Multi-race / multi-day support.** Select among posted races from admin;
@@ -330,8 +333,8 @@ flowchart TD
     P1 -. record/replay .-> P3
 ```
 
-- **Phase 1 (normalize) goes first**: it's the keystone. Everything downstream
-  is easier after it, and it's the biggest pain relief.
+- **Phase 1 (normalize) goes first** — the keystone; everything downstream is
+  easier after it, and it's the biggest pain relief.
 - **Phase 2 (config split) is independent of Phase 1** (different files) but is
   ordered second because its only dependents are the control plane below it; it
   could run in parallel with Phase 1 if two people are working.
