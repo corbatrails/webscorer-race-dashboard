@@ -11,5 +11,6 @@ alwaysApply: true
 - All agentic development must occur in a git worktree so multiple agents can run concurrently without conflicts.
 - Create Git worktrees as sibling directories outside the repository, named `<repo-name>-<worktree-name>` (for example, `C:\git\folder-name-work-tree-name`).
 - Before creating a new worktree, check whether existing worktrees are associated with merged PRs and remove those worktree directories; preserve worktrees with unmerged or unverified PRs.
+- Commit in small, progressive chunks (one logical change per commit); a PR may cover a whole phase, but its history must read as incremental steps.
 - Configuration output must always include the full universe of supported configuration options.
 - Adding a non-secret option means updating `OPTIONS` in `config.py`, `config.yaml`, the README options table, and `_format_config_lines` in `app.py` (tests enforce the first, second, and last).
