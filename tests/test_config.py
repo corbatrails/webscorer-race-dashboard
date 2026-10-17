@@ -220,3 +220,149 @@ def test_load_config_show_demographics_true(mock_dotenv, monkeypatch):
     monkeypatch.setenv("SHOW_DEMOGRAPHICS", "true")
     cfg = load_config()
     assert cfg["show_demographics"] is True
+
+
+# --- config.yaml layering (Phase 2) ---------------------------------------
+
+import yaml
+from config import OPTIONS, SECRET_ENV_VARS
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+@pytest.fixture
+def clean_env(monkeypatch):
+    for opt in OPTIONS:
+        monkeypatch.delenv(opt.env, raising=False)
+    for name in SECRET_ENV_VARS:
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+
+
+def _write_yaml(tmp_path, data):
+    path = tmp_path / "config.yaml"
+    path.write_text(yaml.safe_dump(data), encoding="utf-8")
+    return str(path)
+
+
+def _load(tmp_path, data=None, env_text=None, **kwargs):
+    config_path = _write_yaml(tmp_path, data) if data is not None else str(tmp_path / "missing.yaml")
+    env_path = tmp_path / ".env"
+    if env_text is not None:
+        env_path.write_text(env_text, encoding="utf-8")
+    return load_config(config_path=config_path, env_path=str(env_path), **kwargs)
+
+
+def test_missing_config_yaml_uses_defaults(clean_env, tmp_path):
+    cfg = _load(tmp_path)
+    assert cfg["refresh_interval"] == 60
+    assert cfg["color_scheme"] == "dark"
+    assert cfg["show_demographics"] is False
+    assert cfg["race_id"] is None
+    assert cfg["data_file"] is None
+
+
+def test_config_yaml_values_are_applied(clean_env, tmp_path):
+    cfg = _load(tmp_path, {
+        "race_id": 4242,
+        "refresh_interval": 15,
+        "show_summary": False,
+        "show_demographics": True,
+        "overall_results_layout": "detailed",
+        "color_scheme": "light",
+        "chart_bucket_minutes": 5,
+    })
+    assert cfg["race_id"] == "4242"
+    assert cfg["refresh_interval"] == 15
+    assert cfg["show_summary"] is False
+    assert cfg["show_demographics"] is True
+    assert cfg["overall_results_layout"] == "detailed"
+    assert cfg["color_scheme"] == "light"
+    assert cfg["chart_bucket_minutes"] == 5
+    assert cfg["scroll_speed"] == 100
+
+
+def test_partial_config_yaml_falls_back_to_defaults(clean_env, tmp_path):
+    cfg = _load(tmp_path, {"scroll_speed": 200})
+    assert cfg["scroll_speed"] == 200
+    assert cfg["pinned_leaders"] == 3
+
+
+def test_empty_config_yaml_uses_defaults(clean_env, tmp_path):
+    (tmp_path / "config.yaml").write_text("", encoding="utf-8")
+    cfg = load_config(config_path=str(tmp_path / "config.yaml"), env_path=str(tmp_path / ".env"))
+    assert cfg["refresh_interval"] == 60
+
+
+def test_env_overrides_config_yaml(clean_env, tmp_path, monkeypatch):
+    monkeypatch.setenv("REFRESH_INTERVAL", "10")
+    monkeypatch.setenv("SHOW_SUMMARY", "false")
+    cfg = _load(tmp_path, {"refresh_interval": 15, "show_summary": True})
+    assert cfg["refresh_interval"] == 10
+    assert cfg["show_summary"] is False
+
+
+def test_dotenv_file_overrides_config_yaml(clean_env, tmp_path):
+    cfg = _load(tmp_path, {"scroll_speed": 200}, env_text="SCROLL_SPEED=300\n")
+    assert cfg["scroll_speed"] == 300
+
+
+def test_process_env_overrides_dotenv_file(clean_env, tmp_path, monkeypatch):
+    monkeypatch.setenv("SCROLL_SPEED", "400")
+    cfg = _load(tmp_path, {"scroll_speed": 200}, env_text="SCROLL_SPEED=300\n")
+    assert cfg["scroll_speed"] == 400
+
+
+def test_blank_env_value_does_not_override_config_yaml(clean_env, tmp_path, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_RACE_ID", "")
+    monkeypatch.setenv("REFRESH_INTERVAL", "")
+    cfg = _load(tmp_path, {"race_id": 777, "refresh_interval": 15})
+    assert cfg["race_id"] == "777"
+    assert cfg["refresh_interval"] == 15
+
+
+def test_secrets_come_from_dotenv_file(clean_env, tmp_path, monkeypatch):
+    monkeypatch.delenv("WEBSCORER_API_ID")
+    monkeypatch.delenv("WEBSCORER_API_TOKEN")
+    cfg = _load(tmp_path, {}, env_text="WEBSCORER_API_ID=987\nWEBSCORER_API_TOKEN=tok12345\n")
+    assert cfg["api_id"] == "987"
+    assert cfg["api_token"] == "tok12345"
+
+
+def test_data_file_from_config_yaml_skips_credentials(clean_env, tmp_path, monkeypatch):
+    monkeypatch.delenv("WEBSCORER_API_ID")
+    monkeypatch.delenv("WEBSCORER_API_TOKEN")
+    data_file = tmp_path / "dump.json"
+    data_file.write_text("{}", encoding="utf-8")
+    cfg = _load(tmp_path, {"data_file": str(data_file)})
+    assert cfg["data_file"] == str(data_file)
+
+
+def test_missing_credentials_message_mentions_dotenv(clean_env, tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("WEBSCORER_API_ID")
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {})
+    assert ".env" in capsys.readouterr().out
+
+
+def test_committed_config_yaml_lists_every_option_with_defaults(clean_env):
+    with open(os.path.join(REPO_ROOT, "config.yaml"), encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    assert set(data) == {opt.key for opt in OPTIONS}
+    cfg = load_config(
+        config_path=os.path.join(REPO_ROOT, "config.yaml"),
+        env_path=os.path.join(REPO_ROOT, "does-not-exist.env"),
+    )
+    defaults = load_config(
+        config_path=os.path.join(REPO_ROOT, "does-not-exist.yaml"),
+        env_path=os.path.join(REPO_ROOT, "does-not-exist.env"),
+    )
+    assert cfg == defaults
+
+
+def test_every_option_declares_reload_mode():
+    assert {opt.reload for opt in OPTIONS} <= {"live", "restart"}
+    assert {opt.key for opt in OPTIONS if opt.reload == "restart"} == {
+        "race_id", "data_file", "refresh_interval",
+    }
