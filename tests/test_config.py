@@ -445,7 +445,7 @@ def test_legacy_env_only_setup_still_works_and_warns(clean_env, tmp_path, monkey
     assert "deprecated" in err.lower()
     for name in ("REFRESH_INTERVAL", "SHOW_DEMOGRAPHICS", "COLOR_SCHEME"):
         assert name in err
-    assert "WEBSCORER_API_ID" not in err.split(":", 1)[1]
+    assert "WEBSCORER_API_ID" not in err.split("(", 1)[1].split(")", 1)[0]
 
 
 def test_legacy_env_values_override_committed_config_yaml(clean_env, tmp_path):
@@ -467,3 +467,10 @@ def test_process_env_overrides_do_not_warn(clean_env, tmp_path, monkeypatch, cap
     monkeypatch.setenv("REFRESH_INTERVAL", "30")
     _load(tmp_path, {})
     assert capsys.readouterr().err == ""
+
+
+def test_env_example_lists_only_secrets():
+    from dotenv import dotenv_values
+
+    keys = set(dotenv_values(os.path.join(REPO_ROOT, ".env.example")))
+    assert keys == set(SECRET_ENV_VARS)

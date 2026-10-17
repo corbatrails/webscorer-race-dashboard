@@ -39,7 +39,7 @@ for name, info in deps.items():
 
 # Check for .env
 if [ ! -f ".env" ]; then
-    echo "ERROR: .env file not found. Copy .env.example to .env and fill in your credentials."
+    echo "ERROR: .env file not found. Copy .env.example to .env and fill in your WebScorer API credentials (other options live in config.yaml)."
     exit 1
 fi
 

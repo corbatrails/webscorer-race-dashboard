@@ -35,7 +35,7 @@ foreach ($dep in $vendorJson.PSObject.Properties) {
 
 # Check for .env
 if (-not (Test-Path ".env")) {
-  Write-Error "ERROR: .env file not found. Copy .env.example to .env and fill in your credentials."
+  Write-Error "ERROR: .env file not found. Copy .env.example to .env and fill in your WebScorer API credentials (other options live in config.yaml)."
   exit 1
 }
 
