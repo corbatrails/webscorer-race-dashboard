@@ -1,4 +1,5 @@
-from data_processing import _classify_racer, _classify_group, _group_name, build_pages, build_demographics_data
+from data_processing import _classify_racer, _classify_group, _group_name, build_pages
+from data_processing import build_demographics_data as _build_demographics_data
 from data_processing import build_finish_chart_data as _build_finish_chart_data
 from data_processing import process_race_data as _process_race_data
 from normalizer import normalize_webscorer
@@ -7,6 +8,10 @@ from normalizer import normalize_webscorer
 def process_race_data(api_response, **kwargs):
     """Feed raw API fixtures through the normalizer, as app.py does."""
     return _process_race_data(normalize_webscorer(api_response), **kwargs)
+
+
+def build_demographics_data(api_response):
+    return _build_demographics_data(normalize_webscorer(api_response))
 
 
 def build_finish_chart_data(api_response, **kwargs):
@@ -809,6 +814,54 @@ def test_build_demographics_skips_category_groups():
 
 def test_build_demographics_no_racers_returns_none():
     assert build_demographics_data({"RaceInfo": {"Name": "Test"}, "Results": []}) is None
+
+
+def test_build_demographics_empty_name_with_team_name_counts_as_solo():
+    response = {
+        "RaceInfo": {"Name": "Test"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "5K", "Overall": True},
+                "Racers": [
+                    {"Bib": "1", "Name": "", "Age": 30, "Gender": "Male", "TeamName": "DOE, Jane", "Distance": "5K"},
+                    {"Bib": "2", "Name": "B", "Age": 31, "Gender": "Female", "TeamName": "Team X", "Distance": "5K"},
+                ],
+            },
+        ],
+    }
+    result = build_demographics_data(response)
+    assert result["teams"] == {"solo_count": 1, "team_count": 1, "top_teams": [{"name": "Team X", "count": 1}]}
+
+
+def test_build_demographics_category_only_racers_are_not_registrants():
+    response = {
+        "RaceInfo": {"Name": "Test"},
+        "Results": [
+            {
+                "Grouping": {"Distance": "5K", "Overall": True},
+                "Racers": [{"Bib": "1", "Name": "A", "Age": 30, "Gender": "Male", "Distance": "5K"}],
+            },
+            {
+                "Grouping": {"Distance": "5K", "Category": "Open"},
+                "Racers": [{"Bib": "9", "Name": "Z", "Age": 20, "Gender": "Male", "Distance": "5K"}],
+            },
+        ],
+    }
+    assert build_demographics_data(response)["total_registrants"] == 1
+
+
+def test_build_demographics_empty_overall_distance_keeps_zero_count_label():
+    response = {
+        "RaceInfo": {"Name": "Test"},
+        "Results": [
+            {"Grouping": {"Distance": "Empty", "Overall": True}, "Racers": []},
+            {
+                "Grouping": {"Overall": True},
+                "Racers": [{"Bib": "1", "Name": "A", "Age": 30, "Gender": "Male"}],
+            },
+        ],
+    }
+    assert build_demographics_data(response)["distance"] == {"labels": ["Empty", "Overall"], "counts": [0, 1]}
 
 
 def test_build_demographics_error_response_returns_none():

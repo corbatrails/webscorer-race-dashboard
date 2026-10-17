@@ -305,18 +305,6 @@ _AGE_BUCKETS = [
 ]
 
 
-def _as_age_int(age):
-    if isinstance(age, bool):
-        return None
-    if isinstance(age, int):
-        return age
-    if isinstance(age, float):
-        return int(age)
-    if isinstance(age, str) and age.strip().isdigit():
-        return int(age.strip())
-    return None
-
-
 def _build_age_stats(ages):
     labels = [label for _, _, label in _AGE_BUCKETS]
     if not ages:
@@ -371,52 +359,37 @@ def _build_team_stats(solo_count, team_counts):
     }
 
 
-def build_demographics_data(api_response):
-    if "Error" in api_response:
+def build_demographics_data(snapshot):
+    if snapshot["error"]:
         return None
 
-    results = api_response.get("Results", [])
+    overall_racers = [r for r in snapshot["racers"] if r["in_overall"]]
+    if not overall_racers:
+        return None
 
-    total_registrants = 0
+    distance_order = [g["distance"] or "Overall" for g in snapshot["groups"] if g["tier"] == "overall"]
+    distance_counts = {name: 0 for name in distance_order}
     ages = []
     gender_counts = {}
-    distance_order = []
-    distance_counts = {}
     solo_count = 0
     team_counts = {}
 
-    for group in results:
-        grouping = group.get("Grouping", {})
-        if not grouping.get("Overall"):
-            continue
+    for racer in overall_racers:
+        distance_counts[racer["distance"] or "Overall"] += 1
 
-        distance = grouping.get("Distance") or "Overall"
-        if distance not in distance_counts:
-            distance_order.append(distance)
-            distance_counts[distance] = 0
+        if racer["age"] is not None:
+            ages.append(racer["age"])
 
-        for racer in group.get("Racers", []):
-            total_registrants += 1
-            distance_counts[distance] += 1
+        gender = racer["gender"] or "Unknown"
+        gender_counts[gender] = gender_counts.get(gender, 0) + 1
 
-            age = _as_age_int(racer.get("Age"))
-            if age is not None:
-                ages.append(age)
-
-            gender = (racer.get("Gender") or "").strip() or "Unknown"
-            gender_counts[gender] = gender_counts.get(gender, 0) + 1
-
-            team = (racer.get("TeamName") or "").strip()
-            if team:
-                team_counts[team] = team_counts.get(team, 0) + 1
-            else:
-                solo_count += 1
-
-    if total_registrants == 0:
-        return None
+        if racer["team"]:
+            team_counts[racer["team"]] = team_counts.get(racer["team"], 0) + 1
+        else:
+            solo_count += 1
 
     return {
-        "total_registrants": total_registrants,
+        "total_registrants": len(overall_racers),
         "age": _build_age_stats(ages),
         "gender": _build_gender_stats(gender_counts),
         "distance": {

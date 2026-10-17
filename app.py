@@ -89,7 +89,7 @@ def poll_once(app):
             show_overall_results=cfg.get("show_overall_results", True),
             show_category_results=cfg.get("show_category_results", True),
         )
-        demographics = build_demographics_data(raw)
+        demographics = build_demographics_data(snapshot)
         pages = build_pages(data, demographics)
         finish_chart = build_finish_chart_data(snapshot, cfg.get("chart_bucket_minutes", 15))
         with _cache_lock:

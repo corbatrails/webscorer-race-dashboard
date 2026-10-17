@@ -459,15 +459,9 @@
      "labels": ["Male", "Female", "Unknown"]
     },
     "teams": {
-     "solo_count": 0,
-     "team_count": 42,
-     "top_teams": [
-      {"count": 1, "name": "Avery Birch"},
-      {"count": 1, "name": "Avery Cedar"},
-      {"count": 1, "name": "Blake Alder"},
-      {"count": 1, "name": "Blake Birch"},
-      {"count": 1, "name": "Blake Cedar"}
-     ]
+     "solo_count": 42,
+     "team_count": 0,
+     "top_teams": []
     },
     "total_registrants": 42
    },
