@@ -1,24 +1,4 @@
-import re
-
-_NON_FINISH_STATUSES = {"DNS", "DNF", "DSQ"}
-_NO_TIME_VALUES = {"-", ""}
-
-
-def _classify_racer(racer):
-    time_val = (racer.get("Time") or "").strip().upper()
-    if time_val in _NON_FINISH_STATUSES:
-        return time_val
-    if time_val in _NO_TIME_VALUES:
-        return "IN_PROGRESS"
-    return "FINISHED"
-
-
-def _classify_group(grouping):
-    if grouping.get("Overall"):
-        return "overall"
-    if grouping.get("Category"):
-        return "category"
-    return None
+_NO_PLACE = "-"
 
 
 def _group_name(group, tier):
@@ -29,62 +9,6 @@ def _group_name(group, tier):
     if gender:
         parts.append(gender)
     return " ".join(parts)
-
-
-def _match_value(value):
-    if value is None:
-        return ""
-    return str(value).strip()
-
-
-def _result_match_key(distance, category, gender, bib):
-    return (
-        _match_value(distance),
-        _match_value(category),
-        _match_value(gender),
-        _match_value(bib),
-    )
-
-
-def _place_sort_key(racer):
-    place = _match_value(racer.get("Place"))
-    if place.isdigit():
-        return (0, int(place))
-    return (1, 0)
-
-
-def _add_category_places(results):
-    category_places = {}
-
-    for group in results:
-        grouping = group.get("Grouping", {})
-        if _classify_group(grouping) != "category":
-            continue
-
-        for racer in group.get("Racers", []):
-            distance = grouping.get("Distance") or racer.get("Distance")
-            category = grouping.get("Category") or racer.get("Category")
-            gender = grouping.get("Gender") if grouping.get("Gender") is not None else racer.get("Gender")
-            key = _result_match_key(distance, category, gender, racer.get("Bib"))
-            category_places[key] = _match_value(racer.get("Place"))
-
-    for group in results:
-        grouping = group.get("Grouping", {})
-        if _classify_group(grouping) != "overall":
-            continue
-
-        for racer in group.get("Racers", []):
-            key = _result_match_key(
-                racer.get("Distance"),
-                racer.get("Category"),
-                racer.get("Gender"),
-                racer.get("Bib"),
-            )
-            if key in category_places:
-                racer["CategoryPlace"] = category_places[key]
-
-
-_NO_PLACE = "-"
 
 
 def _rank_racers(racers):

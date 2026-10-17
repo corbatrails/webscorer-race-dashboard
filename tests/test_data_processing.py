@@ -1,8 +1,8 @@
-from data_processing import _classify_racer, _classify_group, _group_name, build_pages
+from data_processing import _group_name, build_pages
 from data_processing import build_demographics_data as _build_demographics_data
 from data_processing import build_finish_chart_data as _build_finish_chart_data
 from data_processing import process_race_data as _process_race_data
-from normalizer import normalize_webscorer
+from normalizer import _classify_group, _classify_racer, normalize_webscorer
 
 
 def process_race_data(api_response, **kwargs):

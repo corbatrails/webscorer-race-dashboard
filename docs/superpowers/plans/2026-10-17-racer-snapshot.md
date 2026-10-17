@@ -70,7 +70,7 @@
 
 - [ ] **Step 1:** Delete `_add_category_places`, `_result_match_key`, `_place_sort_key`, `_match_value` users and raw helpers left in `data_processing.py`; move test imports of `_classify_racer`/`_classify_group` to `normalizer`.
 - [ ] **Step 2:** Assert (test) that `data_processing.py` no longer references `"Results"`.
-- [ ] **Step 3:** Update `README.md` architecture note if it describes the data flow; full suite green; commit `refactor: remove raw Results walking from data_processing`.
+- [ ] **Step 3:** The schema stays documented in the `normalizer.py` docstring and the spec (README is Phase 2's surface); full suite green; commit `refactor: remove raw Results walking from data_processing`.
 
 ## Verification
 

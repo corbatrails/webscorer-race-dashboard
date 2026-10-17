@@ -206,6 +206,12 @@ def test_group_order_and_filters_follow_snapshot_groups():
     assert [c["name"] for c in only_cat] == ["Open", "Open"]
 
 
+def test_views_do_not_read_raw_results():
+    source = (Path(__file__).parent.parent / "data_processing.py").read_text(encoding="utf-8")
+    for raw_key in ('"Results"', '"Racers"', '"Grouping"', "api_response"):
+        assert raw_key not in source
+
+
 @pytest.mark.parametrize("fixture", ["race_a_finished", "race_a_live", "race_b_teamname"])
 def test_derived_places_reconcile_with_source_places(fixture):
     raw = json.loads((FIXTURES / f"{fixture}.json").read_text(encoding="utf-8"))
