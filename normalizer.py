@@ -230,8 +230,8 @@ def normalize_webscorer(api_response):
         descriptor = {
             "tier": tier,
             "distance": grouping.get("Distance") or "",
-            "category": grouping.get("Category") or "",
-            "gender": grouping.get("Gender") or "",
+            "category": (grouping.get("Category") or "") if tier == "category" else "",
+            "gender": (grouping.get("Gender") or "") if tier == "category" else "",
         }
         key = tuple(descriptor.values())
         if key not in seen_groups:

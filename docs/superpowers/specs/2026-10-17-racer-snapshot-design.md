@@ -37,7 +37,7 @@ No visible behavior change on the TV. No provider abstraction (that is Phase 3);
 
 `RaceMeta`: `name`, `date`, `sport` (strings, `""` if missing) and `start_seconds` (float, seconds since midnight of the race start parsed from `RaceInfo.StartTime`; `0` if absent, as the finish chart already does).
 
-`GroupInfo`: `tier` (`"overall"` or `"category"`), `distance` (`""` if the grouping has none), `category` (`""` if none), `gender` (`""` if none).
+`GroupInfo`: `tier` (`"overall"` or `"category"`), `distance` (`""` if the grouping has none), `category` and `gender` (`""` if none, and always `""` for the overall tier).
 
 ### `Racer`
 
@@ -73,7 +73,9 @@ Overall racers are never de-duplicated against each other: every overall listing
 
 This intentionally drops the old `(distance, category, gender, bib)` key. In dump 412060 the two relay racers have an empty `Gender` in the overall list but `Male` in the relay category grouping, so the old key never matched and their overall rows got no `CategoryPlace`. They now get one. See "Intentional output differences".
 
-Limitation: one Overall grouping per distance is assumed (true for every WebScorer dump seen). Duplicate group descriptors are collapsed into one page.
+Limitation: one Overall grouping per distance is assumed (true for every WebScorer dump seen). Duplicate group descriptors are collapsed into one page, and Overall descriptors carry only a `distance` (`category` and `gender` are `""`).
+
+**The overall listing is the source of truth for a racer.** A racer has one name, time and status in the snapshot; category listings only add membership and a place. In the real dumps the two agree, with one exception: every category listing in `api_dump_443486_finished.json` (402 of 402) carries a `Time` unrelated to the same racer's overall `Time` (for example 4:03:11 overall and 4:22:38 in the category), so its category pages ranked different times than its overall page. That file is not a result set WebScorer itself would produce, so the old behavior is not preserved: category pages now rank and show the overall time. The committed fixture for that dump copies the overall time into each category listing before places are renumbered, and the local comparison against the legacy code does the same.
 
 ### Place is derived per view
 
@@ -131,6 +133,7 @@ Fixtures are derived from the real dumps by keeping a small stratified subset (t
 |------------|-----|
 | Race B (412060): `Name` filled from `TeamName`, `TeamName` blank; demographics `solo_count`/`top_teams` change accordingly | #34, in scope for this phase. |
 | Relay racers (412060) gain `CategoryPlace` on the overall page | Old key required equal gender between two sources that disagree; new match is by `(distance, bib)`. |
+| Category pages for a dump whose category times contradict its overall times (only `api_dump_443486_finished.json`) | The overall listing is the source of truth, see above. |
 | Rows contain only frontend fields | Stops leaking emails/lap data to the browser; frontend untouched. |
 | Non-placed racers always show `Place` `"-"` | The API already sends `"-"`; only synthetic `""` inputs differ. |
 | Races crossing midnight bucket correctly and label hours mod 24 | Previously dropped or labelled `24:xx`. |

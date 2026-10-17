@@ -307,7 +307,7 @@ def test_groups_in_api_order_skip_untiered_and_deduplicate():
     assert snap["groups"] == [
         {"tier": "overall", "distance": "Long", "category": "", "gender": ""},
         {"tier": "category", "distance": "Long", "category": "Open", "gender": "Male"},
-        {"tier": "overall", "distance": "", "category": "Overall", "gender": ""},
+        {"tier": "overall", "distance": "", "category": "", "gender": ""},
         {"tier": "category", "distance": "", "category": "Masters", "gender": ""},
     ]
     assert snap["racers"] == []

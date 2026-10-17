@@ -21,11 +21,11 @@ def _classify_group(grouping):
     return None
 
 
-def _group_name(grouping, tier):
+def _group_name(group, tier):
     if tier == "overall":
-        return grouping.get("Distance") or "Overall"
-    parts = [grouping.get("Category", "")]
-    gender = grouping.get("Gender")
+        return group.get("distance") or "Overall"
+    parts = [group.get("category", "")]
+    gender = group.get("gender")
     if gender:
         parts.append(gender)
     return " ".join(parts)
@@ -84,8 +84,77 @@ def _add_category_places(results):
                 racer["CategoryPlace"] = category_places[key]
 
 
-def process_race_data(api_response, show_overall_results=True, show_category_results=True):
-    if "Error" in api_response:
+_NO_PLACE = "-"
+
+
+def _rank_racers(racers):
+    """Pair each racer with a derived place, in display order.
+
+    Finishers come first, ordered by elapsed time (ties keep input order) and
+    ranked with competition ranking (1, 2, 2, 4). Everyone else has no place
+    (None) and follows in input order.
+    """
+    finishers = [r for r in racers if r["status"] == "FINISHED" and r["elapsed_seconds"] is not None]
+    others = [r for r in racers if not (r["status"] == "FINISHED" and r["elapsed_seconds"] is not None)]
+    finishers.sort(key=lambda r: r["elapsed_seconds"])
+
+    ranked = []
+    place = 0
+    previous = None
+    for index, racer in enumerate(finishers, start=1):
+        if racer["elapsed_seconds"] != previous:
+            place = index
+            previous = racer["elapsed_seconds"]
+        ranked.append((racer, place))
+    return ranked + [(racer, None) for racer in others]
+
+
+def _place_text(place):
+    return str(place) if place is not None else _NO_PLACE
+
+
+def _racer_row(racer, place, category_place=None):
+    row = {
+        "Place": _place_text(place),
+        "Bib": racer["bib"],
+        "Name": racer["name"],
+        "Time": racer["time_display"],
+        "TeamName": racer["team"],
+        "Category": racer["category"],
+        "Gender": racer["gender"],
+    }
+    if category_place is not None:
+        row["CategoryPlace"] = category_place
+    return row
+
+
+def _membership_key(membership):
+    return (membership["distance"], membership["category"], membership["gender"])
+
+
+def _category_members(racers):
+    """Group racers by category grouping, preserving snapshot order."""
+    members = {}
+    for racer in racers:
+        for membership in racer["category_groups"]:
+            members.setdefault(_membership_key(membership), []).append(racer)
+    return members
+
+
+def _category_place_of(racer, category_places):
+    """Category place text for an overall row, or None if the racer has no category grouping."""
+    memberships = racer["category_groups"]
+    if not memberships:
+        return None
+    chosen = next(
+        (m for m in memberships if m["category"] == racer["category"] and m["gender"] == racer["gender"]),
+        memberships[0],
+    )
+    return _place_text(category_places[_membership_key(chosen)].get(id(racer)))
+
+
+def process_race_data(snapshot, show_overall_results=True, show_category_results=True):
+    if snapshot["error"]:
         return {
             "race_name": "",
             "race_date": "",
@@ -97,74 +166,66 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
             "total_dsq": 0,
             "categories": [],
             "distance_stats": [],
-            "error": api_response["Error"],
+            "error": snapshot["error"],
         }
 
-    info = api_response.get("RaceInfo", {})
-    results = api_response.get("Results", [])
-    _add_category_places(results)
+    race = snapshot["race"]
+    racers = snapshot["racers"]
+    overall_racers = [r for r in racers if r["in_overall"]]
+    members = _category_members(racers)
+    category_places = {
+        key: {id(racer): place for racer, place in _rank_racers(group)}
+        for key, group in members.items()
+    }
 
-    total_racers = 0
-    total_finished = 0
-    total_dns = 0
-    total_dnf = 0
-    total_dsq = 0
+    counts = {"FINISHED": 0, "DNS": 0, "DNF": 0, "DSQ": 0, "IN_PROGRESS": 0}
+    distance_stats = []
+    for group in snapshot["groups"]:
+        if group["tier"] != "overall":
+            continue
+        in_group = [r for r in overall_racers if r["distance"] == group["distance"]]
+        stat = {"name": group["distance"] or "Overall", "total": len(in_group), "finished": 0, "resolved": 0}
+        for racer in in_group:
+            counts[racer["status"]] += 1
+            if racer["status"] == "FINISHED":
+                stat["finished"] += 1
+            if racer["status"] != "IN_PROGRESS":
+                stat["resolved"] += 1
+        distance_stats.append(stat)
 
     # Collect groups by distance, preserving API order
     distance_order = []
     distance_buckets = {}
-    distance_stats_map = {}
-
-    for group in results:
-        grouping = group.get("Grouping", {})
-        racers = sorted(group.get("Racers", []), key=_place_sort_key)
-
-        if grouping.get("Overall"):
-            dist_name = grouping.get("Distance") or "Overall"
-            if dist_name not in distance_stats_map:
-                distance_stats_map[dist_name] = {
-                    "name": dist_name,
-                    "total": 0,
-                    "finished": 0,
-                    "resolved": 0,
-                }
-            distance_stats_map[dist_name]["total"] += len(racers)
-            total_racers += len(racers)
-            for racer in racers:
-                status = _classify_racer(racer)
-                if status == "DNS":
-                    total_dns += 1
-                    distance_stats_map[dist_name]["resolved"] += 1
-                elif status == "DNF":
-                    total_dnf += 1
-                    distance_stats_map[dist_name]["resolved"] += 1
-                elif status == "DSQ":
-                    total_dsq += 1
-                    distance_stats_map[dist_name]["resolved"] += 1
-                elif status == "FINISHED":
-                    total_finished += 1
-                    distance_stats_map[dist_name]["finished"] += 1
-                    distance_stats_map[dist_name]["resolved"] += 1
-
-        tier = _classify_group(grouping)
-        if tier is None:
-            continue
+    for group in snapshot["groups"]:
+        tier = group["tier"]
         if tier == "overall" and not show_overall_results:
             continue
         if tier == "category" and not show_category_results:
             continue
 
-        distance = grouping.get("Distance", "")
+        distance = group["distance"]
         if distance not in distance_buckets:
             distance_order.append(distance)
             distance_buckets[distance] = {"overall": [], "category": []}
 
-        name = _group_name(grouping, tier)
+        if tier == "overall":
+            in_group = [r for r in overall_racers if r["distance"] == distance]
+            rows = [
+                _racer_row(racer, place, _category_place_of(racer, category_places))
+                for racer, place in _rank_racers(in_group)
+            ]
+        else:
+            key = (distance, group["category"], group["gender"])
+            rows = [
+                _racer_row(racer, place)
+                for racer, place in _rank_racers(members.get(key, []))
+            ]
+
         distance_buckets[distance][tier].append({
-            "name": name,
+            "name": _group_name(group, tier),
             "tier": tier,
-            "racers": racers,
-            "leaders": racers[:3],
+            "racers": rows,
+            "leaders": rows[:3],
         })
 
     categories = []
@@ -173,17 +234,15 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
         categories.extend(bucket["overall"])
         categories.extend(bucket["category"])
 
-    distance_stats = list(distance_stats_map.values())
-
     return {
-        "race_name": info.get("Name", ""),
-        "race_date": info.get("Date", ""),
-        "race_sport": info.get("Sport", ""),
-        "total_racers": total_racers,
-        "total_finished": total_finished,
-        "total_dns": total_dns,
-        "total_dnf": total_dnf,
-        "total_dsq": total_dsq,
+        "race_name": race["name"],
+        "race_date": race["date"],
+        "race_sport": race["sport"],
+        "total_racers": len(overall_racers),
+        "total_finished": counts["FINISHED"],
+        "total_dns": counts["DNS"],
+        "total_dnf": counts["DNF"],
+        "total_dsq": counts["DSQ"],
         "categories": categories,
         "distance_stats": distance_stats,
         "error": None,

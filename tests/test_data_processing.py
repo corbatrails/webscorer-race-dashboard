@@ -1,4 +1,11 @@
-from data_processing import _classify_racer, _classify_group, _group_name, process_race_data, build_pages, build_finish_chart_data, build_demographics_data
+from data_processing import _classify_racer, _classify_group, _group_name, build_pages, build_finish_chart_data, build_demographics_data
+from data_processing import process_race_data as _process_race_data
+from normalizer import normalize_webscorer
+
+
+def process_race_data(api_response, **kwargs):
+    """Feed raw API fixtures through the normalizer, as app.py does."""
+    return _process_race_data(normalize_webscorer(api_response), **kwargs)
 
 
 def test_classify_group_overall():
@@ -17,17 +24,17 @@ def test_classify_group_skipped():
 
 
 def test_group_name_overall():
-    assert _group_name({"Distance": "Long Course (88 miles)", "Overall": True}, "overall") == "Long Course (88 miles)"
-    assert _group_name({"Category": "Overall", "Overall": True}, "overall") == "Overall"
+    assert _group_name({"distance": "Long Course (88 miles)"}, "overall") == "Long Course (88 miles)"
+    assert _group_name({"distance": ""}, "overall") == "Overall"
 
 
 def test_group_name_category_with_gender():
-    g = {"Distance": "Long", "Category": "Adult Long Course (age 18-44)", "Gender": "Male"}
+    g = {"distance": "Long", "category": "Adult Long Course (age 18-44)", "gender": "Male"}
     assert _group_name(g, "category") == "Adult Long Course (age 18-44) Male"
 
 
 def test_group_name_category_without_gender():
-    assert _group_name({"Category": "Male 20-29"}, "category") == "Male 20-29"
+    assert _group_name({"category": "Male 20-29"}, "category") == "Male 20-29"
 
 
 MOCK_API_RESPONSE = {
@@ -110,13 +117,14 @@ def test_process_race_data_adds_category_place_to_overall_racers():
             {
                 "Grouping": {"Distance": "Long", "Overall": True},
                 "Racers": [
-                    {"Place": "7", "Bib": "10", "Name": "Alex", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
+                    {"Place": "1", "Bib": "9", "Name": "Zed", "Distance": "Long", "Category": "Elite", "Gender": "X", "Time": "0:50:00"},
+                    {"Place": "2", "Bib": "10", "Name": "Alex", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
                 ],
             },
             {
                 "Grouping": {"Distance": "Long", "Category": "Open", "Gender": "X"},
                 "Racers": [
-                    {"Place": "2", "Bib": "10", "Name": "Alex", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
+                    {"Place": "1", "Bib": "10", "Name": "Alex", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:00:00"},
                 ],
             },
         ],
@@ -126,8 +134,11 @@ def test_process_race_data_adds_category_place_to_overall_racers():
 
     overall = result["categories"][0]
     assert overall["tier"] == "overall"
-    assert overall["racers"][0]["CategoryPlace"] == "2"
-    assert overall["racers"][0]["Gender"] == "X"
+    alex = overall["racers"][1]
+    assert alex["Place"] == "2"
+    assert alex["CategoryPlace"] == "1"
+    assert alex["Gender"] == "X"
+    assert "CategoryPlace" not in overall["racers"][0]
 
 
 def test_process_race_data_category_place_does_not_cross_match_distances():
@@ -161,12 +172,16 @@ def test_process_race_data_category_place_matches_blank_gender():
             {
                 "Grouping": {"Distance": "Long", "Overall": True},
                 "Racers": [
-                    {"Place": "9", "Bib": "11", "Name": "Sam", "Distance": "Long", "Category": "Open", "Gender": "", "Time": "1:05:00"},
+                    {"Place": "1", "Bib": "1", "Name": "Fast", "Distance": "Long", "Category": "Open", "Gender": "", "Time": "1:00:00"},
+                    {"Place": "2", "Bib": "2", "Name": "Faster", "Distance": "Long", "Category": "Open", "Gender": "", "Time": "1:02:00"},
+                    {"Place": "3", "Bib": "11", "Name": "Sam", "Distance": "Long", "Category": "Open", "Gender": "", "Time": "1:05:00"},
                 ],
             },
             {
                 "Grouping": {"Distance": "Long", "Category": "Open", "Gender": ""},
                 "Racers": [
+                    {"Place": "1", "Bib": "1", "Name": "Fast", "Distance": "Long", "Category": "Open", "Gender": "", "Time": "1:00:00"},
+                    {"Place": "2", "Bib": "2", "Name": "Faster", "Distance": "Long", "Category": "Open", "Gender": "", "Time": "1:02:00"},
                     {"Place": "3", "Bib": "11", "Name": "Sam", "Distance": "Long", "Category": "Open", "Gender": "", "Time": "1:05:00"},
                 ],
             },
@@ -175,8 +190,8 @@ def test_process_race_data_category_place_matches_blank_gender():
 
     result = process_race_data(response)
 
-    assert result["categories"][0]["racers"][0]["CategoryPlace"] == "3"
-    assert result["categories"][0]["racers"][0]["Gender"] == ""
+    assert result["categories"][0]["racers"][2]["CategoryPlace"] == "3"
+    assert result["categories"][0]["racers"][2]["Gender"] == ""
 
 
 def test_process_race_data_category_place_matches_missing_gender_as_blank():
@@ -186,13 +201,15 @@ def test_process_race_data_category_place_matches_missing_gender_as_blank():
             {
                 "Grouping": {"Distance": "Long", "Overall": True},
                 "Racers": [
-                    {"Place": "12", "Bib": "12", "Name": "Riley", "Distance": "Long", "Category": "Open", "Time": "1:10:00"},
+                    {"Place": "1", "Bib": "1", "Name": "Fast", "Distance": "Long", "Category": "Open", "Time": "1:00:00"},
+                    {"Place": "2", "Bib": "12", "Name": "Riley", "Distance": "Long", "Category": "Open", "Time": "1:10:00"},
                 ],
             },
             {
                 "Grouping": {"Distance": "Long", "Category": "Open"},
                 "Racers": [
-                    {"Place": "4", "Bib": "12", "Name": "Riley", "Distance": "Long", "Category": "Open", "Time": "1:10:00"},
+                    {"Place": "1", "Bib": "1", "Name": "Fast", "Distance": "Long", "Category": "Open", "Time": "1:00:00"},
+                    {"Place": "2", "Bib": "12", "Name": "Riley", "Distance": "Long", "Category": "Open", "Time": "1:10:00"},
                 ],
             },
         ],
@@ -200,8 +217,8 @@ def test_process_race_data_category_place_matches_missing_gender_as_blank():
 
     result = process_race_data(response)
 
-    assert result["categories"][0]["racers"][0]["CategoryPlace"] == "4"
-    assert "Gender" not in result["categories"][0]["racers"][0]
+    assert result["categories"][0]["racers"][1]["CategoryPlace"] == "2"
+    assert result["categories"][0]["racers"][1]["Gender"] == ""
 
 
 def test_process_race_data_sorts_overall_racers_by_place_after_category_place_enrichment():
@@ -211,14 +228,14 @@ def test_process_race_data_sorts_overall_racers_by_place_after_category_place_en
             {
                 "Grouping": {"Distance": "Long", "Overall": True},
                 "Racers": [
-                    {"Place": "44", "Bib": "8001", "Name": "Bib Sorted", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:10:00"},
-                    {"Place": "2", "Bib": "8002", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
+                    {"Place": "2", "Bib": "8001", "Name": "Bib Sorted", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:10:00"},
+                    {"Place": "1", "Bib": "8002", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
                 ],
             },
             {
                 "Grouping": {"Distance": "Long", "Category": "Open", "Gender": "X"},
                 "Racers": [
-                    {"Place": "31", "Bib": "8001", "Name": "Bib Sorted", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:10:00"},
+                    {"Place": "2", "Bib": "8001", "Name": "Bib Sorted", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:10:00"},
                     {"Place": "1", "Bib": "8002", "Name": "Second Overall", "Distance": "Long", "Category": "Open", "Gender": "X", "Time": "1:01:00"},
                 ],
             },
@@ -229,8 +246,8 @@ def test_process_race_data_sorts_overall_racers_by_place_after_category_place_en
 
     overall_racers = result["categories"][0]["racers"]
     assert [racer["Bib"] for racer in overall_racers] == ["8002", "8001"]
-    assert [racer["Place"] for racer in overall_racers] == ["2", "44"]
-    assert [racer["CategoryPlace"] for racer in overall_racers] == ["1", "31"]
+    assert [racer["Place"] for racer in overall_racers] == ["1", "2"]
+    assert [racer["CategoryPlace"] for racer in overall_racers] == ["1", "2"]
 
 
 def test_process_race_data_sorts_category_racers_by_place_with_non_placed_last():
@@ -241,8 +258,8 @@ def test_process_race_data_sorts_category_racers_by_place_with_non_placed_last()
                 "Grouping": {"Distance": "Long", "Category": "Open", "Gender": "X"},
                 "Racers": [
                     {"Place": "-", "Bib": "8001", "Name": "Pending", "Time": "-"},
-                    {"Place": "12", "Bib": "8002", "Name": "Twelfth", "Time": "1:12:00"},
-                    {"Place": "3", "Bib": "8003", "Name": "Third", "Time": "1:03:00"},
+                    {"Place": "2", "Bib": "8002", "Name": "Second", "Time": "1:12:00"},
+                    {"Place": "1", "Bib": "8003", "Name": "First", "Time": "1:03:00"},
                     {"Place": "", "Bib": "8004", "Name": "No Place", "Time": "DNF"},
                 ],
             },
@@ -253,7 +270,7 @@ def test_process_race_data_sorts_category_racers_by_place_with_non_placed_last()
 
     category_racers = result["categories"][0]["racers"]
     assert [racer["Bib"] for racer in category_racers] == ["8003", "8002", "8001", "8004"]
-    assert [racer["Place"] for racer in category_racers] == ["3", "12", "-", ""]
+    assert [racer["Place"] for racer in category_racers] == ["1", "2", "-", "-"]
 
 
 def test_process_race_data_empty_results():
