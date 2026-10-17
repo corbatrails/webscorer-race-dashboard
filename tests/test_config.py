@@ -366,3 +366,104 @@ def test_every_option_declares_reload_mode():
     assert {opt.key for opt in OPTIONS if opt.reload == "restart"} == {
         "race_id", "data_file", "refresh_interval",
     }
+
+
+# --- validation, warnings, legacy back-compat -------------------------------
+
+
+def test_unknown_config_yaml_key_warns_and_is_ignored(clean_env, tmp_path, capsys):
+    cfg = _load(tmp_path, {"refresh_interval": 15, "refresh_intervl": 99})
+    assert cfg["refresh_interval"] == 15
+    assert "refresh_intervl" in capsys.readouterr().err
+
+
+def test_secrets_in_config_yaml_are_ignored_with_warning(clean_env, tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("WEBSCORER_API_TOKEN")
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"api_token": "from-yaml"})
+    err = capsys.readouterr().err
+    assert "api_token" in err
+    assert ".env" in err
+
+
+def test_malformed_config_yaml_exits_with_message(clean_env, tmp_path, capsys):
+    (tmp_path / "config.yaml").write_text("refresh_interval: [unclosed\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        load_config(config_path=str(tmp_path / "config.yaml"), env_path=str(tmp_path / ".env"))
+    assert "config.yaml" in capsys.readouterr().out
+
+
+def test_non_mapping_config_yaml_exits(clean_env, tmp_path, capsys):
+    (tmp_path / "config.yaml").write_text("- a\n- b\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        load_config(config_path=str(tmp_path / "config.yaml"), env_path=str(tmp_path / ".env"))
+    assert "mapping" in capsys.readouterr().out
+
+
+def test_invalid_integer_in_config_yaml_names_option(clean_env, tmp_path, capsys):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"refresh_interval": "soon"})
+    out = capsys.readouterr().out
+    assert "refresh_interval" in out
+    assert "config.yaml" in out
+
+
+def test_invalid_integer_in_env_names_variable(clean_env, tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("SCROLL_SPEED", "fast")
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {})
+    assert "SCROLL_SPEED" in capsys.readouterr().out
+
+
+def test_non_boolean_yaml_value_exits(clean_env, tmp_path, capsys):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"show_summary": 5})
+    assert "show_summary" in capsys.readouterr().out
+
+
+def test_invalid_enum_values_fall_back_to_defaults(clean_env, tmp_path):
+    cfg = _load(tmp_path, {"overall_results_layout": "wide", "color_scheme": "neon"})
+    assert cfg["overall_results_layout"] == "standard"
+    assert cfg["color_scheme"] == "dark"
+
+
+def test_legacy_env_only_setup_still_works_and_warns(clean_env, tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("WEBSCORER_API_ID")
+    monkeypatch.delenv("WEBSCORER_API_TOKEN")
+    cfg = _load(
+        tmp_path,
+        env_text=(
+            "WEBSCORER_API_ID=111\nWEBSCORER_API_TOKEN=tok11111\n"
+            "REFRESH_INTERVAL=45\nSHOW_DEMOGRAPHICS=true\nCOLOR_SCHEME=light\n"
+        ),
+    )
+    assert cfg["api_id"] == "111"
+    assert cfg["refresh_interval"] == 45
+    assert cfg["show_demographics"] is True
+    assert cfg["color_scheme"] == "light"
+    err = capsys.readouterr().err
+    assert "deprecated" in err.lower()
+    for name in ("REFRESH_INTERVAL", "SHOW_DEMOGRAPHICS", "COLOR_SCHEME"):
+        assert name in err
+    assert "WEBSCORER_API_ID" not in err.split(":", 1)[1]
+
+
+def test_legacy_env_values_override_committed_config_yaml(clean_env, tmp_path):
+    cfg = _load(tmp_path, {"refresh_interval": 15}, env_text="REFRESH_INTERVAL=45\n")
+    assert cfg["refresh_interval"] == 45
+
+
+def test_secrets_only_dotenv_does_not_warn(clean_env, tmp_path, capsys):
+    _load(tmp_path, {}, env_text="WEBSCORER_API_ID=111\nWEBSCORER_API_TOKEN=tok11111\n")
+    assert capsys.readouterr().err == ""
+
+
+def test_blank_legacy_dotenv_keys_do_not_warn(clean_env, tmp_path, capsys):
+    _load(tmp_path, {}, env_text="WEBSCORER_API_ID=111\nWEBSCORER_RACE_ID=\nREFRESH_INTERVAL=\n")
+    assert capsys.readouterr().err == ""
+
+
+def test_process_env_overrides_do_not_warn(clean_env, tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("REFRESH_INTERVAL", "30")
+    _load(tmp_path, {})
+    assert capsys.readouterr().err == ""

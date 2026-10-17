@@ -3,7 +3,7 @@ import sys
 from collections import namedtuple
 
 import yaml
-from dotenv import find_dotenv, load_dotenv
+from dotenv import dotenv_values, find_dotenv, load_dotenv
 
 
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
@@ -77,29 +77,80 @@ OPTIONS = (
 )
 
 
+def _fail(message):
+    print(f"ERROR: {message}")
+    sys.exit(1)
+
+
+def _warn(message):
+    print(f"WARNING: {message}", file=sys.stderr)
+
+
 def _read_yaml(path):
     if not path or not os.path.isfile(path):
         return {}
-    with open(path, "r", encoding="utf-8") as f:
-        return yaml.safe_load(f) or {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        _fail(f"Could not parse {os.path.basename(path)}: {e}")
+    if data is None:
+        return {}
+    if not isinstance(data, dict):
+        _fail(f"{os.path.basename(path)} must be a mapping of option names to values.")
+    return data
 
 
-def _resolve_option(opt, yaml_data):
+def _check_yaml_keys(yaml_data, path):
+    known = {opt.key for opt in OPTIONS}
+    secret_names = {"api_id", "api_token"} | {name.lower() for name in SECRET_ENV_VARS}
+    name = os.path.basename(path)
+    for key in yaml_data:
+        if str(key).lower() in secret_names:
+            _warn(f"{name} contains '{key}', which is ignored. Secrets belong in .env only.")
+        elif key not in known:
+            _warn(f"{name} contains unknown option '{key}', which is ignored.")
+
+
+def _warn_legacy_dotenv(env_path):
+    """Non-secret settings in .env still apply (as overrides) but are deprecated."""
+    if not env_path or not os.path.isfile(env_path):
+        return
+    env_names = {opt.env for opt in OPTIONS}
+    legacy = [k for k, v in dotenv_values(env_path).items() if k in env_names and (v or "").strip()]
+    if legacy:
+        _warn(
+            f"Non-secret settings found in .env are deprecated ({', '.join(legacy)}). "
+            "They still apply and override config.yaml; move them to config.yaml "
+            "so .env only holds WEBSCORER_API_ID and WEBSCORER_API_TOKEN."
+        )
+
+
+def _resolve_option(opt, yaml_data, yaml_name):
     """Environment (process env, then .env) > config.yaml > built-in default."""
     raw = os.environ.get(opt.env)
-    if raw is not None and raw.strip() != "":
+    source = opt.env
+    if raw is None or raw.strip() == "":
+        raw = yaml_data.get(opt.key)
+        source = yaml_name
+    if raw is None:
+        return opt.default
+    try:
         return opt.parse(raw)
-    if yaml_data.get(opt.key) is not None:
-        return opt.parse(yaml_data[opt.key])
-    return opt.default
+    except ValueError as e:
+        _fail(f"Invalid value {raw!r} for '{opt.key}' (from {source}): {e}")
 
 
 def load_config(config_path=None, env_path=None):
     env_path = env_path or find_dotenv()
     load_dotenv(env_path)
-    yaml_data = _read_yaml(config_path or DEFAULT_CONFIG_PATH)
+    config_path = config_path or DEFAULT_CONFIG_PATH
+    yaml_data = _read_yaml(config_path)
+    yaml_name = os.path.basename(config_path)
+    _check_yaml_keys(yaml_data, config_path)
+    _warn_legacy_dotenv(env_path)
 
-    values = {opt.key: _resolve_option(opt, yaml_data) for opt in OPTIONS}
+    values = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
 
     data_file = values["data_file"]
     api_id = os.environ.get("WEBSCORER_API_ID")
