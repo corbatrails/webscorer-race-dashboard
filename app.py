@@ -66,12 +66,16 @@ def create_app(config=None, start_polling=True):
             })
 
     if start_polling:
-        race_id = app.config["dashboard"]["race_id"]
-        interval = app.config["dashboard"]["refresh_interval"]
-        t = threading.Thread(target=_poll_loop, args=(app, race_id, interval), daemon=True)
-        t.start()
+        _start_polling(app)
 
     return app
+
+
+def _start_polling(app, sleep_first=False):
+    race_id = app.config["dashboard"]["race_id"]
+    interval = app.config["dashboard"]["refresh_interval"]
+    t = threading.Thread(target=_poll_loop, args=(app, race_id, interval, sleep_first), daemon=True)
+    t.start()
 
 
 def poll_once(app):
@@ -113,7 +117,9 @@ def poll_once(app):
             _cache["error"] = error_msg
 
 
-def _poll_loop(app, race_id, interval):
+def _poll_loop(app, race_id, interval, sleep_first=False):
+    if sleep_first:
+        time.sleep(interval)
     while True:
         with app.app_context():
             poll_once(app)
@@ -192,36 +198,14 @@ def main():
         time.sleep(5)
 
     # Fetch initial data before starting the server to avoid rate-limit conflicts
-    race_name = ""
-    race_date = ""
-    try:
-        if config.get("data_file"):
-            with open(config["data_file"], "r", encoding="utf-8") as f:
-                raw = json.load(f)
-        else:
-            raw = fetch_race_results(config["race_id"], config["api_id"], config["api_token"])
-        data = process_race_data(
-            normalize_webscorer(raw),
-            show_overall_results=config.get("show_overall_results", True),
-            show_category_results=config.get("show_category_results", True),
-        )
-        pages = build_pages(data)
-        with _cache_lock:
-            _cache["pages"] = pages
-            _cache["last_refresh"] = datetime.now().strftime("%H:%M:%S")
-            _cache["is_stale"] = False
-            if not data.get("error"):
-                _cache["waiting"] = False
-            _cache["error"] = data.get("error")
-            _cache["race_name"] = data.get("race_name", "")
-            _cache["race_date"] = data.get("race_date", "")
-            _cache["race_sport"] = data.get("race_sport", "")
-        race_name = data.get("race_name", "")
-        race_date = data.get("race_date", "")
-    except Exception:
-        pass
+    app = create_app(config, start_polling=False)
+    poll_once(app)
+    with _cache_lock:
+        race_name = _cache["race_name"]
+        race_date = _cache["race_date"]
 
-    app = create_app(config, start_polling=True)
+    # Priming poll already fetched, so the loop waits one interval before its first poll
+    _start_polling(app, sleep_first=True)
     for line in _format_config_lines(config, race_name, race_date):
         print(line)
     print(f"\nDashboard running at http://localhost:5000")
