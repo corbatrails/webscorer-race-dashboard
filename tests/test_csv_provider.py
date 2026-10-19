@@ -1,6 +1,6 @@
 import pytest
 
-from providers.csv_provider import CsvFormatError, _parse_rows
+from providers.csv_provider import PROVIDER, CsvFormatError, _parse_rows, fetch, normalize
 
 
 def _text(*lines):
@@ -174,3 +174,136 @@ def test_errors_are_capped_at_ten_with_remaining_count():
     msg = _error("bib,name,time", *rows)
     assert msg.count("column 'time'") == 10
     assert msg.endswith("and 5 more")
+
+
+# --- metadata, groups and snapshot ------------------------------------------
+
+
+def _snapshot(*lines, name="results"):
+    return normalize({"name": name, "text": _text(*lines)})
+
+
+def test_metadata_comment_lines_set_race_fields():
+    snap = _snapshot(
+        "# name: 2026 Coon Fork 40",
+        "# date: Aug 13, 2026",
+        "# sport: Cycling - gravel",
+        "# start: 14:08",
+        "",
+        "bib,name,time",
+        "1,A,10:00",
+    )
+    assert snap["race"] == {
+        "name": "2026 Coon Fork 40", "date": "Aug 13, 2026",
+        "sport": "Cycling - gravel", "start_seconds": 14 * 3600 + 8 * 60,
+    }
+    assert snap["error"] is None
+
+
+def test_metadata_defaults_to_file_stem_and_blank_fields():
+    snap = _snapshot("bib,name,time", "1,A,10:00", name="my-race")
+    assert snap["race"] == {"name": "my-race", "date": "", "sport": "", "start_seconds": 0}
+
+
+def test_start_defaults_to_earliest_racer_start():
+    snap = _snapshot("bib,name,time,start time", "1,A,10:00,9:30", "2,B,11:00,8:15", "3,C,12:00,")
+    assert snap["race"]["start_seconds"] == 8 * 3600 + 15 * 60
+
+
+def test_metadata_start_overrides_racer_starts():
+    snap = _snapshot("# start: 7:00", "bib,name,time,start time", "1,A,10:00,8:15")
+    assert snap["race"]["start_seconds"] == 7 * 3600
+
+
+def test_unknown_metadata_key_is_an_error():
+    msg = _error("# colour: red", "bib,name,time", "1,A,10:00")
+    assert "row 1" in msg and "colour" in msg
+
+
+def test_malformed_comment_line_is_an_error():
+    assert "row 2" in _error("# name: X", "# just a note", "bib,name,time", "1,A,10:00")
+
+
+def test_invalid_metadata_start_is_an_error():
+    assert "row 1" in _error("# start: soon", "bib,name,time", "1,A,10:00")
+
+
+def test_row_numbers_count_comment_lines():
+    assert "row 4, column 'time'" in _error("# name: X", "", "bib,name,time", "1,A,bad")
+
+
+def test_metadata_errors_and_row_errors_are_reported_together():
+    msg = _error("# colour: red", "bib,name,time", "1,A,bad")
+    assert "row 1" in msg and "row 3, column 'time'" in msg
+
+
+def test_next_day_start_gets_a_day_added():
+    snap = _snapshot(
+        "# start: 23:30",
+        "bib,name,time,start time",
+        "1,A,1:00:00,23:30",
+        "2,B,1:00:00,0:15",
+    )
+    a, b = snap["racers"]
+    assert a["start_seconds"] == 23 * 3600 + 30 * 60
+    assert b["start_seconds"] == 86400 + 15 * 60
+    assert b["finish_tod_seconds"] == 86400 + 15 * 60 + 3600
+
+
+def test_overall_groups_per_distance_in_first_appearance_order():
+    snap = _snapshot("bib,name,time,distance", "1,A,10:00,40", "2,B,11:00,20", "3,C,12:00,40")
+    overall = [g for g in snap["groups"] if g["tier"] == "overall"]
+    assert [g["distance"] for g in overall] == ["40", "20"]
+    assert all(g["category"] == "" and g["gender"] == "" for g in overall)
+
+
+def test_blank_distance_is_a_single_overall_group():
+    snap = _snapshot("bib,name,time", "1,A,10:00", "2,B,11:00")
+    assert snap["groups"] == [{"tier": "overall", "distance": "", "category": "", "gender": ""}]
+
+
+def test_category_groups_per_distance_and_category():
+    snap = _snapshot(
+        "bib,name,time,distance,category",
+        "1,A,10:00,40,Men",
+        "2,B,11:00,40,Women",
+        "3,C,12:00,20,Men",
+        "4,D,13:00,40,Men",
+        "5,E,14:00,40,",
+    )
+    cats = [(g["distance"], g["category"], g["gender"]) for g in snap["groups"] if g["tier"] == "category"]
+    assert cats == [("40", "Men", ""), ("40", "Women", ""), ("20", "Men", "")]
+
+
+def test_racers_get_category_membership_only_when_category_set():
+    snap = _snapshot("bib,name,time,distance,category", "1,A,10:00,40,Men", "2,B,11:00,40,")
+    a, b = snap["racers"]
+    assert a["category_groups"] == [{"distance": "40", "category": "Men", "gender": "", "source_place": ""}]
+    assert b["category_groups"] == []
+    assert a["in_overall"] is True and a["source_place"] == ""
+
+
+def test_normalize_raises_csv_format_error():
+    with pytest.raises(CsvFormatError):
+        _snapshot("bib,name", "1,A")
+
+
+def test_fetch_reads_data_file_and_uses_stem_as_name(tmp_path):
+    path = tmp_path / "gravel-40.csv"
+    path.write_text("\ufeffbib,name,time\n1,Zoë,10:00\n", encoding="utf-8")
+    raw = fetch({"data_file": str(path)}, {})
+    assert raw["name"] == "gravel-40"
+    assert normalize(raw)["racers"][0]["name"] == "Zoë"
+
+
+def test_fetch_missing_file_raises(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        fetch({"data_file": str(tmp_path / "nope.csv")}, {})
+
+
+def test_provider_declaration():
+    assert PROVIDER.name == "csv"
+    assert PROVIDER.required_secrets == {}
+    assert PROVIDER.requires_data_file is True
+    assert PROVIDER.list_races is None
+    assert PROVIDER.fetch is fetch and PROVIDER.normalize is normalize

@@ -1,14 +1,21 @@
 """CSV provider: a spreadsheet export read from `data_file`. Format in README.md."""
 import csv
 import io
+import os
 import re
+
+from providers.base import Provider
 
 MAX_REPORTED_ERRORS = 10
 
 _REQUIRED_COLUMNS = ("bib", "name", "time")
 _KNOWN_COLUMNS = _REQUIRED_COLUMNS + ("team", "distance", "category", "gender", "age", "start time")
+_METADATA_KEYS = ("name", "date", "sport", "start")
 _NON_FINISH_STATUSES = {"DNS", "DNF", "DSQ"}
 _MAX_AGE = 120
+_DAY_SECONDS = 86400
+# A racer start more than this far before the race start is on the next day.
+_NEXT_DAY_THRESHOLD_SECONDS = 12 * 3600
 
 _HMS_RE = re.compile(r"^(\d+):([0-5]\d):([0-5]\d(?:\.\d+)?)$")
 _MS_RE = re.compile(r"^(\d+):([0-5]\d(?:\.\d+)?)$")
@@ -48,24 +55,46 @@ def _normalize_header(cell):
 
 
 def _skip_preamble(stream):
-    """Consume blank and `#` comment lines; return how many lines were consumed."""
+    """Consume blank and `#` comment lines; return (lines consumed, [(line number, comment)])."""
     consumed = 0
+    comments = []
     while True:
         position = stream.tell()
         line = stream.readline()
         if not line:
-            return consumed
+            return consumed, comments
         stripped = line.strip()
         if stripped and not stripped.startswith("#"):
             stream.seek(position)
-            return consumed
+            return consumed, comments
         consumed += 1
+        if stripped:
+            comments.append((consumed, stripped))
+
+
+def _parse_metadata(comments, errors):
+    meta = {}
+    for line, comment in comments:
+        key, separator, value = comment[1:].partition(":")
+        key = key.strip().lower()
+        if not separator or not key:
+            errors.append(f"row {line}: comment must look like '# key: value'")
+        elif key not in _METADATA_KEYS:
+            errors.append(f"row {line}: unknown metadata key {key!r} (use {', '.join(_METADATA_KEYS)})")
+        elif key == "start":
+            try:
+                meta[key] = _parse_time_of_day(value.strip())
+            except ValueError as e:
+                errors.append(f"row {line}, metadata 'start': {e}")
+        else:
+            meta[key] = value.strip()
+    return meta
 
 
 def _read_header(reader, offset):
     for row in reader:
         if any(cell.strip() for cell in row):
-            return {}, row, offset + reader.line_num
+            return row, offset + reader.line_num
     raise CsvFormatError("no header row found (expected columns: bib, name, time)")
 
 
@@ -155,11 +184,14 @@ def _parse_rows(text):
     if text.startswith("\ufeff"):
         text = text[1:]
     stream = io.StringIO(text, newline="")
-    offset = _skip_preamble(stream)
+    offset, comments = _skip_preamble(stream)
+    errors = []
+    meta = _parse_metadata(comments, errors)
     reader = csv.reader(stream)
-    meta, header_row, header_line = _read_header(reader, offset)
-    index, errors = _column_index(header_row, header_line)
-    if errors:
+    header_row, header_line = _read_header(reader, offset)
+    index, header_errors = _column_index(header_row, header_line)
+    errors.extend(header_errors)
+    if header_errors:
         _raise_errors(errors)
 
     racers = []
@@ -190,3 +222,68 @@ def _parse_rows(text):
     if not racers:
         raise CsvFormatError("no racer rows found")
     return meta, racers
+
+
+def _race_start_seconds(meta, racers):
+    if "start" in meta:
+        return meta["start"]
+    starts = [r["start_seconds"] for r in racers if r["start_seconds"] is not None]
+    return min(starts) if starts else 0
+
+
+def _derive_groups(racers):
+    overall = []
+    categories = []
+    for racer in racers:
+        distance = racer["distance"]
+        group = {"tier": "overall", "distance": distance, "category": "", "gender": ""}
+        if group not in overall:
+            overall.append(group)
+        if racer["category"]:
+            group = {"tier": "category", "distance": distance, "category": racer["category"], "gender": ""}
+            if group not in categories:
+                categories.append(group)
+            racer["category_groups"].append(
+                {"distance": distance, "category": racer["category"], "gender": "", "source_place": ""}
+            )
+    return overall + categories
+
+
+def normalize(raw):
+    """Turn `{"name": file stem, "text": file text}` into a RaceSnapshot."""
+    meta, racers = _parse_rows(raw["text"])
+    race_start = _race_start_seconds(meta, racers)
+    for racer in racers:
+        start = racer["start_seconds"]
+        if start is not None and start < race_start - _NEXT_DAY_THRESHOLD_SECONDS:
+            racer["start_seconds"] = start + _DAY_SECONDS
+            if racer["finish_tod_seconds"] is not None:
+                racer["finish_tod_seconds"] += _DAY_SECONDS
+    return {
+        "error": None,
+        "race": {
+            "name": meta.get("name") or raw["name"],
+            "date": meta.get("date", ""),
+            "sport": meta.get("sport", ""),
+            "start_seconds": race_start,
+        },
+        "groups": _derive_groups(racers),
+        "racers": racers,
+    }
+
+
+def fetch(config, secrets):
+    path = config["data_file"]
+    with open(path, "r", encoding="utf-8") as f:
+        text = f.read()
+    return {"name": os.path.splitext(os.path.basename(path))[0], "text": text}
+
+
+PROVIDER = Provider(
+    name="csv",
+    required_secrets={},
+    requires_data_file=True,
+    fetch=fetch,
+    normalize=normalize,
+    list_races=None,
+)
