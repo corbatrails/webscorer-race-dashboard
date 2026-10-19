@@ -266,3 +266,23 @@ def test_format_config_lines_includes_all_config_options():
         assert label in output
     assert "abc123de" not in output
     assert "abc*****" in output
+
+
+def test_format_config_lines_covers_every_registry_option():
+    from app import _format_config_lines
+    from config import OPTIONS
+
+    class Marker:
+        def __init__(self, key):
+            self.key = key
+
+        def __str__(self):
+            return f"<<{self.key}>>"
+
+    config = {opt.key: Marker(opt.key) for opt in OPTIONS}
+    config.update({"api_id": "12345", "api_token": "abc123de"})
+
+    output = "\n".join(_format_config_lines(config, "Race Name", "Race Date"))
+
+    for opt in OPTIONS:
+        assert f"<<{opt.key}>>" in output, f"{opt.key} missing from startup config output"

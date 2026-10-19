@@ -1,0 +1,50 @@
+# Dashboard configuration (non-secret options).
+#
+# Secrets (WEBSCORER_API_ID, WEBSCORER_API_TOKEN) belong in .env, not here.
+#
+# Precedence, lowest to highest:
+#   built-in defaults < config.yaml < .env < process environment variables
+# Any option below can be overridden by its environment variable (shown in
+# README.md), e.g. REFRESH_INTERVAL=30.
+
+# --- Race / data source ---
+# WebScorer race ID. null = prompt for a race at startup.
+race_id: null
+# Load results from a local JSON file instead of the API (no credentials needed).
+data_file: null
+
+# --- Timing ---
+# Seconds between WebScorer API polls.
+refresh_interval: 60
+# Seconds the summary page displays.
+summary_display_time: 20
+# Scroll speed in pixels per second.
+scroll_speed: 100
+# Seconds to pause before and after scrolling.
+scroll_pause_time: 2
+
+# --- Pages ---
+show_summary: true
+show_overall_results: true
+show_category_results: true
+# Age/gender/distance/team breakdown page.
+show_demographics: false
+# Show in-progress result pages before racers finish.
+display_unfinished_in_category: false
+display_unfinished_in_overall: false
+
+# --- Layout ---
+# Number of leader rows pinned at the top.
+pinned_leaders: 3
+# Pinned leaders row + medal coloring on Overall-tier pages.
+pinned_leaders_on_overall_results: false
+# Overall result table layout: standard or detailed.
+overall_results_layout: standard
+# Minutes per bucket in the finish chart.
+chart_bucket_minutes: 15
+
+# --- Appearance ---
+# dark or light.
+color_scheme: dark
+# Toast notifications when racers finish.
+show_toasts: true

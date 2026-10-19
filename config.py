@@ -1,9 +1,18 @@
 import os
 import sys
-from dotenv import load_dotenv
+from collections import namedtuple
 
+import yaml
+from dotenv import dotenv_values, find_dotenv, load_dotenv
+
+
+DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
+
+# Secrets are read from the environment (.env) only, never from config.yaml.
+SECRET_ENV_VARS = ("WEBSCORER_API_ID", "WEBSCORER_API_TOKEN")
 
 _OVERALL_RESULTS_LAYOUTS = {"standard", "detailed"}
+_COLOR_SCHEMES = {"dark", "light"}
 
 
 def _normalize_overall_results_layout(value):
@@ -13,10 +22,137 @@ def _normalize_overall_results_layout(value):
     return "standard"
 
 
-def load_config():
-    load_dotenv()
+def _parse_int(value):
+    if isinstance(value, bool):
+        raise ValueError("expected a whole number")
+    if isinstance(value, int):
+        return value
+    return int(str(value).strip())
 
-    data_file = os.environ.get("DATA_FILE")
+
+def _parse_bool(value):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() == "true"
+    raise ValueError("expected true or false")
+
+
+def _parse_optional_str(value):
+    return str(value).strip() or None
+
+
+def _parse_layout(value):
+    return _normalize_overall_results_layout(str(value))
+
+
+def _parse_color_scheme(value):
+    value = str(value).strip().lower()
+    return value if value in _COLOR_SCHEMES else "dark"
+
+
+# reload: "live" options can change mid-run (Phase 4); "restart" options are
+# consumed once at startup and need a restart to change.
+Option = namedtuple("Option", "key env default parse reload")
+
+OPTIONS = (
+    Option("race_id", "WEBSCORER_RACE_ID", None, _parse_optional_str, "restart"),
+    Option("data_file", "DATA_FILE", None, _parse_optional_str, "restart"),
+    Option("refresh_interval", "REFRESH_INTERVAL", 60, _parse_int, "restart"),
+    Option("summary_display_time", "SUMMARY_DISPLAY_TIME", 20, _parse_int, "live"),
+    Option("scroll_speed", "SCROLL_SPEED", 100, _parse_int, "live"),
+    Option("scroll_pause_time", "SCROLL_PAUSE_TIME", 2, _parse_int, "live"),
+    Option("pinned_leaders", "PINNED_LEADERS", 3, _parse_int, "live"),
+    Option("show_summary", "SHOW_SUMMARY", True, _parse_bool, "live"),
+    Option("show_overall_results", "SHOW_OVERALL_RESULTS", True, _parse_bool, "live"),
+    Option("show_category_results", "SHOW_CATEGORY_RESULTS", True, _parse_bool, "live"),
+    Option("show_demographics", "SHOW_DEMOGRAPHICS", False, _parse_bool, "live"),
+    Option("pinned_leaders_on_overall_results", "PINNED_LEADERS_ON_OVERALL_RESULTS", False, _parse_bool, "live"),
+    Option("overall_results_layout", "OVERALL_RESULTS_LAYOUT", "standard", _parse_layout, "live"),
+    Option("display_unfinished_in_category", "DISPLAY_UNFINISHED_IN_CATEGORY", False, _parse_bool, "live"),
+    Option("display_unfinished_in_overall", "DISPLAY_UNFINISHED_IN_OVERALL", False, _parse_bool, "live"),
+    Option("chart_bucket_minutes", "CHART_BUCKET_MINUTES", 15, _parse_int, "live"),
+    Option("color_scheme", "COLOR_SCHEME", "dark", _parse_color_scheme, "live"),
+    Option("show_toasts", "SHOW_TOASTS", True, _parse_bool, "live"),
+)
+
+
+def _fail(message):
+    print(f"ERROR: {message}")
+    sys.exit(1)
+
+
+def _warn(message):
+    print(f"WARNING: {message}", file=sys.stderr)
+
+
+def _read_yaml(path):
+    if not path or not os.path.isfile(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        _fail(f"Could not parse {os.path.basename(path)}: {e}")
+    if data is None:
+        return {}
+    if not isinstance(data, dict):
+        _fail(f"{os.path.basename(path)} must be a mapping of option names to values.")
+    return data
+
+
+def _check_yaml_keys(yaml_data, path):
+    known = {opt.key for opt in OPTIONS}
+    secret_names = {"api_id", "api_token"} | {name.lower() for name in SECRET_ENV_VARS}
+    name = os.path.basename(path)
+    for key in yaml_data:
+        if str(key).lower() in secret_names:
+            _warn(f"{name} contains '{key}', which is ignored. Secrets belong in .env only.")
+        elif key not in known:
+            _warn(f"{name} contains unknown option '{key}', which is ignored.")
+
+
+def _warn_legacy_dotenv(env_path):
+    """Non-secret settings in .env still apply (as overrides) but are deprecated."""
+    if not env_path or not os.path.isfile(env_path):
+        return
+    env_names = {opt.env for opt in OPTIONS}
+    legacy = [k for k, v in dotenv_values(env_path).items() if k in env_names and (v or "").strip()]
+    if legacy:
+        _warn(
+            f"Non-secret settings found in .env are deprecated ({', '.join(legacy)}). "
+            "They still apply and override config.yaml; move them to config.yaml "
+            "so .env only holds WEBSCORER_API_ID and WEBSCORER_API_TOKEN."
+        )
+
+
+def _resolve_option(opt, yaml_data, yaml_name):
+    """Environment (process env, then .env) > config.yaml > built-in default."""
+    raw = os.environ.get(opt.env)
+    source = opt.env
+    if raw is None or raw.strip() == "":
+        raw = yaml_data.get(opt.key)
+        source = yaml_name
+    if raw is None:
+        return opt.default
+    try:
+        return opt.parse(raw)
+    except ValueError as e:
+        _fail(f"Invalid value {raw!r} for '{opt.key}' (from {source}): {e}")
+
+
+def load_config(config_path=None, env_path=None):
+    env_path = env_path or find_dotenv()
+    load_dotenv(env_path)
+    config_path = config_path or DEFAULT_CONFIG_PATH
+    yaml_data = _read_yaml(config_path)
+    yaml_name = os.path.basename(config_path)
+    _check_yaml_keys(yaml_data, config_path)
+    _warn_legacy_dotenv(env_path)
+
+    values = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
+
+    data_file = values["data_file"]
     api_id = os.environ.get("WEBSCORER_API_ID")
     api_token = os.environ.get("WEBSCORER_API_TOKEN")
 
@@ -32,29 +168,4 @@ def load_config():
             print("ERROR: WEBSCORER_API_TOKEN is required. Set it in .env file.")
             sys.exit(1)
 
-    color_scheme_raw = os.environ.get("COLOR_SCHEME", "dark").lower()
-
-    return {
-        "data_file": data_file,
-        "api_id": api_id,
-        "api_token": api_token,
-        "race_id": os.environ.get("WEBSCORER_RACE_ID") or None,
-        "refresh_interval": int(os.environ.get("REFRESH_INTERVAL", "60")),
-        "summary_display_time": int(os.environ.get("SUMMARY_DISPLAY_TIME", "20")),
-        "scroll_speed": int(os.environ.get("SCROLL_SPEED", "100")),
-        "scroll_pause_time": int(os.environ.get("SCROLL_PAUSE_TIME", "2")),
-        "pinned_leaders": int(os.environ.get("PINNED_LEADERS", "3")),
-        "show_summary": os.environ.get("SHOW_SUMMARY", "true").lower() == "true",
-        "show_overall_results": os.environ.get("SHOW_OVERALL_RESULTS", "true").lower() == "true",
-        "show_category_results": os.environ.get("SHOW_CATEGORY_RESULTS", "true").lower() == "true",
-        "show_demographics": os.environ.get("SHOW_DEMOGRAPHICS", "false").lower() == "true",
-        "pinned_leaders_on_overall_results": os.environ.get("PINNED_LEADERS_ON_OVERALL_RESULTS", "false").lower() == "true",
-        "overall_results_layout": _normalize_overall_results_layout(
-            os.environ.get("OVERALL_RESULTS_LAYOUT", "standard")
-        ),
-        "display_unfinished_in_category": os.environ.get("DISPLAY_UNFINISHED_IN_CATEGORY", "false").lower() == "true",
-        "display_unfinished_in_overall": os.environ.get("DISPLAY_UNFINISHED_IN_OVERALL", "false").lower() == "true",
-        "chart_bucket_minutes": int(os.environ.get("CHART_BUCKET_MINUTES", "15")),
-        "color_scheme": color_scheme_raw if color_scheme_raw in ("dark", "light") else "dark",
-        "show_toasts": os.environ.get("SHOW_TOASTS", "true").lower() == "true",
-    }
+    return {"api_id": api_id, "api_token": api_token, **values}
