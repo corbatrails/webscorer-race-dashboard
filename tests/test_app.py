@@ -1,4 +1,5 @@
 import json
+import os
 import pytest
 from unittest.mock import patch, MagicMock
 from app import create_app
@@ -286,3 +287,44 @@ def test_format_config_lines_covers_every_registry_option():
 
     for opt in OPTIONS:
         assert f"<<{opt.key}>>" in output, f"{opt.key} missing from startup config output"
+
+
+@patch("app.threading.Thread")
+@patch("app.Flask.run")
+@patch("app.fetch_race_results")
+@patch("app.load_config")
+def test_main_initial_load_populates_demographics_and_finish_chart(
+    mock_load_config, mock_fetch, mock_run, mock_thread, capsys
+):
+    import app as app_module
+    from config import OPTIONS
+
+    config = {opt.key: opt.default for opt in OPTIONS}
+    fixture = os.path.join(os.path.dirname(__file__), "fixtures", "race_a_finished.json")
+    config.update({"api_id": "12345", "api_token": "abc123de", "data_file": fixture})
+    mock_load_config.return_value = config
+
+    app_module.main()
+
+    with app_module._cache_lock:
+        types = [p["type"] for p in app_module._cache["pages"]]
+        finish_chart = app_module._cache["finish_chart"]
+    assert "demographics" in types
+    assert finish_chart is not None
+    mock_fetch.assert_not_called()
+    assert "Race Name:                      -" not in capsys.readouterr().out
+    mock_thread.return_value.start.assert_called_once()
+    mock_run.assert_called_once()
+
+
+@patch("app.time.sleep")
+@patch("app.poll_once")
+def test_poll_loop_sleep_first_skips_immediate_poll(mock_poll, mock_sleep):
+    from app import _poll_loop
+
+    mock_sleep.side_effect = [None, StopIteration]
+    with pytest.raises(StopIteration):
+        _poll_loop(create_app({}, start_polling=False), "100", 60, sleep_first=True)
+
+    assert mock_sleep.call_args_list[0].args == (60,)
+    assert mock_poll.call_count == 1
