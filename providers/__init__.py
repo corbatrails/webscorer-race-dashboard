@@ -1,8 +1,9 @@
 """Provider registry. Add a provider by importing it here and adding it to `_REGISTRY`."""
 from providers.base import Provider, RaceChoice
+from providers.csv_provider import PROVIDER as _CSV
 from providers.webscorer import PROVIDER as _WEBSCORER
 
-_REGISTRY = {provider.name: provider for provider in (_WEBSCORER,)}
+_REGISTRY = {provider.name: provider for provider in (_CSV, _WEBSCORER)}
 
 
 def provider_names():

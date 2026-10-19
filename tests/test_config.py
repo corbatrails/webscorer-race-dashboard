@@ -541,3 +541,21 @@ def test_env_example_lists_only_secrets():
 
     keys = set(dotenv_values(os.path.join(REPO_ROOT, ".env.example")))
     assert keys == set(SECRET_ENV_VARS)
+
+
+def test_csv_source_needs_no_credentials(clean_env, tmp_path, monkeypatch):
+    monkeypatch.delenv("WEBSCORER_API_ID")
+    monkeypatch.delenv("WEBSCORER_API_TOKEN")
+    data_file = tmp_path / "results.csv"
+    data_file.write_text("bib,name,time\n1,A,1:00:00\n", encoding="utf-8")
+    cfg = _load(tmp_path, {"source": "csv", "data_file": str(data_file)})
+    assert cfg["source"] == "csv"
+    assert cfg["api_id"] is None and cfg["api_token"] is None
+
+
+def test_csv_source_without_data_file_exits_naming_data_file(clean_env, tmp_path, capsys):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"source": "csv"})
+    out = capsys.readouterr().out
+    assert out.startswith("ERROR:")
+    assert "data_file" in out

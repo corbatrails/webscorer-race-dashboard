@@ -99,3 +99,15 @@ def test_webscorer_list_races_maps_api_list(mock_list):
         {"id": "100", "name": "Morning 5K", "date": "2026-08-07", "sport": "Running"},
         {"id": "200", "name": "Trail 10K", "date": "N/A", "sport": ""},
     ]
+
+
+# --- CSV provider registration ----------------------------------------------
+
+
+def test_csv_provider_is_registered():
+    provider = get_provider("csv")
+    assert provider.name == "csv"
+    assert provider.required_secrets == {}
+    assert provider.requires_data_file is True
+    assert provider.list_races is None
+    assert provider_names() == ["csv", "webscorer"]
