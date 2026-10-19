@@ -3,6 +3,7 @@
 This is the only module that reads the raw `Results` structure. Views in
 `data_processing` are projections over `snapshot["racers"]`; see
 `docs/superpowers/specs/2026-10-17-racer-snapshot-design.md` for the rationale.
+`providers/base.py` defines the contract of the providers that produce snapshots.
 
 Schema
 ------
