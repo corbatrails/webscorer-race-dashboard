@@ -364,7 +364,7 @@ def test_committed_config_yaml_lists_every_option_with_defaults(clean_env):
 def test_every_option_declares_reload_mode():
     assert {opt.reload for opt in OPTIONS} <= {"live", "restart"}
     assert {opt.key for opt in OPTIONS if opt.reload == "restart"} == {
-        "race_id", "data_file", "refresh_interval",
+        "race_id", "data_file",
     }
 
 

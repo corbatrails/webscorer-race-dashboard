@@ -319,18 +319,89 @@ def test_main_initial_load_populates_demographics_and_finish_chart(
     mock_run.assert_called_once()
 
 
-@patch("app.time.sleep")
+@patch("app._wait_for_next_poll")
 @patch("app.poll_once")
-def test_poll_loop_sleep_first_skips_immediate_poll(mock_poll, mock_sleep):
+def test_poll_loop_sleep_first_waits_before_first_poll(mock_poll, mock_wait):
     from app import _poll_loop
 
-    mock_sleep.side_effect = [None, StopIteration]
-    with pytest.raises(StopIteration):
-        _poll_loop(create_app({}, start_polling=False), "100", 60, sleep_first=True)
+    order = []
 
-    assert mock_sleep.call_args_list[0].args == (60,)
+    def wait(*args):
+        order.append("wait")
+        if len(order) > 2:
+            raise StopIteration
+
+    mock_wait.side_effect = wait
+    mock_poll.side_effect = lambda *args: order.append("poll")
+    with pytest.raises(StopIteration):
+        _poll_loop(create_app({}, start_polling=False), sleep_first=True)
+
+    assert order == ["wait", "poll", "wait"]
+
+
+@patch("app._wait_for_next_poll")
+@patch("app.poll_once")
+def test_poll_loop_polls_immediately_by_default(mock_poll, mock_wait):
+    from app import _poll_loop
+
+    mock_wait.side_effect = StopIteration
+    with pytest.raises(StopIteration):
+        _poll_loop(create_app({}, start_polling=False))
+
     assert mock_poll.call_count == 1
 
+
+def _run_wait(app, since):
+    import time
+    from app import _wait_for_next_poll
+
+    done = {}
+
+    def target():
+        start = time.monotonic()
+        _wait_for_next_poll(app, since)
+        done["elapsed"] = time.monotonic() - start
+
+    import threading
+    t = threading.Thread(target=target, daemon=True)
+    t.start()
+    return t, done
+
+
+def test_wait_for_next_poll_returns_after_current_interval():
+    import time
+    import app as app_module
+
+    app = create_app({"refresh_interval": 0.2}, start_polling=False)
+    start = time.monotonic()
+    app_module._wait_for_next_poll(app, time.monotonic())
+    assert 0.15 <= time.monotonic() - start < 2
+
+
+def test_wait_for_next_poll_returns_early_when_interval_is_lowered():
+    import time
+    import app as app_module
+
+    app = create_app({"refresh_interval": 60}, start_polling=False)
+    t, done = _run_wait(app, time.monotonic() - 5)
+    app_module.apply_config_reload(app, _reload(app, refresh_interval=1))
+    t.join(timeout=3)
+
+    assert not t.is_alive()
+    assert done["elapsed"] < 3
+
+
+def test_wait_for_next_poll_keeps_waiting_if_new_interval_has_not_elapsed():
+    import time
+    import app as app_module
+
+    app = create_app({"refresh_interval": 60}, start_polling=False)
+    t, done = _run_wait(app, time.monotonic())
+    app_module.apply_config_reload(app, _reload(app, refresh_interval=0.4))
+    t.join(timeout=3)
+
+    assert not t.is_alive()
+    assert done["elapsed"] >= 0.3
 
 # --- Live config swap (Phase 4) ----------------------------------------------
 

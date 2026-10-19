@@ -90,9 +90,7 @@ def create_app(config=None, start_polling=True):
 
 
 def _start_polling(app, sleep_first=False):
-    race_id = app.config["dashboard"]["race_id"]
-    interval = app.config["dashboard"]["refresh_interval"]
-    t = threading.Thread(target=_poll_loop, args=(app, race_id, interval, sleep_first), daemon=True)
+    t = threading.Thread(target=_poll_loop, args=(app, sleep_first), daemon=True)
     t.start()
 
 
@@ -135,13 +133,24 @@ def poll_once(app):
             _cache["error"] = error_msg
 
 
-def _poll_loop(app, race_id, interval, sleep_first=False):
+def _wait_for_next_poll(app, since):
+    """Block until refresh_interval seconds have passed since `since`, re-reading the interval if it changes."""
+    while True:
+        interval = app.config["dashboard"].get("refresh_interval", 60)
+        remaining = since + interval - time.monotonic()
+        if remaining <= 0:
+            return
+        if _config_changed.wait(remaining):
+            _config_changed.clear()
+
+
+def _poll_loop(app, sleep_first=False):
     if sleep_first:
-        time.sleep(interval)
+        _wait_for_next_poll(app, time.monotonic())
     while True:
         with app.app_context():
             poll_once(app)
-        time.sleep(interval)
+        _wait_for_next_poll(app, time.monotonic())
 
 
 def _watch_config_once(app, watcher):

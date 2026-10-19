@@ -65,7 +65,7 @@ Option = namedtuple("Option", "key env default parse reload")
 OPTIONS = (
     Option("race_id", "WEBSCORER_RACE_ID", None, _parse_optional_str, "restart"),
     Option("data_file", "DATA_FILE", None, _parse_optional_str, "restart"),
-    Option("refresh_interval", "REFRESH_INTERVAL", 60, _parse_refresh_interval, "restart"),
+    Option("refresh_interval", "REFRESH_INTERVAL", 60, _parse_refresh_interval, "live"),
     Option("summary_display_time", "SUMMARY_DISPLAY_TIME", 20, _parse_int, "live"),
     Option("scroll_speed", "SCROLL_SPEED", 100, _parse_int, "live"),
     Option("scroll_pause_time", "SCROLL_PAUSE_TIME", 2, _parse_int, "live"),
