@@ -328,3 +328,65 @@ def test_poll_loop_sleep_first_skips_immediate_poll(mock_poll, mock_sleep):
 
     assert mock_sleep.call_args_list[0].args == (60,)
     assert mock_poll.call_count == 1
+
+
+# --- Live config swap (Phase 4) ----------------------------------------------
+
+
+def _reload(app, changed=None, restart_required=(), **values):
+    from config import Reload
+
+    new_config = {**app.config["dashboard"], **values}
+    return Reload(new_config, list(changed if changed is not None else values), list(restart_required))
+
+
+def test_api_data_includes_config_fields(client):
+    data = client.get("/api/data").get_json()
+    assert data["config_version"] == 1
+    assert data["config_restart_required"] == []
+    assert data["color_scheme"] == "dark"
+    assert data["refresh_interval"] == 60
+
+
+def test_apply_config_reload_swaps_values_and_bumps_version(app, client):
+    from app import apply_config_reload
+
+    apply_config_reload(app, _reload(app, scroll_speed=250, color_scheme="light", refresh_interval=30))
+
+    data = client.get("/api/data").get_json()
+    assert data["scroll_speed"] == 250
+    assert data["color_scheme"] == "light"
+    assert data["refresh_interval"] == 30
+    assert data["config_version"] == 2
+    assert b'data-theme="light"' in client.get("/").data
+
+
+def test_apply_config_reload_does_not_mutate_old_config(app):
+    from app import apply_config_reload
+
+    old = app.config["dashboard"]
+    apply_config_reload(app, _reload(app, scroll_speed=250))
+
+    assert old["scroll_speed"] == 100
+    assert app.config["dashboard"] is not old
+
+
+def test_restart_only_reload_keeps_version_and_reports_keys(app, client):
+    from app import apply_config_reload
+
+    apply_config_reload(app, _reload(app, changed=[], restart_required=["race_id"]))
+
+    data = client.get("/api/data").get_json()
+    assert data["config_version"] == 1
+    assert data["config_restart_required"] == ["race_id"]
+
+
+def test_apply_config_reload_wakes_poll_loop_only_when_interval_changes(app):
+    import app as app_module
+
+    app_module._config_changed.clear()
+    app_module.apply_config_reload(app, _reload(app, scroll_speed=250))
+    assert not app_module._config_changed.is_set()
+
+    app_module.apply_config_reload(app, _reload(app, refresh_interval=10))
+    assert app_module._config_changed.is_set()

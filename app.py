@@ -20,11 +20,28 @@ _cache = {
     "finish_chart": None,
 }
 _cache_lock = threading.Lock()
+# Set when refresh_interval changes so the poll loop re-reads it.
+_config_changed = threading.Event()
+
+
+def apply_config_reload(app, reload):
+    """Swap in a reloaded config and its state; neither dict is ever mutated in place."""
+    with _cache_lock:
+        old = app.config["dashboard"]
+        state = app.config["dashboard_state"]
+        app.config["dashboard"] = reload.config
+        app.config["dashboard_state"] = {
+            "config_version": state["config_version"] + (1 if reload.changed else 0),
+            "restart_required": list(reload.restart_required),
+        }
+        if old.get("refresh_interval") != reload.config.get("refresh_interval"):
+            _config_changed.set()
 
 
 def create_app(config=None, start_polling=True):
     app = Flask(__name__)
     app.config["dashboard"] = config or {}
+    app.config["dashboard_state"] = {"config_version": 1, "restart_required": []}
     _start_time = int(time.time())
 
     @app.route("/")
@@ -35,6 +52,8 @@ def create_app(config=None, start_polling=True):
     @app.route("/api/data")
     def api_data():
         with _cache_lock:
+            cfg = app.config["dashboard"]
+            state = app.config["dashboard_state"]
             return jsonify({
                 "pages": _cache["pages"],
                 "last_refresh": _cache["last_refresh"],
@@ -45,24 +64,22 @@ def create_app(config=None, start_polling=True):
                 "race_date": _cache["race_date"],
                 "race_sport": _cache["race_sport"],
                 "finish_chart": _cache["finish_chart"],
-                "summary_display_time": app.config["dashboard"].get("summary_display_time", 20),
-                "scroll_speed": app.config["dashboard"].get("scroll_speed", 100),
-                "scroll_pause_time": app.config["dashboard"].get("scroll_pause_time", 2),
-                "pinned_leaders": app.config["dashboard"].get("pinned_leaders", 3),
-                "show_summary": app.config["dashboard"].get("show_summary", True),
-                "show_demographics": app.config["dashboard"].get("show_demographics", False),
-                "chart_bucket_minutes": app.config["dashboard"].get("chart_bucket_minutes", 15),
-                "show_toasts": app.config["dashboard"].get("show_toasts", True),
-                "overall_results_layout": app.config["dashboard"].get("overall_results_layout", "standard"),
-                "display_unfinished_in_category": app.config["dashboard"].get(
-                    "display_unfinished_in_category", False
-                ),
-                "display_unfinished_in_overall": app.config["dashboard"].get(
-                    "display_unfinished_in_overall", False
-                ),
-                "pinned_leaders_on_overall_results": app.config["dashboard"].get(
-                    "pinned_leaders_on_overall_results", False
-                ),
+                "summary_display_time": cfg.get("summary_display_time", 20),
+                "scroll_speed": cfg.get("scroll_speed", 100),
+                "scroll_pause_time": cfg.get("scroll_pause_time", 2),
+                "pinned_leaders": cfg.get("pinned_leaders", 3),
+                "show_summary": cfg.get("show_summary", True),
+                "show_demographics": cfg.get("show_demographics", False),
+                "chart_bucket_minutes": cfg.get("chart_bucket_minutes", 15),
+                "show_toasts": cfg.get("show_toasts", True),
+                "overall_results_layout": cfg.get("overall_results_layout", "standard"),
+                "display_unfinished_in_category": cfg.get("display_unfinished_in_category", False),
+                "display_unfinished_in_overall": cfg.get("display_unfinished_in_overall", False),
+                "pinned_leaders_on_overall_results": cfg.get("pinned_leaders_on_overall_results", False),
+                "color_scheme": cfg.get("color_scheme", "dark"),
+                "refresh_interval": cfg.get("refresh_interval", 60),
+                "config_version": state["config_version"],
+                "config_restart_required": state["restart_required"],
             })
 
     if start_polling:
