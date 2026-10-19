@@ -474,3 +474,32 @@ def test_env_example_lists_only_secrets():
 
     keys = set(dotenv_values(os.path.join(REPO_ROOT, ".env.example")))
     assert keys == set(SECRET_ENV_VARS)
+
+
+# --- ConfigError (loaders raise, load_config exits) --------------------------
+
+
+def test_read_yaml_raises_config_error_on_malformed_yaml(tmp_path):
+    from config import ConfigError, _read_yaml
+
+    path = tmp_path / "config.yaml"
+    path.write_text("refresh_interval: [unclosed\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match="config.yaml"):
+        _read_yaml(str(path))
+
+
+def test_read_yaml_raises_config_error_on_non_mapping(tmp_path):
+    from config import ConfigError, _read_yaml
+
+    path = tmp_path / "config.yaml"
+    path.write_text("- a\n- b\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match="mapping"):
+        _read_yaml(str(path))
+
+
+def test_resolve_option_raises_config_error_on_invalid_value(clean_env):
+    from config import ConfigError, _resolve_option
+
+    opt = next(o for o in OPTIONS if o.key == "scroll_speed")
+    with pytest.raises(ConfigError, match="scroll_speed"):
+        _resolve_option(opt, {"scroll_speed": "fast"}, "config.yaml")

@@ -77,6 +77,10 @@ OPTIONS = (
 )
 
 
+class ConfigError(Exception):
+    """A config source is unreadable or holds an invalid value."""
+
+
 def _fail(message):
     print(f"ERROR: {message}")
     sys.exit(1)
@@ -93,11 +97,11 @@ def _read_yaml(path):
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
-        _fail(f"Could not parse {os.path.basename(path)}: {e}")
+        raise ConfigError(f"Could not parse {os.path.basename(path)}: {e}")
     if data is None:
         return {}
     if not isinstance(data, dict):
-        _fail(f"{os.path.basename(path)} must be a mapping of option names to values.")
+        raise ConfigError(f"{os.path.basename(path)} must be a mapping of option names to values.")
     return data
 
 
@@ -138,19 +142,21 @@ def _resolve_option(opt, yaml_data, yaml_name):
     try:
         return opt.parse(raw)
     except ValueError as e:
-        _fail(f"Invalid value {raw!r} for '{opt.key}' (from {source}): {e}")
+        raise ConfigError(f"Invalid value {raw!r} for '{opt.key}' (from {source}): {e}")
 
 
 def load_config(config_path=None, env_path=None):
     env_path = env_path or find_dotenv()
     load_dotenv(env_path)
     config_path = config_path or DEFAULT_CONFIG_PATH
-    yaml_data = _read_yaml(config_path)
     yaml_name = os.path.basename(config_path)
-    _check_yaml_keys(yaml_data, config_path)
-    _warn_legacy_dotenv(env_path)
-
-    values = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
+    try:
+        yaml_data = _read_yaml(config_path)
+        _check_yaml_keys(yaml_data, config_path)
+        _warn_legacy_dotenv(env_path)
+        values = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
+    except ConfigError as e:
+        _fail(str(e))
 
     data_file = values["data_file"]
     api_id = os.environ.get("WEBSCORER_API_ID")
