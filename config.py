@@ -182,3 +182,49 @@ def load_config(config_path=None, env_path=None):
             sys.exit(1)
 
     return {"api_id": api_id, "api_token": api_token, **values}
+
+
+Reload = namedtuple("Reload", "config changed restart_required")
+
+
+def _signature(path):
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    return (st.st_mtime_ns, st.st_size)
+
+
+class ConfigWatcher:
+    """Detects config.yaml edits and builds a validated replacement config.
+
+    The environment layer and secrets are not re-read; they keep their startup values.
+    """
+
+    def __init__(self, config_path=None):
+        self.path = config_path or DEFAULT_CONFIG_PATH
+        self._applied = _signature(self.path)
+        self._candidate = None
+
+    def check(self, running):
+        """One watch tick. Returns a Reload when a settled edit changes the config, else None."""
+        sig = _signature(self.path)
+        if sig is None or sig == self._applied:
+            self._candidate = None
+            return None
+        if sig != self._candidate:
+            self._candidate = sig
+            return None
+        self._applied, self._candidate = sig, None
+        return self._reload(running)
+
+    def _reload(self, running):
+        yaml_data = _read_yaml(self.path)
+        _check_yaml_keys(yaml_data, self.path)
+        yaml_name = os.path.basename(self.path)
+        resolved = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
+        live = {opt.key: resolved[opt.key] for opt in OPTIONS if opt.reload == "live"}
+        changed = [key for key, value in live.items() if running.get(key) != value]
+        if not changed:
+            return None
+        return Reload({**running, **live}, changed, [])

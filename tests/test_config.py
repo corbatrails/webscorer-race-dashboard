@@ -514,3 +514,90 @@ def test_refresh_interval_below_one_exits(clean_env, tmp_path, capsys, value):
 
 def test_refresh_interval_of_one_is_accepted(clean_env, tmp_path):
     assert _load(tmp_path, {"refresh_interval": 1})["refresh_interval"] == 1
+
+
+# --- ConfigWatcher (Phase 4 hot-reload) --------------------------------------
+
+_edit_counter = [0]
+
+
+def _edit_config(path, data):
+    """Rewrite config.yaml and force a distinct mtime so signatures always differ."""
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(data, f)
+    _edit_counter[0] += 1
+    stamp = 1_700_000_000_000_000_000 + _edit_counter[0] * 1_000_000_000
+    os.utime(path, ns=(stamp, stamp))
+
+
+def _start_watcher(tmp_path, data):
+    from config import ConfigWatcher
+
+    path = _write_yaml(tmp_path, data)
+    running = load_config(config_path=path, env_path=str(tmp_path / ".env"))
+    return path, running, ConfigWatcher(path)
+
+
+def _settle(watcher, running):
+    """Two ticks: the first notices a new signature, the second sees it settled."""
+    watcher.check(running)
+    return watcher.check(running)
+
+
+def test_watcher_returns_none_when_file_is_unchanged(clean_env, tmp_path):
+    _, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    assert watcher.check(running) is None
+    assert watcher.check(running) is None
+
+
+def test_watcher_applies_live_change_once_file_settles(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _edit_config(path, {"scroll_speed": 200, "color_scheme": "light"})
+
+    assert watcher.check(running) is None
+    result = watcher.check(running)
+
+    assert result.changed == ["scroll_speed", "color_scheme"]
+    assert result.config["scroll_speed"] == 200
+    assert result.config["color_scheme"] == "light"
+    assert result.config["pinned_leaders"] == running["pinned_leaders"]
+    assert result.config["api_token"] == "abc123de"
+    assert running["scroll_speed"] == 150
+    assert watcher.check(result.config) is None
+
+
+def test_watcher_waits_while_file_keeps_changing(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _edit_config(path, {"scroll_speed": 200})
+    assert watcher.check(running) is None
+    _edit_config(path, {"scroll_speed": 250})
+    assert watcher.check(running) is None
+    assert watcher.check(running).config["scroll_speed"] == 250
+
+
+def test_watcher_ignores_edit_with_no_live_change(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _edit_config(path, {"scroll_speed": 150})
+    assert _settle(watcher, running) is None
+
+
+def test_watcher_env_override_keeps_winning(clean_env, tmp_path, monkeypatch):
+    monkeypatch.setenv("SCROLL_SPEED", "300")
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _edit_config(path, {"scroll_speed": 200})
+    assert _settle(watcher, running) is None
+    assert running["scroll_speed"] == 300
+
+
+def test_watcher_ignores_missing_file(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    os.remove(path)
+    assert _settle(watcher, running) is None
+
+
+def test_watcher_warns_about_unknown_keys(clean_env, tmp_path, capsys):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _edit_config(path, {"scroll_speed": 200, "scrol_speed": 5})
+    result = _settle(watcher, running)
+    assert result.config["scroll_speed"] == 200
+    assert "scrol_speed" in capsys.readouterr().err
