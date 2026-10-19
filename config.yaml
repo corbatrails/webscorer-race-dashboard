@@ -6,11 +6,14 @@
 #   built-in defaults < config.yaml < .env < process environment variables
 # Any option below can be overridden by its environment variable (shown in
 # README.md), e.g. REFRESH_INTERVAL=30.
+#
+# Edits to this file apply while the app runs; only race_id and data_file need
+# a restart. An invalid edit is ignored and the last good settings keep running.
 
 # --- Race / data source ---
-# WebScorer race ID. null = prompt for a race at startup.
+# WebScorer race ID. null = prompt for a race at startup. Restart required.
 race_id: null
-# Load results from a local JSON file instead of the API (no credentials needed).
+# Load results from a local JSON file instead of the API (no credentials needed). Restart required.
 data_file: null
 
 # --- Timing ---

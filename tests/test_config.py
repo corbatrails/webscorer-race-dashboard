@@ -364,7 +364,7 @@ def test_committed_config_yaml_lists_every_option_with_defaults(clean_env):
 def test_every_option_declares_reload_mode():
     assert {opt.reload for opt in OPTIONS} <= {"live", "restart"}
     assert {opt.key for opt in OPTIONS if opt.reload == "restart"} == {
-        "race_id", "data_file", "refresh_interval",
+        "race_id", "data_file",
     }
 
 
@@ -474,3 +474,244 @@ def test_env_example_lists_only_secrets():
 
     keys = set(dotenv_values(os.path.join(REPO_ROOT, ".env.example")))
     assert keys == set(SECRET_ENV_VARS)
+
+
+# --- ConfigError (loaders raise, load_config exits) --------------------------
+
+
+def test_read_yaml_raises_config_error_on_malformed_yaml(tmp_path):
+    from config import ConfigError, _read_yaml
+
+    path = tmp_path / "config.yaml"
+    path.write_text("refresh_interval: [unclosed\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match="config.yaml"):
+        _read_yaml(str(path))
+
+
+def test_read_yaml_raises_config_error_on_non_mapping(tmp_path):
+    from config import ConfigError, _read_yaml
+
+    path = tmp_path / "config.yaml"
+    path.write_text("- a\n- b\n", encoding="utf-8")
+    with pytest.raises(ConfigError, match="mapping"):
+        _read_yaml(str(path))
+
+
+def test_resolve_option_raises_config_error_on_invalid_value(clean_env):
+    from config import ConfigError, _resolve_option
+
+    opt = next(o for o in OPTIONS if o.key == "scroll_speed")
+    with pytest.raises(ConfigError, match="scroll_speed"):
+        _resolve_option(opt, {"scroll_speed": "fast"}, "config.yaml")
+
+
+@pytest.mark.parametrize("value", [0, -5])
+def test_refresh_interval_below_one_exits(clean_env, tmp_path, capsys, value):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"refresh_interval": value})
+    assert "refresh_interval" in capsys.readouterr().out
+
+
+def test_refresh_interval_of_one_is_accepted(clean_env, tmp_path):
+    assert _load(tmp_path, {"refresh_interval": 1})["refresh_interval"] == 1
+
+
+# --- ConfigWatcher (Phase 4 hot-reload) --------------------------------------
+
+_edit_counter = [0]
+
+
+def _edit_config(path, data):
+    """Rewrite config.yaml and force a distinct mtime so signatures always differ."""
+    with open(path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(data, f)
+    _edit_counter[0] += 1
+    stamp = 1_700_000_000_000_000_000 + _edit_counter[0] * 1_000_000_000
+    os.utime(path, ns=(stamp, stamp))
+
+
+def _start_watcher(tmp_path, data):
+    from config import ConfigWatcher
+
+    path = _write_yaml(tmp_path, data)
+    running = load_config(config_path=path, env_path=str(tmp_path / ".env"))
+    return path, running, ConfigWatcher(path)
+
+
+def _settle(watcher, running):
+    """Two ticks: the first notices a new signature, the second sees it settled."""
+    watcher.check(running)
+    return watcher.check(running)
+
+
+def test_watcher_returns_none_when_file_is_unchanged(clean_env, tmp_path):
+    _, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    assert watcher.check(running) is None
+    assert watcher.check(running) is None
+
+
+def test_watcher_applies_live_change_once_file_settles(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _edit_config(path, {"scroll_speed": 200, "color_scheme": "light"})
+
+    assert watcher.check(running) is None
+    result = watcher.check(running)
+
+    assert result.changed == ["scroll_speed", "color_scheme"]
+    assert result.config["scroll_speed"] == 200
+    assert result.config["color_scheme"] == "light"
+    assert result.config["pinned_leaders"] == running["pinned_leaders"]
+    assert result.config["api_token"] == "abc123de"
+    assert running["scroll_speed"] == 150
+    assert watcher.check(result.config) is None
+
+
+def test_watcher_waits_while_file_keeps_changing(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _edit_config(path, {"scroll_speed": 200})
+    assert watcher.check(running) is None
+    _edit_config(path, {"scroll_speed": 250})
+    assert watcher.check(running) is None
+    assert watcher.check(running).config["scroll_speed"] == 250
+
+
+def test_watcher_ignores_edit_with_no_live_change(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _edit_config(path, {"scroll_speed": 150})
+    assert _settle(watcher, running) is None
+
+
+def test_watcher_env_override_keeps_winning(clean_env, tmp_path, monkeypatch):
+    monkeypatch.setenv("SCROLL_SPEED", "300")
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _edit_config(path, {"scroll_speed": 200})
+    assert _settle(watcher, running) is None
+    assert running["scroll_speed"] == 300
+
+
+def test_watcher_ignores_missing_file(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    os.remove(path)
+    assert _settle(watcher, running) is None
+
+
+def test_watcher_warns_about_unknown_keys(clean_env, tmp_path, capsys):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _edit_config(path, {"scroll_speed": 200, "scrol_speed": 5})
+    result = _settle(watcher, running)
+    assert result.config["scroll_speed"] == 200
+    assert "scrol_speed" in capsys.readouterr().err
+
+
+def _write_raw(path, text):
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    _edit_counter[0] += 1
+    stamp = 1_700_000_000_000_000_000 + _edit_counter[0] * 1_000_000_000
+    os.utime(path, ns=(stamp, stamp))
+
+
+@pytest.mark.parametrize("text,fragment", [
+    ("scroll_speed: [unclosed\n", "config.yaml"),
+    ("- a\n- b\n", "mapping"),
+    ("scroll_speed: fast\n", "scroll_speed"),
+    ("refresh_interval: 0\n", "refresh_interval"),
+])
+def test_watcher_keeps_last_good_config_on_bad_edit(clean_env, tmp_path, capsys, text, fragment):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _write_raw(path, text)
+
+    assert _settle(watcher, running) is None
+
+    err = capsys.readouterr().err
+    assert "WARNING" in err
+    assert fragment in err
+    assert "keeping" in err
+
+
+def test_watcher_warns_once_per_distinct_error(clean_env, tmp_path, capsys):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _write_raw(path, "scroll_speed: fast\n")
+    for _ in range(4):
+        watcher.check(running)
+    assert capsys.readouterr().err.count("WARNING") == 1
+
+    _write_raw(path, "scroll_speed: fast\n")  # same error, new mtime
+    assert _settle(watcher, running) is None
+    assert capsys.readouterr().err == ""
+
+    _write_raw(path, "pinned_leaders: many\n")  # different error
+    assert _settle(watcher, running) is None
+    assert capsys.readouterr().err.count("WARNING") == 1
+
+
+def test_watcher_recovers_when_file_is_fixed(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _write_raw(path, "scroll_speed: [unclosed\n")
+    assert _settle(watcher, running) is None
+    _edit_config(path, {"scroll_speed": 200})
+    assert _settle(watcher, running).config["scroll_speed"] == 200
+
+
+def test_watcher_warns_again_if_same_error_returns_after_recovery(clean_env, tmp_path, capsys):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _write_raw(path, "scroll_speed: fast\n")
+    _settle(watcher, running)
+    _edit_config(path, {"scroll_speed": 200})
+    _settle(watcher, running)
+    capsys.readouterr()
+    _write_raw(path, "scroll_speed: fast\n")
+    _settle(watcher, running)
+    assert capsys.readouterr().err.count("WARNING") == 1
+
+
+def test_watcher_reports_restart_only_change_without_applying_it(clean_env, tmp_path, capsys):
+    path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
+    _edit_config(path, {"race_id": 222, "data_file": "other.json"})
+
+    result = _settle(watcher, running)
+
+    assert result.restart_required == ["data_file", "race_id"]
+    assert result.changed == []
+    assert result.config == running
+    err = capsys.readouterr().err
+    assert "requires restart" in err
+    assert "other.json" not in err
+    assert _settle(watcher, result.config) is None
+
+
+def test_watcher_warns_once_per_restart_change(clean_env, tmp_path, capsys):
+    path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
+    _edit_config(path, {"race_id": 222})
+    _settle(watcher, running)
+    capsys.readouterr()
+
+    _edit_config(path, {"race_id": 222, "scroll_speed": 150})
+    result = _settle(watcher, running)
+
+    assert result.restart_required == ["race_id"]
+    assert result.changed == ["scroll_speed"]
+    assert "requires restart" not in capsys.readouterr().err
+
+
+def test_watcher_clears_restart_required_when_file_reverts(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
+    _edit_config(path, {"race_id": 222})
+    assert _settle(watcher, running).restart_required == ["race_id"]
+
+    _edit_config(path, {"race_id": 111})
+    result = _settle(watcher, running)
+
+    assert result.restart_required == []
+    assert result.changed == []
+
+
+def test_watcher_ignores_interactively_chosen_race_id(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    running = {**running, "race_id": "999"}
+    _edit_config(path, {"scroll_speed": 200})
+
+    result = _settle(watcher, running)
+
+    assert result.restart_required == []
+    assert result.config["race_id"] == "999"

@@ -62,28 +62,41 @@ A blank environment value (`KEY=`) counts as unset. Every `config.yaml` option c
 
 ### Options
 
-| `config.yaml` key | Environment override | Default | Description |
-|---|---|---|---|
-| `race_id` | `WEBSCORER_RACE_ID` | `null` | Race ID (prompts at startup if omitted) |
-| `data_file` | `DATA_FILE` | `null` | Load results from a local JSON file instead of the API (no credentials needed) |
-| `refresh_interval` | `REFRESH_INTERVAL` | 60 | Seconds between API polls |
-| `summary_display_time` | `SUMMARY_DISPLAY_TIME` | 20 | Seconds the summary page displays |
-| `scroll_speed` | `SCROLL_SPEED` | 100 | Scroll speed in pixels per second |
-| `scroll_pause_time` | `SCROLL_PAUSE_TIME` | 2 | Seconds to pause before and after scrolling |
-| `pinned_leaders` | `PINNED_LEADERS` | 3 | Leader rows pinned at the top |
-| `show_summary` | `SHOW_SUMMARY` | true | Show the summary page |
-| `show_overall_results` | `SHOW_OVERALL_RESULTS` | true | Show Overall result pages |
-| `show_category_results` | `SHOW_CATEGORY_RESULTS` | true | Show category result pages |
-| `show_demographics` | `SHOW_DEMOGRAPHICS` | false | Show the demographics page (age/gender/distance/team breakdown) |
-| `pinned_leaders_on_overall_results` | `PINNED_LEADERS_ON_OVERALL_RESULTS` | false | Pinned leaders row + medal coloring on Overall pages |
-| `overall_results_layout` | `OVERALL_RESULTS_LAYOUT` | standard | Overall table layout: `standard` or `detailed` |
-| `display_unfinished_in_category` | `DISPLAY_UNFINISHED_IN_CATEGORY` | false | Show in-progress category pages before racers finish |
-| `display_unfinished_in_overall` | `DISPLAY_UNFINISHED_IN_OVERALL` | false | Show in-progress Overall pages before racers finish |
-| `chart_bucket_minutes` | `CHART_BUCKET_MINUTES` | 15 | Minutes per bucket in the finish chart |
-| `color_scheme` | `COLOR_SCHEME` | dark | `dark` or `light` |
-| `show_toasts` | `SHOW_TOASTS` | true | Toast notifications when racers finish |
+| `config.yaml` key | Environment override | Default | Description | Reload |
+|---|---|---|---|---|
+| `race_id` | `WEBSCORER_RACE_ID` | `null` | Race ID (prompts at startup if omitted) | restart |
+| `data_file` | `DATA_FILE` | `null` | Load results from a local JSON file instead of the API (no credentials needed) | restart |
+| `refresh_interval` | `REFRESH_INTERVAL` | 60 | Seconds between API polls | live |
+| `summary_display_time` | `SUMMARY_DISPLAY_TIME` | 20 | Seconds the summary page displays | live |
+| `scroll_speed` | `SCROLL_SPEED` | 100 | Scroll speed in pixels per second | live |
+| `scroll_pause_time` | `SCROLL_PAUSE_TIME` | 2 | Seconds to pause before and after scrolling | live |
+| `pinned_leaders` | `PINNED_LEADERS` | 3 | Leader rows pinned at the top | live |
+| `show_summary` | `SHOW_SUMMARY` | true | Show the summary page | live |
+| `show_overall_results` | `SHOW_OVERALL_RESULTS` | true | Show Overall result pages | live |
+| `show_category_results` | `SHOW_CATEGORY_RESULTS` | true | Show category result pages | live |
+| `show_demographics` | `SHOW_DEMOGRAPHICS` | false | Show the demographics page (age/gender/distance/team breakdown) | live |
+| `pinned_leaders_on_overall_results` | `PINNED_LEADERS_ON_OVERALL_RESULTS` | false | Pinned leaders row + medal coloring on Overall pages | live |
+| `overall_results_layout` | `OVERALL_RESULTS_LAYOUT` | standard | Overall table layout: `standard` or `detailed` | live |
+| `display_unfinished_in_category` | `DISPLAY_UNFINISHED_IN_CATEGORY` | false | Show in-progress category pages before racers finish | live |
+| `display_unfinished_in_overall` | `DISPLAY_UNFINISHED_IN_OVERALL` | false | Show in-progress Overall pages before racers finish | live |
+| `chart_bucket_minutes` | `CHART_BUCKET_MINUTES` | 15 | Minutes per bucket in the finish chart | live |
+| `color_scheme` | `COLOR_SCHEME` | dark | `dark` or `light` | live |
+| `show_toasts` | `SHOW_TOASTS` | true | Toast notifications when racers finish | live |
 
 The full set of effective options is printed at startup. Unknown keys in `config.yaml` and secrets placed in it are ignored with a warning.
+
+The `Reload` column says whether a change needs a restart: `live` options apply while the app runs, `restart` options are read once at startup.
+
+### Changing settings while running
+
+The app watches `config.yaml` and applies edits to `live` options without a restart or a blank screen. This is the intended way to adjust the TV during an event.
+
+- **Latency:** a saved edit is picked up in about 2 seconds. The browser follows on its next fetch. The theme and page layout update without a page reload, and the fetch cadence follows `refresh_interval`.
+- **Applied at the next poll:** `show_overall_results`, `show_category_results`, and `chart_bucket_minutes` shape the cached pages, so they take effect on the next API poll (within one `refresh_interval`).
+- **Environment overrides still win.** Editing `config.yaml` for a key that is set in `.env` or the process environment has no effect. `.env` and the API credentials are never reloaded.
+- **Bad edits are rejected whole.** If the file has invalid YAML or an invalid value (including `refresh_interval` below 1), the last good settings keep running and a warning is printed to the console once per distinct error. Fix the file and it is picked up automatically.
+- **Restart-only options:** changes to `race_id` or `data_file` are not applied. The console logs that a restart is needed, and `/api/data` lists the pending keys in `config_restart_required`. The value in use does not change.
+- **`/api/data` fields:** `config_version` starts at 1 and increments each time a live option changes. `config_restart_required` lists restart-only keys edited since startup. `color_scheme` and `refresh_interval` report the active values.
 
 ### Migrating from an `.env`-only setup
 

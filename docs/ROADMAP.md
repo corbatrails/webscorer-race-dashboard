@@ -1,6 +1,6 @@
 # Race Dashboard: Platform & Refactor Roadmap
 
-> Status: **In progress** (Phases 1-2 shipped) · Owner: maintainers · Last updated: 2026-10-18
+> Status: **In progress** (Phases 1, 2 and 4 shipped) · Owner: maintainers · Last updated: 2026-10-19
 >
 > This is a strategic roadmap, not an implementation plan. Each phase below is
 > delivered through the normal workflow: `brainstorming` → a design spec in
@@ -257,6 +257,10 @@ JSON + CSV) and no more.
 ---
 
 ### Phase 4: Live config hot-reload
+**Status: Shipped** (#76, issue #71). `ConfigWatcher` in `config.py` plus a
+watcher thread and atomic config swap in `app.py`. Spec:
+[config hot-reload design](superpowers/specs/2026-10-18-config-hot-reload-design.md).
+
 **Goal:** Config changes take effect mid-run without a restart.
 
 - Watch `config.yaml` (mtime/poll) and re-merge on change.
@@ -382,7 +386,8 @@ flowchart TD
 
 - Finish chart x-axis labels run past 24:00 for finishes after midnight.
   Cosmetic; deferred in the Phase 1 spec.
-- `refresh_interval` is restart-only today. Make it live in Phase 4.
+- ~~`refresh_interval` is restart-only today. Make it live in Phase 4.~~ Resolved
+  in Phase 4.
 
 ---
 

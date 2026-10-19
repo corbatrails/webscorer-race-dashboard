@@ -13,9 +13,10 @@
   var genderChart = null;
   var distanceChart = null;
   var hasRenderedPage = false;
+  var configVersion = null;
 
   function fetchData() {
-    fetch("/api/data")
+    return fetch("/api/data")
       .then(function (r) { return r.json(); })
       .then(function (data) {
         lastData = data;
@@ -34,8 +35,13 @@
         var previousTotalPages = getTotalPages();
         buildPageList(data);
         detectNewFinishers(data);
-        // Only render on first data arrival; ongoing animations pick up new data on next advance
-        if (!hasRenderedPage || (previousTotalPages === 0 && getTotalPages() > 0)) {
+        if (data.color_scheme) {
+          document.body.dataset.theme = data.color_scheme;
+        }
+        var configChanged = configVersion !== null && data.config_version !== configVersion;
+        configVersion = data.config_version;
+        // Render on first data arrival or a settings change; ongoing animations pick up new data on next advance
+        if (!hasRenderedPage || (previousTotalPages === 0 && getTotalPages() > 0) || configChanged) {
           renderCurrentPage();
         }
       })
@@ -749,14 +755,10 @@
     }
   }
 
-  // Fast-poll until data arrives, then switch to normal refresh interval
-  fetchData();
-  var startupPoll = setInterval(function () {
-    if (lastData && !lastData.waiting) {
-      clearInterval(startupPoll);
-      setInterval(fetchData, 60 * 1000);
-    } else {
-      fetchData();
-    }
-  }, 5000);
+  // Fast-poll until data arrives, then follow the server's refresh interval
+  function scheduleNextFetch() {
+    var seconds = lastData && !lastData.waiting ? (lastData.refresh_interval || 60) : 5;
+    setTimeout(function () { fetchData().then(scheduleNextFetch); }, seconds * 1000);
+  }
+  fetchData().then(scheduleNextFetch);
 })();
