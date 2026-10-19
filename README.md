@@ -64,8 +64,9 @@ A blank environment value (`KEY=`) counts as unset. Every `config.yaml` option c
 
 | `config.yaml` key | Environment override | Default | Description |
 |---|---|---|---|
+| `source` | `RACE_SOURCE` | `webscorer` | Ingestion provider: `webscorer` or `csv` (restart to change) |
 | `race_id` | `WEBSCORER_RACE_ID` | `null` | Race ID (prompts at startup if omitted) |
-| `data_file` | `DATA_FILE` | `null` | Load results from a local JSON file instead of the API (no credentials needed) |
+| `data_file` | `DATA_FILE` | `null` | File the provider reads instead of the network: a WebScorer JSON dump, or the CSV for `source: csv` (no credentials needed) |
 | `refresh_interval` | `REFRESH_INTERVAL` | 60 | Seconds between API polls |
 | `summary_display_time` | `SUMMARY_DISPLAY_TIME` | 20 | Seconds the summary page displays |
 | `scroll_speed` | `SCROLL_SPEED` | 100 | Scroll speed in pixels per second |

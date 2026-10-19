@@ -166,6 +166,7 @@ def _format_config_lines(config, race_name, race_date):
     return [
         "",
         "--- Configuration ---",
+        f"  Source:                         {config.get('source', 'webscorer')}",
         f"  Data file:                      {config.get('data_file') or '-'}",
         f"  API ID:                         {config.get('api_id') or '-'}",
         f"  API Token:                      {_mask_token(config.get('api_token'))}",

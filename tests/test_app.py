@@ -294,6 +294,7 @@ def test_format_config_lines_includes_all_config_options():
     from app import _format_config_lines
 
     config = {
+        "source": "webscorer",
         "data_file": "api_dump.json",
         "api_id": "12345",
         "api_token": "abc123de",
@@ -319,6 +320,7 @@ def test_format_config_lines_includes_all_config_options():
     output = "\n".join(_format_config_lines(config, "Race Name", "Race Date"))
 
     expected_labels = [
+        "Source:",
         "Data file:",
         "API ID:",
         "API Token:",

@@ -364,8 +364,75 @@ def test_committed_config_yaml_lists_every_option_with_defaults(clean_env):
 def test_every_option_declares_reload_mode():
     assert {opt.reload for opt in OPTIONS} <= {"live", "restart"}
     assert {opt.key for opt in OPTIONS if opt.reload == "restart"} == {
-        "race_id", "data_file", "refresh_interval",
+        "source", "race_id", "data_file", "refresh_interval",
     }
+
+
+# --- source option and per-provider credentials ------------------------------
+
+
+def _stub_provider(**overrides):
+    from providers.base import Provider
+    fields = dict(
+        name="stub", required_secrets={}, requires_data_file=False,
+        fetch=lambda config, secrets: None, normalize=lambda raw: None,
+    )
+    fields.update(overrides)
+    return Provider(**fields)
+
+
+def test_source_defaults_to_webscorer(clean_env, tmp_path):
+    assert _load(tmp_path)["source"] == "webscorer"
+
+
+def test_source_from_config_yaml(clean_env, tmp_path, monkeypatch):
+    import providers
+    monkeypatch.setitem(providers._REGISTRY, "stub", _stub_provider())
+    assert _load(tmp_path, {"source": "stub"})["source"] == "stub"
+
+
+def test_source_env_overrides_config_yaml_and_is_case_insensitive(clean_env, tmp_path, monkeypatch):
+    import providers
+    monkeypatch.setitem(providers._REGISTRY, "stub", _stub_provider())
+    monkeypatch.setenv("RACE_SOURCE", " STUB ")
+    assert _load(tmp_path, {"source": "webscorer"})["source"] == "stub"
+
+
+def test_unknown_source_exits_naming_option_and_valid_names(clean_env, tmp_path, capsys):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"source": "nope"})
+    out = capsys.readouterr().out
+    assert out.startswith("ERROR:")
+    assert "source" in out and "webscorer" in out
+
+
+def test_provider_requiring_data_file_exits_without_one(clean_env, tmp_path, monkeypatch, capsys):
+    import providers
+    monkeypatch.setitem(providers._REGISTRY, "stub", _stub_provider(requires_data_file=True))
+    monkeypatch.delenv("WEBSCORER_API_ID")
+    monkeypatch.delenv("WEBSCORER_API_TOKEN")
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"source": "stub"})
+    out = capsys.readouterr().out
+    assert "requires data_file" in out
+    assert "WEBSCORER_API" not in out
+
+
+def test_provider_without_secrets_needs_no_credentials(clean_env, tmp_path, monkeypatch):
+    import providers
+    monkeypatch.setitem(providers._REGISTRY, "stub", _stub_provider())
+    monkeypatch.delenv("WEBSCORER_API_ID")
+    monkeypatch.delenv("WEBSCORER_API_TOKEN")
+    cfg = _load(tmp_path, {"source": "stub"})
+    assert cfg["api_id"] is None and cfg["api_token"] is None
+
+
+@pytest.mark.parametrize("missing", ["WEBSCORER_API_ID", "WEBSCORER_API_TOKEN"])
+def test_webscorer_missing_credential_message_is_unchanged(clean_env, tmp_path, monkeypatch, capsys, missing):
+    monkeypatch.delenv(missing)
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {})
+    assert capsys.readouterr().out.strip() == f"ERROR: {missing} is required. Set it in .env file."
 
 
 # --- validation, warnings, legacy back-compat -------------------------------
