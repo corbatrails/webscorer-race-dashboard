@@ -503,3 +503,14 @@ def test_resolve_option_raises_config_error_on_invalid_value(clean_env):
     opt = next(o for o in OPTIONS if o.key == "scroll_speed")
     with pytest.raises(ConfigError, match="scroll_speed"):
         _resolve_option(opt, {"scroll_speed": "fast"}, "config.yaml")
+
+
+@pytest.mark.parametrize("value", [0, -5])
+def test_refresh_interval_below_one_exits(clean_env, tmp_path, capsys, value):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"refresh_interval": value})
+    assert "refresh_interval" in capsys.readouterr().out
+
+
+def test_refresh_interval_of_one_is_accepted(clean_env, tmp_path):
+    assert _load(tmp_path, {"refresh_interval": 1})["refresh_interval"] == 1
