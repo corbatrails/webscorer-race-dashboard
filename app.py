@@ -1,4 +1,5 @@
 import json
+import sys
 import threading
 import time
 from datetime import datetime
@@ -6,7 +7,7 @@ from flask import Flask, render_template, jsonify
 from webscorer_client import fetch_race_list, fetch_race_results
 from data_processing import process_race_data, build_pages, build_finish_chart_data, build_demographics_data
 from normalizer import normalize_webscorer
-from config import load_config
+from config import ConfigWatcher, load_config
 
 _cache = {
     "pages": [],
@@ -143,6 +144,29 @@ def _poll_loop(app, race_id, interval, sleep_first=False):
         time.sleep(interval)
 
 
+def _watch_config_once(app, watcher):
+    try:
+        reload = watcher.check(app.config["dashboard"])
+        if reload is not None:
+            apply_config_reload(app, reload)
+            if reload.changed:
+                print(f"Config reloaded: {', '.join(reload.changed)}")
+    except Exception as e:
+        print(f"WARNING: config watcher error: {e}", file=sys.stderr)
+
+
+def _watch_config(app, watcher):
+    while True:
+        _watch_config_once(app, watcher)
+        time.sleep(1)
+
+
+def _start_config_watcher(app):
+    watcher = ConfigWatcher()
+    t = threading.Thread(target=_watch_config, args=(app, watcher), daemon=True)
+    t.start()
+
+
 def select_race(api_id, api_token):
     try:
         races = fetch_race_list(api_id, api_token)
@@ -223,8 +247,10 @@ def main():
 
     # Priming poll already fetched, so the loop waits one interval before its first poll
     _start_polling(app, sleep_first=True)
+    _start_config_watcher(app)
     for line in _format_config_lines(config, race_name, race_date):
         print(line)
+    print("\nConfig: live options reload from config.yaml; changes to race_id/data_file need a restart.")
     print(f"\nDashboard running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=False)
 

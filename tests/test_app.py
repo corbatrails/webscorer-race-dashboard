@@ -312,8 +312,10 @@ def test_main_initial_load_populates_demographics_and_finish_chart(
     assert "demographics" in types
     assert finish_chart is not None
     mock_fetch.assert_not_called()
-    assert "Race Name:                      -" not in capsys.readouterr().out
-    mock_thread.return_value.start.assert_called_once()
+    out = capsys.readouterr().out
+    assert "Race Name:                      -" not in out
+    assert mock_thread.return_value.start.call_count == 2
+    assert "live options reload from config.yaml" in out
     mock_run.assert_called_once()
 
 
@@ -390,3 +392,57 @@ def test_apply_config_reload_wakes_poll_loop_only_when_interval_changes(app):
 
     app_module.apply_config_reload(app, _reload(app, refresh_interval=10))
     assert app_module._config_changed.is_set()
+
+
+# --- Config watcher thread (Phase 4) -----------------------------------------
+
+
+def test_watch_config_once_applies_reload(app, client, capsys):
+    from app import _watch_config_once
+
+    watcher = MagicMock()
+    watcher.check.return_value = _reload(app, scroll_speed=250)
+
+    _watch_config_once(app, watcher)
+
+    watcher.check.assert_called_once()
+    assert client.get("/api/data").get_json()["scroll_speed"] == 250
+    assert "Config reloaded: scroll_speed" in capsys.readouterr().out
+
+
+def test_watch_config_once_passes_running_config_and_ignores_none(app, client):
+    from app import _watch_config_once
+
+    running = app.config["dashboard"]
+    watcher = MagicMock()
+    watcher.check.return_value = None
+
+    _watch_config_once(app, watcher)
+
+    watcher.check.assert_called_once_with(running)
+    assert client.get("/api/data").get_json()["config_version"] == 1
+
+
+def test_watch_config_once_survives_unexpected_exception(app, capsys):
+    from app import _watch_config_once
+
+    watcher = MagicMock()
+    watcher.check.side_effect = RuntimeError("boom")
+
+    _watch_config_once(app, watcher)
+
+    assert "boom" in capsys.readouterr().err
+
+
+@patch("app.time.sleep")
+@patch("app._watch_config_once")
+def test_watch_config_loop_ticks_every_second(mock_once, mock_sleep):
+    from app import _watch_config
+
+    mock_sleep.side_effect = [None, StopIteration]
+    with pytest.raises(StopIteration):
+        _watch_config("app", "watcher")
+
+    assert mock_once.call_count == 2
+    mock_once.assert_called_with("app", "watcher")
+    assert mock_sleep.call_args_list[0].args == (1,)
