@@ -307,3 +307,50 @@ def test_provider_declaration():
     assert PROVIDER.requires_data_file is True
     assert PROVIDER.list_races is None
     assert PROVIDER.fetch is fetch and PROVIDER.normalize is normalize
+
+
+# --- sample file through the real pipeline ----------------------------------
+
+import os
+
+SAMPLE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "sample-results.csv")
+
+
+def _sample_snapshot():
+    return PROVIDER.normalize(PROVIDER.fetch({"data_file": SAMPLE}, {}))
+
+
+def test_sample_file_metadata_and_counts():
+    snapshot = _sample_snapshot()
+    assert snapshot["race"]["name"] == "Sample Gravel Grinder"
+    assert snapshot["race"]["date"] == "Saturday, June 6, 2026"
+    assert snapshot["race"]["start_seconds"] == 8 * 3600
+    statuses = [r["status"] for r in snapshot["racers"]]
+    assert len(statuses) == 21
+    assert {"FINISHED", "DNF", "DNS", "DSQ", "IN_PROGRESS"} <= set(statuses)
+
+
+def test_sample_file_renders_overall_and_category_pages():
+    from data_processing import build_demographics_data, build_pages, process_race_data
+
+    snapshot = _sample_snapshot()
+    data = process_race_data(snapshot)
+    pages = build_pages(data, build_demographics_data(snapshot))
+    by_title = {p["title"]: p for p in pages if p["type"] == "category"}
+    assert pages[0]["type"] == "summary"
+    assert pages[0]["data"]["total_racers"] == 21
+    assert by_title["Overall - 40 mile"]["tier"] == "overall"
+    assert by_title["Overall - 20 mile"]["tier"] == "overall"
+    assert by_title["Men 40-49"]["tier"] == "category"
+    leader = by_title["Overall - 40 mile"]["racers"][0]
+    assert (leader["Place"], leader["Name"]) == ("1", "Luis Ortega")
+    names = [r["Name"] for r in by_title["Men 40-49"]["racers"]]
+    assert "Okafor, Daniel" in names
+
+
+def test_sample_file_feeds_the_finish_chart():
+    from data_processing import build_finish_chart_data
+
+    chart = build_finish_chart_data(_sample_snapshot(), 15)
+    assert [d["label"] for d in chart["datasets"]] == ["40 mile", "20 mile"]
+    assert sum(sum(d["data"]) for d in chart["datasets"]) == 14
