@@ -196,6 +196,91 @@ def test_main_prompts_for_webscorer_without_race_id_or_data_file(
     mock_select.assert_called_once()
 
 
+# --- source: csv end to end (no WebScorer credentials, no network) ----------
+
+SAMPLE_CSV = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "sample-results.csv")
+
+
+def _csv_config(tmp_path, data_file=SAMPLE_CSV):
+    import yaml
+    from config import load_config
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(yaml.safe_dump({"source": "csv", "data_file": data_file}), encoding="utf-8")
+    return load_config(config_path=str(config_path), env_path=str(tmp_path / ".env"))
+
+
+@pytest.fixture
+def no_credentials(monkeypatch):
+    for name in ("WEBSCORER_API_ID", "WEBSCORER_API_TOKEN", "RACE_SOURCE", "DATA_FILE"):
+        monkeypatch.delenv(name, raising=False)
+
+
+def test_csv_source_serves_pages_without_credentials(no_credentials, tmp_path):
+    cfg = _csv_config(tmp_path)
+    assert cfg["api_id"] is None and cfg["api_token"] is None
+    application = create_app(cfg, start_polling=False)
+    with patch("requests.get", side_effect=AssertionError("network used")):
+        import app as app_module
+        app_module.poll_once(application)
+    data = json.loads(application.test_client().get("/api/data").data)
+    assert data["waiting"] is False and data["is_stale"] is False and data["error"] is None
+    assert data["race_name"] == "Sample Gravel Grinder"
+    titles = [p["title"] for p in data["pages"]]
+    assert titles[0] == "Summary"
+    assert "Overall - 40 mile" in titles and "Men 40-49" in titles
+    assert data["finish_chart"]["datasets"]
+
+
+def test_bad_csv_marks_stale_and_keeps_previous_pages(no_credentials, tmp_path):
+    import app as app_module
+    data_file = tmp_path / "results.csv"
+    data_file.write_text("bib,name,time\n1,Alice,1:00:00\n", encoding="utf-8")
+    application = create_app(_csv_config(tmp_path, str(data_file)), start_polling=False)
+    app_module.poll_once(application)
+    good_pages = list(app_module._cache["pages"])
+    assert good_pages
+
+    data_file.write_text("bib,name,time\n1,Alice,soon\n", encoding="utf-8")
+    app_module.poll_once(application)
+    data = json.loads(application.test_client().get("/api/data").data)
+    assert data["is_stale"] is True
+    assert "row 2, column 'time'" in data["error"]
+    assert data["pages"] == good_pages
+
+    data_file.write_text("bib,name,time\n1,Alice,1:00:00\n", encoding="utf-8")
+    app_module.poll_once(application)
+    assert app_module._cache["is_stale"] is False and app_module._cache["error"] is None
+
+
+@patch("app.select_race")
+@patch("app.threading.Thread")
+@patch("app.Flask.run")
+@patch("providers.webscorer.fetch_race_results")
+@patch("providers.webscorer.fetch_race_list")
+@patch("app.load_config")
+def test_main_with_csv_source_never_prompts_or_calls_webscorer(
+    mock_load_config, mock_list, mock_fetch, mock_run, mock_thread, mock_select
+):
+    import app as app_module
+    mock_load_config.return_value = _main_config(source="csv", data_file=SAMPLE_CSV)
+    app_module.main()
+    mock_select.assert_not_called()
+    mock_list.assert_not_called()
+    mock_fetch.assert_not_called()
+    assert app_module._cache["race_name"] == "Sample Gravel Grinder"
+    assert app_module._cache["pages"]
+
+
+def test_webscorer_source_still_requires_credentials(no_credentials, tmp_path, capsys):
+    import yaml
+    from config import load_config
+    config_path = tmp_path / "config.yaml"
+    config_path.write_text(yaml.safe_dump({"source": "webscorer"}), encoding="utf-8")
+    with pytest.raises(SystemExit):
+        load_config(config_path=str(config_path), env_path=str(tmp_path / ".env"))
+    assert "WEBSCORER_API_ID is required" in capsys.readouterr().out
+
+
 @patch("providers.webscorer.fetch_race_results")
 def test_api_data_includes_finish_chart(mock_fetch, app, client):
     """finish_chart key is present in /api/data response."""
