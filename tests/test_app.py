@@ -81,7 +81,7 @@ def test_index_includes_data_theme(client):
     assert b'data-theme="dark"' in response.data
 
 
-@patch("app.fetch_race_results")
+@patch("providers.webscorer.fetch_race_results")
 def test_api_data_returns_json(mock_fetch, app, client):
     mock_fetch.return_value = MOCK_RACE_RESULTS
     # Simulate a successful poll
@@ -96,7 +96,7 @@ def test_api_data_returns_json(mock_fetch, app, client):
     assert data["pages"][0]["type"] == "summary"
 
 
-@patch("app.fetch_race_results")
+@patch("providers.webscorer.fetch_race_results")
 def test_api_data_before_first_poll(mock_fetch, client):
     response = client.get("/api/data")
     assert response.status_code == 200
@@ -105,19 +105,98 @@ def test_api_data_before_first_poll(mock_fetch, client):
     assert data["waiting"] is True
 
 
-@patch("app.fetch_race_list")
+@patch("providers.webscorer.fetch_race_list")
 def test_select_race_interactive(mock_fetch_list):
     mock_fetch_list.return_value = [
         {"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"},
         {"RaceId": 200, "Name": "Trail 10K", "Date": "2026-08-07", "Sport": "Running"},
     ]
     from app import select_race
+    from providers import get_provider
     with patch("builtins.input", return_value="1"):
-        race_id = select_race("12345", "abc123de")
+        race_id = select_race(get_provider("webscorer"), {"api_id": "12345", "api_token": "abc123de"})
     assert race_id == "100"
 
 
-@patch("app.fetch_race_results")
+def _main_config(**overrides):
+    from config import OPTIONS
+    cfg = {"api_id": None, "api_token": None, **{opt.key: opt.default for opt in OPTIONS}}
+    cfg.update(overrides)
+    return cfg
+
+
+def _stub_provider(**overrides):
+    from normalizer import normalize_webscorer
+    from providers.base import Provider
+    fields = dict(
+        name="stub",
+        required_secrets={"api_token": "STUB_TOKEN"},
+        requires_data_file=False,
+        fetch=MagicMock(return_value=MOCK_RACE_RESULTS),
+        normalize=normalize_webscorer,
+    )
+    fields.update(overrides)
+    return Provider(**fields)
+
+
+def test_poll_once_uses_provider_named_by_source(app, monkeypatch):
+    import app as app_module
+    import providers
+    stub = _stub_provider()
+    monkeypatch.setitem(providers._REGISTRY, "stub", stub)
+    app.config["dashboard"]["source"] = "stub"
+    with app.app_context():
+        app_module.poll_once(app)
+    stub.fetch.assert_called_once()
+    config, secrets = stub.fetch.call_args.args
+    assert config is app.config["dashboard"]
+    assert secrets == {"api_token": "abc123de"}
+    assert app_module._cache["race_name"] == "Morning 5K"
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_poll_once_defaults_source_to_webscorer(mock_fetch, app):
+    import app as app_module
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    assert "source" not in app.config["dashboard"]
+    with app.app_context():
+        app_module.poll_once(app)
+    mock_fetch.assert_called_once_with("100", "12345", "abc123de")
+
+
+@patch("app.select_race")
+@patch("app.threading.Thread")
+@patch("app.Flask.run")
+@patch("app.load_config")
+def test_main_skips_race_prompt_without_list_races(
+    mock_load_config, mock_run, mock_thread, mock_select, monkeypatch
+):
+    import app as app_module
+    import providers
+    stub = _stub_provider(list_races=None)
+    monkeypatch.setitem(providers._REGISTRY, "stub", stub)
+    mock_load_config.return_value = _main_config(source="stub", api_token="t")
+    app_module.main()
+    mock_select.assert_not_called()
+
+
+@patch("app.time.sleep")
+@patch("app.select_race", return_value="100")
+@patch("app.threading.Thread")
+@patch("app.Flask.run")
+@patch("providers.webscorer.fetch_race_results")
+@patch("app.load_config")
+def test_main_prompts_for_webscorer_without_race_id_or_data_file(
+    mock_load_config, mock_fetch, mock_run, mock_thread, mock_select, mock_sleep
+):
+    import app as app_module
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    mock_load_config.return_value = _main_config(api_id="1", api_token="t")
+    app_module.main()
+    mock_select.assert_called_once()
+
+
+@patch("providers.webscorer.fetch_race_results")
 def test_api_data_includes_finish_chart(mock_fetch, app, client):
     """finish_chart key is present in /api/data response."""
     mock_fetch.return_value = MOCK_RACE_RESULTS
@@ -131,7 +210,7 @@ def test_api_data_includes_finish_chart(mock_fetch, app, client):
     assert "finish_chart" in data
 
 
-@patch("app.fetch_race_results")
+@patch("providers.webscorer.fetch_race_results")
 def test_api_data_includes_pinned_leaders_on_overall_results(mock_fetch, app, client):
     mock_fetch.return_value = MOCK_RACE_RESULTS
     with app.app_context():
@@ -142,7 +221,7 @@ def test_api_data_includes_pinned_leaders_on_overall_results(mock_fetch, app, cl
     assert data["pinned_leaders_on_overall_results"] is False
 
 
-@patch("app.fetch_race_results")
+@patch("providers.webscorer.fetch_race_results")
 def test_api_data_includes_overall_results_layout(mock_fetch, app, client):
     mock_fetch.return_value = MOCK_RACE_RESULTS
     with app.app_context():
@@ -153,7 +232,7 @@ def test_api_data_includes_overall_results_layout(mock_fetch, app, client):
     assert data["overall_results_layout"] == "detailed"
 
 
-@patch("app.fetch_race_results")
+@patch("providers.webscorer.fetch_race_results")
 def test_api_data_includes_show_demographics_default_false(mock_fetch, app, client):
     mock_fetch.return_value = MOCK_RACE_RESULTS
     with app.app_context():
@@ -173,7 +252,7 @@ def test_api_data_show_demographics_true_when_configured():
     assert data["show_demographics"] is True
 
 
-@patch("app.fetch_race_results")
+@patch("providers.webscorer.fetch_race_results")
 def test_poll_once_includes_demographics_page(mock_fetch, app, client):
     mock_fetch.return_value = MOCK_RACE_RESULTS
     with app.app_context():
@@ -291,7 +370,7 @@ def test_format_config_lines_covers_every_registry_option():
 
 @patch("app.threading.Thread")
 @patch("app.Flask.run")
-@patch("app.fetch_race_results")
+@patch("providers.webscorer.fetch_race_results")
 @patch("app.load_config")
 def test_main_initial_load_populates_demographics_and_finish_chart(
     mock_load_config, mock_fetch, mock_run, mock_thread, capsys
