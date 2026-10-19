@@ -663,3 +663,55 @@ def test_watcher_warns_again_if_same_error_returns_after_recovery(clean_env, tmp
     _write_raw(path, "scroll_speed: fast\n")
     _settle(watcher, running)
     assert capsys.readouterr().err.count("WARNING") == 1
+
+
+def test_watcher_reports_restart_only_change_without_applying_it(clean_env, tmp_path, capsys):
+    path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
+    _edit_config(path, {"race_id": 222, "data_file": "other.json"})
+
+    result = _settle(watcher, running)
+
+    assert result.restart_required == ["data_file", "race_id"]
+    assert result.changed == []
+    assert result.config == running
+    err = capsys.readouterr().err
+    assert "requires restart" in err
+    assert "other.json" not in err
+    assert _settle(watcher, result.config) is None
+
+
+def test_watcher_warns_once_per_restart_change(clean_env, tmp_path, capsys):
+    path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
+    _edit_config(path, {"race_id": 222})
+    _settle(watcher, running)
+    capsys.readouterr()
+
+    _edit_config(path, {"race_id": 222, "scroll_speed": 150})
+    result = _settle(watcher, running)
+
+    assert result.restart_required == ["race_id"]
+    assert result.changed == ["scroll_speed"]
+    assert "requires restart" not in capsys.readouterr().err
+
+
+def test_watcher_clears_restart_required_when_file_reverts(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
+    _edit_config(path, {"race_id": 222})
+    assert _settle(watcher, running).restart_required == ["race_id"]
+
+    _edit_config(path, {"race_id": 111})
+    result = _settle(watcher, running)
+
+    assert result.restart_required == []
+    assert result.changed == []
+
+
+def test_watcher_ignores_interactively_chosen_race_id(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    running = {**running, "race_id": "999"}
+    _edit_config(path, {"scroll_speed": 200})
+
+    result = _settle(watcher, running)
+
+    assert result.restart_required == []
+    assert result.config["race_id"] == "999"

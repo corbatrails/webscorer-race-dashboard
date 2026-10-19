@@ -206,6 +206,20 @@ class ConfigWatcher:
         self._applied = _signature(self.path)
         self._candidate = None
         self._last_error = None
+        self._pending = []
+        self._baseline = self._file_restart_values()
+
+    def _file_restart_values(self):
+        """Restart-key values config.yaml resolves to now, or None if it cannot be read."""
+        try:
+            yaml_data = _read_yaml(self.path)
+            name = os.path.basename(self.path)
+            return {
+                opt.key: _resolve_option(opt, yaml_data, name)
+                for opt in OPTIONS if opt.reload == "restart"
+            }
+        except ConfigError:
+            return None
 
     def check(self, running):
         """One watch tick. Returns a Reload when a settled edit changes the config, else None."""
@@ -234,6 +248,15 @@ class ConfigWatcher:
         resolved = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
         live = {opt.key: resolved[opt.key] for opt in OPTIONS if opt.reload == "live"}
         changed = [key for key, value in live.items() if running.get(key) != value]
-        if not changed:
+        restart_keys = [opt.key for opt in OPTIONS if opt.reload == "restart"]
+        if self._baseline is None:
+            self._baseline = {key: running.get(key) for key in restart_keys}
+        pending = sorted(key for key in restart_keys if resolved[key] != self._baseline[key])
+        newly_pending = [key for key in pending if key not in self._pending]
+        if newly_pending:
+            _warn(f"{', '.join(newly_pending)} changed in {yaml_name} and requires restart.")
+        pending_changed = pending != self._pending
+        self._pending = pending
+        if not changed and not pending_changed:
             return None
-        return Reload({**running, **live}, changed, [])
+        return Reload({**running, **live}, changed, pending)
