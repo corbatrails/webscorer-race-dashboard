@@ -1,0 +1,564 @@
+{
+ "chart_bucket_minutes": 15,
+ "display_unfinished_in_category": false,
+ "display_unfinished_in_overall": false,
+ "error": null,
+ "finish_chart": {
+  "datasets": [
+   {
+    "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "label": "Long Course (88 miles)"
+   },
+   {
+    "data": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "label": "Mid Course (45 miles)"
+   },
+   {
+    "data": [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+    "label": "Short Course (28 miles)"
+   }
+  ],
+  "labels": ["14:00", "14:15", "14:30", "14:45", "15:00", "15:15", "15:30", "15:45", "16:00", "16:15", "16:30", "16:45", "17:00", "17:15", "17:30", "17:45", "18:00", "18:15", "18:30", "18:45", "19:00", "19:15", "19:30", "19:45", "20:00", "20:15", "20:30", "20:45", "21:00", "21:15", "21:30", "21:45", "22:00", "22:15", "22:30", "22:45", "23:00", "23:15", "23:30", "23:45", "24:00"]
+ },
+ "is_stale": false,
+ "overall_results_layout": "standard",
+ "pages": [
+  {
+   "data": {
+    "categories": [
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "8001", "Name": "Blake Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "8002", "Name": "Casey Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "8014", "Name": "Drew Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Female", "CategoryPlace": "-"}
+      ],
+      "name": "Long Course (88 miles)",
+      "racers": [
+       {"Place": "-", "Bib": "8001", "Name": "Blake Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "8002", "Name": "Casey Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "8014", "Name": "Drew Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "8017", "Name": "Emery Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Female", "CategoryPlace": "-"}
+      ],
+      "tier": "overall"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "8014", "Name": "Drew Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Female"}
+      ],
+      "name": "Adult Long Course (age 18-44) Female",
+      "racers": [
+       {"Place": "-", "Bib": "8014", "Name": "Drew Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "8002", "Name": "Casey Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Male"}
+      ],
+      "name": "Adult Long Course (age 18-44) Male",
+      "racers": [
+       {"Place": "-", "Bib": "8002", "Name": "Casey Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "8017", "Name": "Emery Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Female"}
+      ],
+      "name": "Masters Long Course (age 45+) Female",
+      "racers": [
+       {"Place": "-", "Bib": "8017", "Name": "Emery Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "8001", "Name": "Blake Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Male"}
+      ],
+      "name": "Masters Long Course (age 45+) Male",
+      "racers": [
+       {"Place": "-", "Bib": "8001", "Name": "Blake Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "4001", "Name": "Finley Alder", "Time": "-", "TeamName": "Team A", "Category": "Masters Mid Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4002", "Name": "Gray Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4004", "Name": "Harper Alder", "Time": "-", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Female", "CategoryPlace": "-"}
+      ],
+      "name": "Mid Course (45 miles)",
+      "racers": [
+       {"Place": "-", "Bib": "4001", "Name": "Finley Alder", "Time": "-", "TeamName": "Team A", "Category": "Masters Mid Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4002", "Name": "Gray Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4004", "Name": "Harper Alder", "Time": "-", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4011", "Name": "Indigo Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4040", "Name": "Jordan Alder", "Time": "-", "TeamName": "", "Category": "E-bike Mid Course Open", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4093", "Name": "Kai Alder", "Time": "-", "TeamName": "Team B", "Category": "Youth Mid Course (under 18)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4186", "Name": "Logan Alder", "Time": "-", "TeamName": "", "Category": "Youth Mid Course (under 18)", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4243", "Name": "Morgan Alder", "Time": "-", "TeamName": "Team C", "Category": "Masters Mid Course (age 45+)", "Gender": "Female/Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4037", "Name": "Noel Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "4173", "Name": "Oakley Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"}
+      ],
+      "tier": "overall"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "4011", "Name": "Indigo Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Female"}
+      ],
+      "name": "Adult Mid Course (age 18-44) Female",
+      "racers": [
+       {"Place": "-", "Bib": "4011", "Name": "Indigo Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "4002", "Name": "Gray Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Male"}
+      ],
+      "name": "Adult Mid Course (age 18-44) Male",
+      "racers": [
+       {"Place": "-", "Bib": "4002", "Name": "Gray Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "4040", "Name": "Jordan Alder", "Time": "-", "TeamName": "", "Category": "E-bike Mid Course Open", "Gender": "Male"}
+      ],
+      "name": "E-bike Mid Course Open Male",
+      "racers": [
+       {"Place": "-", "Bib": "4040", "Name": "Jordan Alder", "Time": "-", "TeamName": "", "Category": "E-bike Mid Course Open", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "4004", "Name": "Harper Alder", "Time": "-", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Female"}
+      ],
+      "name": "Masters Mid Course (age 45+) Female",
+      "racers": [
+       {"Place": "-", "Bib": "4004", "Name": "Harper Alder", "Time": "-", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "4001", "Name": "Finley Alder", "Time": "-", "TeamName": "Team A", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"},
+       {"Place": "-", "Bib": "4037", "Name": "Noel Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"},
+       {"Place": "-", "Bib": "4173", "Name": "Oakley Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"}
+      ],
+      "name": "Masters Mid Course (age 45+) Male",
+      "racers": [
+       {"Place": "-", "Bib": "4001", "Name": "Finley Alder", "Time": "-", "TeamName": "Team A", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"},
+       {"Place": "-", "Bib": "4037", "Name": "Noel Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"},
+       {"Place": "-", "Bib": "4173", "Name": "Oakley Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "4243", "Name": "Morgan Alder", "Time": "-", "TeamName": "Team C", "Category": "Masters Mid Course (age 45+)", "Gender": "Female/Male"}
+      ],
+      "name": "Masters Mid Course (age 45+) Female/Male",
+      "racers": [
+       {"Place": "-", "Bib": "4243", "Name": "Morgan Alder", "Time": "-", "TeamName": "Team C", "Category": "Masters Mid Course (age 45+)", "Gender": "Female/Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "4186", "Name": "Logan Alder", "Time": "-", "TeamName": "", "Category": "Youth Mid Course (under 18)", "Gender": "Female"}
+      ],
+      "name": "Youth Mid Course (under 18) Female",
+      "racers": [
+       {"Place": "-", "Bib": "4186", "Name": "Logan Alder", "Time": "-", "TeamName": "", "Category": "Youth Mid Course (under 18)", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "4093", "Name": "Kai Alder", "Time": "-", "TeamName": "Team B", "Category": "Youth Mid Course (under 18)", "Gender": "Male"}
+      ],
+      "name": "Youth Mid Course (under 18) Male",
+      "racers": [
+       {"Place": "-", "Bib": "4093", "Name": "Kai Alder", "Time": "-", "TeamName": "Team B", "Category": "Youth Mid Course (under 18)", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "2029", "Name": "Parker Alder", "Time": "0:22.4", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "1", "Bib": "2055", "Name": "Quinn Alder", "Time": "0:22.4", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "3", "Bib": "2023", "Name": "Reese Alder", "Time": "10:06:16.5", "TeamName": "Team D", "Category": "Masters Short Course (age 45+)", "Gender": "Male", "CategoryPlace": "1"}
+      ],
+      "name": "Short Course (28 miles)",
+      "racers": [
+       {"Place": "1", "Bib": "2029", "Name": "Parker Alder", "Time": "0:22.4", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "1", "Bib": "2055", "Name": "Quinn Alder", "Time": "0:22.4", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "3", "Bib": "2023", "Name": "Reese Alder", "Time": "10:06:16.5", "TeamName": "Team D", "Category": "Masters Short Course (age 45+)", "Gender": "Male", "CategoryPlace": "1"},
+       {"Place": "4", "Bib": "2043", "Name": "Sage Alder", "Time": "10:06:18.3", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female", "CategoryPlace": "1"},
+       {"Place": "-", "Bib": "2001", "Name": "Tatum Alder", "Time": "-", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "2002", "Name": "Avery Birch", "Time": "-", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "2004", "Name": "Blake Birch", "Time": "-", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "2026", "Name": "Casey Birch", "Time": "DNF", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "2065", "Name": "Drew Birch", "Time": "DNF", "TeamName": "Team E", "Category": "Masters Short Course (age 45+)", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "2003", "Name": "Emery Birch", "Time": "DSQ", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "2020", "Name": "Finley Birch", "Time": "DNS", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female", "CategoryPlace": "-"},
+       {"Place": "-", "Bib": "2042", "Name": "Gray Birch", "Time": "DNS", "TeamName": "", "Category": "E-bike Short Course Open", "Gender": "Female", "CategoryPlace": "-"}
+      ],
+      "tier": "overall"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "2043", "Name": "Sage Alder", "Time": "10:06:18.3", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"},
+       {"Place": "-", "Bib": "2020", "Name": "Finley Birch", "Time": "DNS", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"}
+      ],
+      "name": "Adult Short Course (age 18-44) Female",
+      "racers": [
+       {"Place": "1", "Bib": "2043", "Name": "Sage Alder", "Time": "10:06:18.3", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"},
+       {"Place": "-", "Bib": "2020", "Name": "Finley Birch", "Time": "DNS", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "2029", "Name": "Parker Alder", "Time": "0:22.4", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"},
+       {"Place": "-", "Bib": "2001", "Name": "Tatum Alder", "Time": "-", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"},
+       {"Place": "-", "Bib": "2003", "Name": "Emery Birch", "Time": "DSQ", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"}
+      ],
+      "name": "Adult Short Course (age 18-44) Male",
+      "racers": [
+       {"Place": "1", "Bib": "2029", "Name": "Parker Alder", "Time": "0:22.4", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"},
+       {"Place": "-", "Bib": "2001", "Name": "Tatum Alder", "Time": "-", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"},
+       {"Place": "-", "Bib": "2003", "Name": "Emery Birch", "Time": "DSQ", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "2042", "Name": "Gray Birch", "Time": "DNS", "TeamName": "", "Category": "E-bike Short Course Open", "Gender": "Female"}
+      ],
+      "name": "E-bike Short Course Open Female",
+      "racers": [
+       {"Place": "-", "Bib": "2042", "Name": "Gray Birch", "Time": "DNS", "TeamName": "", "Category": "E-bike Short Course Open", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "2026", "Name": "Casey Birch", "Time": "DNF", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Female"},
+       {"Place": "-", "Bib": "2065", "Name": "Drew Birch", "Time": "DNF", "TeamName": "Team E", "Category": "Masters Short Course (age 45+)", "Gender": "Female"}
+      ],
+      "name": "Masters Short Course (age 45+) Female",
+      "racers": [
+       {"Place": "-", "Bib": "2026", "Name": "Casey Birch", "Time": "DNF", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Female"},
+       {"Place": "-", "Bib": "2065", "Name": "Drew Birch", "Time": "DNF", "TeamName": "Team E", "Category": "Masters Short Course (age 45+)", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "2023", "Name": "Reese Alder", "Time": "10:06:16.5", "TeamName": "Team D", "Category": "Masters Short Course (age 45+)", "Gender": "Male"},
+       {"Place": "-", "Bib": "2002", "Name": "Avery Birch", "Time": "-", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Male"}
+      ],
+      "name": "Masters Short Course (age 45+) Male",
+      "racers": [
+       {"Place": "1", "Bib": "2023", "Name": "Reese Alder", "Time": "10:06:16.5", "TeamName": "Team D", "Category": "Masters Short Course (age 45+)", "Gender": "Male"},
+       {"Place": "-", "Bib": "2002", "Name": "Avery Birch", "Time": "-", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Male"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "1", "Bib": "2055", "Name": "Quinn Alder", "Time": "0:22.4", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Female"}
+      ],
+      "name": "Youth Short Course (under 18) Female",
+      "racers": [
+       {"Place": "1", "Bib": "2055", "Name": "Quinn Alder", "Time": "0:22.4", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Female"}
+      ],
+      "tier": "category"
+     },
+     {
+      "leaders": [
+       {"Place": "-", "Bib": "2004", "Name": "Blake Birch", "Time": "-", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Male"}
+      ],
+      "name": "Youth Short Course (under 18) Male",
+      "racers": [
+       {"Place": "-", "Bib": "2004", "Name": "Blake Birch", "Time": "-", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Male"}
+      ],
+      "tier": "category"
+     }
+    ],
+    "distance_stats": [
+     {"finished": 0, "name": "Long Course (88 miles)", "resolved": 0, "total": 4},
+     {"finished": 0, "name": "Mid Course (45 miles)", "resolved": 2, "total": 10},
+     {"finished": 4, "name": "Short Course (28 miles)", "resolved": 9, "total": 12}
+    ],
+    "error": null,
+    "race_date": "Aug 13, 2026",
+    "race_name": "2026 Coon Fork 40 TEST",
+    "race_sport": "Cycling - gravel",
+    "total_dnf": 2,
+    "total_dns": 2,
+    "total_dsq": 3,
+    "total_finished": 4,
+    "total_racers": 26
+   },
+   "title": "Summary",
+   "type": "summary"
+  },
+  {
+   "data": {
+    "age": {
+     "average": 42.0,
+     "counts": [4, 1, 6, 6, 5, 3, 1],
+     "labels": ["<20", "20-29", "30-39", "40-49", "50-59", "60-69", "70+"],
+     "max": 70,
+     "median": 42.5,
+     "min": 11
+    },
+    "distance": {
+     "counts": [4, 10, 12],
+     "labels": ["Long Course (88 miles)", "Mid Course (45 miles)", "Short Course (28 miles)"]
+    },
+    "gender": {
+     "counts": [14, 11, 1],
+     "labels": ["Male", "Female", "Female/Male"]
+    },
+    "teams": {
+     "solo_count": 21,
+     "team_count": 5,
+     "top_teams": [
+      {"count": 1, "name": "Team A"},
+      {"count": 1, "name": "Team B"},
+      {"count": 1, "name": "Team C"},
+      {"count": 1, "name": "Team D"},
+      {"count": 1, "name": "Team E"}
+     ]
+    },
+    "total_registrants": 26
+   },
+   "title": "Demographics",
+   "type": "demographics"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "8001", "Name": "Blake Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "8002", "Name": "Casey Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "8014", "Name": "Drew Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "8017", "Name": "Emery Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Female", "CategoryPlace": "-"}
+   ],
+   "tier": "overall",
+   "title": "Overall - Long Course (88 miles)",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "8014", "Name": "Drew Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Adult Long Course (age 18-44) Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "8002", "Name": "Casey Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Adult Long Course (age 18-44) Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "8017", "Name": "Emery Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Masters Long Course (age 45+) Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "8001", "Name": "Blake Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Masters Long Course (age 45+) Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "4001", "Name": "Finley Alder", "Time": "-", "TeamName": "Team A", "Category": "Masters Mid Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "4002", "Name": "Gray Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "4004", "Name": "Harper Alder", "Time": "-", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "4011", "Name": "Indigo Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "4040", "Name": "Jordan Alder", "Time": "-", "TeamName": "", "Category": "E-bike Mid Course Open", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "4093", "Name": "Kai Alder", "Time": "-", "TeamName": "Team B", "Category": "Youth Mid Course (under 18)", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "4186", "Name": "Logan Alder", "Time": "-", "TeamName": "", "Category": "Youth Mid Course (under 18)", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "4243", "Name": "Morgan Alder", "Time": "-", "TeamName": "Team C", "Category": "Masters Mid Course (age 45+)", "Gender": "Female/Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "4037", "Name": "Noel Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "4173", "Name": "Oakley Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"}
+   ],
+   "tier": "overall",
+   "title": "Overall - Mid Course (45 miles)",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "4011", "Name": "Indigo Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Adult Mid Course (age 18-44) Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "4002", "Name": "Gray Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Adult Mid Course (age 18-44) Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "4040", "Name": "Jordan Alder", "Time": "-", "TeamName": "", "Category": "E-bike Mid Course Open", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "E-bike Mid Course Open Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "4004", "Name": "Harper Alder", "Time": "-", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Masters Mid Course (age 45+) Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "4001", "Name": "Finley Alder", "Time": "-", "TeamName": "Team A", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"},
+    {"Place": "-", "Bib": "4037", "Name": "Noel Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"},
+    {"Place": "-", "Bib": "4173", "Name": "Oakley Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Masters Mid Course (age 45+) Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "4243", "Name": "Morgan Alder", "Time": "-", "TeamName": "Team C", "Category": "Masters Mid Course (age 45+)", "Gender": "Female/Male"}
+   ],
+   "tier": "category",
+   "title": "Masters Mid Course (age 45+) Female/Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "4186", "Name": "Logan Alder", "Time": "-", "TeamName": "", "Category": "Youth Mid Course (under 18)", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Youth Mid Course (under 18) Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "4093", "Name": "Kai Alder", "Time": "-", "TeamName": "Team B", "Category": "Youth Mid Course (under 18)", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Youth Mid Course (under 18) Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "2029", "Name": "Parker Alder", "Time": "0:22.4", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "1", "Bib": "2055", "Name": "Quinn Alder", "Time": "0:22.4", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "3", "Bib": "2023", "Name": "Reese Alder", "Time": "10:06:16.5", "TeamName": "Team D", "Category": "Masters Short Course (age 45+)", "Gender": "Male", "CategoryPlace": "1"},
+    {"Place": "4", "Bib": "2043", "Name": "Sage Alder", "Time": "10:06:18.3", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female", "CategoryPlace": "1"},
+    {"Place": "-", "Bib": "2001", "Name": "Tatum Alder", "Time": "-", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "2002", "Name": "Avery Birch", "Time": "-", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "2004", "Name": "Blake Birch", "Time": "-", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "2026", "Name": "Casey Birch", "Time": "DNF", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "2065", "Name": "Drew Birch", "Time": "DNF", "TeamName": "Team E", "Category": "Masters Short Course (age 45+)", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "2003", "Name": "Emery Birch", "Time": "DSQ", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "2020", "Name": "Finley Birch", "Time": "DNS", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female", "CategoryPlace": "-"},
+    {"Place": "-", "Bib": "2042", "Name": "Gray Birch", "Time": "DNS", "TeamName": "", "Category": "E-bike Short Course Open", "Gender": "Female", "CategoryPlace": "-"}
+   ],
+   "tier": "overall",
+   "title": "Overall - Short Course (28 miles)",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "2043", "Name": "Sage Alder", "Time": "10:06:18.3", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"},
+    {"Place": "-", "Bib": "2020", "Name": "Finley Birch", "Time": "DNS", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Adult Short Course (age 18-44) Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "2029", "Name": "Parker Alder", "Time": "0:22.4", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"},
+    {"Place": "-", "Bib": "2001", "Name": "Tatum Alder", "Time": "-", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"},
+    {"Place": "-", "Bib": "2003", "Name": "Emery Birch", "Time": "DSQ", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Adult Short Course (age 18-44) Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "2042", "Name": "Gray Birch", "Time": "DNS", "TeamName": "", "Category": "E-bike Short Course Open", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "E-bike Short Course Open Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "2026", "Name": "Casey Birch", "Time": "DNF", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Female"},
+    {"Place": "-", "Bib": "2065", "Name": "Drew Birch", "Time": "DNF", "TeamName": "Team E", "Category": "Masters Short Course (age 45+)", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Masters Short Course (age 45+) Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "2023", "Name": "Reese Alder", "Time": "10:06:16.5", "TeamName": "Team D", "Category": "Masters Short Course (age 45+)", "Gender": "Male"},
+    {"Place": "-", "Bib": "2002", "Name": "Avery Birch", "Time": "-", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Masters Short Course (age 45+) Male",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "1", "Bib": "2055", "Name": "Quinn Alder", "Time": "0:22.4", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Female"}
+   ],
+   "tier": "category",
+   "title": "Youth Short Course (under 18) Female",
+   "type": "category"
+  },
+  {
+   "racers": [
+    {"Place": "-", "Bib": "2004", "Name": "Blake Birch", "Time": "-", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Male"}
+   ],
+   "tier": "category",
+   "title": "Youth Short Course (under 18) Male",
+   "type": "category"
+  }
+ ],
+ "pinned_leaders": 3,
+ "pinned_leaders_on_overall_results": false,
+ "race_date": "Aug 13, 2026",
+ "race_name": "2026 Coon Fork 40 TEST",
+ "race_sport": "Cycling - gravel",
+ "scroll_pause_time": 2,
+ "scroll_speed": 100,
+ "show_demographics": false,
+ "show_summary": true,
+ "show_toasts": true,
+ "summary_display_time": 20,
+ "waiting": false
+}

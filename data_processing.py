@@ -1,91 +1,84 @@
-import re
-
-_NON_FINISH_STATUSES = {"DNS", "DNF", "DSQ"}
-_NO_TIME_VALUES = {"-", ""}
+_NO_PLACE = "-"
 
 
-def _classify_racer(racer):
-    time_val = (racer.get("Time") or "").strip().upper()
-    if time_val in _NON_FINISH_STATUSES:
-        return time_val
-    if time_val in _NO_TIME_VALUES:
-        return "IN_PROGRESS"
-    return "FINISHED"
-
-
-def _classify_group(grouping):
-    if grouping.get("Overall"):
-        return "overall"
-    if grouping.get("Category"):
-        return "category"
-    return None
-
-
-def _group_name(grouping, tier):
+def _group_name(group, tier):
     if tier == "overall":
-        return grouping.get("Distance") or "Overall"
-    parts = [grouping.get("Category", "")]
-    gender = grouping.get("Gender")
+        return group.get("distance") or "Overall"
+    parts = [group.get("category", "")]
+    gender = group.get("gender")
     if gender:
         parts.append(gender)
     return " ".join(parts)
 
 
-def _match_value(value):
-    if value is None:
-        return ""
-    return str(value).strip()
+def _rank_racers(racers):
+    """Pair each racer with a derived place, in display order.
+
+    Finishers come first, ordered by elapsed time (ties keep input order) and
+    ranked with competition ranking (1, 2, 2, 4). Everyone else has no place
+    (None) and follows in input order.
+    """
+    finishers = [r for r in racers if r["status"] == "FINISHED" and r["elapsed_seconds"] is not None]
+    others = [r for r in racers if not (r["status"] == "FINISHED" and r["elapsed_seconds"] is not None)]
+    finishers.sort(key=lambda r: r["elapsed_seconds"])
+
+    ranked = []
+    place = 0
+    previous = None
+    for index, racer in enumerate(finishers, start=1):
+        if racer["elapsed_seconds"] != previous:
+            place = index
+            previous = racer["elapsed_seconds"]
+        ranked.append((racer, place))
+    return ranked + [(racer, None) for racer in others]
 
 
-def _result_match_key(distance, category, gender, bib):
-    return (
-        _match_value(distance),
-        _match_value(category),
-        _match_value(gender),
-        _match_value(bib),
+def _place_text(place):
+    return str(place) if place is not None else _NO_PLACE
+
+
+def _racer_row(racer, place, category_place=None):
+    row = {
+        "Place": _place_text(place),
+        "Bib": racer["bib"],
+        "Name": racer["name"],
+        "Time": racer["time_display"],
+        "TeamName": racer["team"],
+        "Category": racer["category"],
+        "Gender": racer["gender"],
+    }
+    if category_place is not None:
+        row["CategoryPlace"] = category_place
+    return row
+
+
+def _membership_key(membership):
+    return (membership["distance"], membership["category"], membership["gender"])
+
+
+def _category_members(racers):
+    """Group racers by category grouping, preserving snapshot order."""
+    members = {}
+    for racer in racers:
+        for membership in racer["category_groups"]:
+            members.setdefault(_membership_key(membership), []).append(racer)
+    return members
+
+
+def _category_place_of(racer, category_places):
+    """Category place text for an overall row, or None if the racer has no category grouping."""
+    memberships = racer["category_groups"]
+    if not memberships:
+        return None
+    chosen = next(
+        (m for m in memberships if m["category"] == racer["category"] and m["gender"] == racer["gender"]),
+        memberships[0],
     )
+    return _place_text(category_places[_membership_key(chosen)].get(id(racer)))
 
 
-def _place_sort_key(racer):
-    place = _match_value(racer.get("Place"))
-    if place.isdigit():
-        return (0, int(place))
-    return (1, 0)
-
-
-def _add_category_places(results):
-    category_places = {}
-
-    for group in results:
-        grouping = group.get("Grouping", {})
-        if _classify_group(grouping) != "category":
-            continue
-
-        for racer in group.get("Racers", []):
-            distance = grouping.get("Distance") or racer.get("Distance")
-            category = grouping.get("Category") or racer.get("Category")
-            gender = grouping.get("Gender") if grouping.get("Gender") is not None else racer.get("Gender")
-            key = _result_match_key(distance, category, gender, racer.get("Bib"))
-            category_places[key] = _match_value(racer.get("Place"))
-
-    for group in results:
-        grouping = group.get("Grouping", {})
-        if _classify_group(grouping) != "overall":
-            continue
-
-        for racer in group.get("Racers", []):
-            key = _result_match_key(
-                racer.get("Distance"),
-                racer.get("Category"),
-                racer.get("Gender"),
-                racer.get("Bib"),
-            )
-            if key in category_places:
-                racer["CategoryPlace"] = category_places[key]
-
-
-def process_race_data(api_response, show_overall_results=True, show_category_results=True):
-    if "Error" in api_response:
+def process_race_data(snapshot, show_overall_results=True, show_category_results=True):
+    if snapshot["error"]:
         return {
             "race_name": "",
             "race_date": "",
@@ -97,74 +90,66 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
             "total_dsq": 0,
             "categories": [],
             "distance_stats": [],
-            "error": api_response["Error"],
+            "error": snapshot["error"],
         }
 
-    info = api_response.get("RaceInfo", {})
-    results = api_response.get("Results", [])
-    _add_category_places(results)
+    race = snapshot["race"]
+    racers = snapshot["racers"]
+    overall_racers = [r for r in racers if r["in_overall"]]
+    members = _category_members(racers)
+    category_places = {
+        key: {id(racer): place for racer, place in _rank_racers(group)}
+        for key, group in members.items()
+    }
 
-    total_racers = 0
-    total_finished = 0
-    total_dns = 0
-    total_dnf = 0
-    total_dsq = 0
+    counts = {"FINISHED": 0, "DNS": 0, "DNF": 0, "DSQ": 0, "IN_PROGRESS": 0}
+    distance_stats = []
+    for group in snapshot["groups"]:
+        if group["tier"] != "overall":
+            continue
+        in_group = [r for r in overall_racers if r["distance"] == group["distance"]]
+        stat = {"name": group["distance"] or "Overall", "total": len(in_group), "finished": 0, "resolved": 0}
+        for racer in in_group:
+            counts[racer["status"]] += 1
+            if racer["status"] == "FINISHED":
+                stat["finished"] += 1
+            if racer["status"] != "IN_PROGRESS":
+                stat["resolved"] += 1
+        distance_stats.append(stat)
 
     # Collect groups by distance, preserving API order
     distance_order = []
     distance_buckets = {}
-    distance_stats_map = {}
-
-    for group in results:
-        grouping = group.get("Grouping", {})
-        racers = sorted(group.get("Racers", []), key=_place_sort_key)
-
-        if grouping.get("Overall"):
-            dist_name = grouping.get("Distance") or "Overall"
-            if dist_name not in distance_stats_map:
-                distance_stats_map[dist_name] = {
-                    "name": dist_name,
-                    "total": 0,
-                    "finished": 0,
-                    "resolved": 0,
-                }
-            distance_stats_map[dist_name]["total"] += len(racers)
-            total_racers += len(racers)
-            for racer in racers:
-                status = _classify_racer(racer)
-                if status == "DNS":
-                    total_dns += 1
-                    distance_stats_map[dist_name]["resolved"] += 1
-                elif status == "DNF":
-                    total_dnf += 1
-                    distance_stats_map[dist_name]["resolved"] += 1
-                elif status == "DSQ":
-                    total_dsq += 1
-                    distance_stats_map[dist_name]["resolved"] += 1
-                elif status == "FINISHED":
-                    total_finished += 1
-                    distance_stats_map[dist_name]["finished"] += 1
-                    distance_stats_map[dist_name]["resolved"] += 1
-
-        tier = _classify_group(grouping)
-        if tier is None:
-            continue
+    for group in snapshot["groups"]:
+        tier = group["tier"]
         if tier == "overall" and not show_overall_results:
             continue
         if tier == "category" and not show_category_results:
             continue
 
-        distance = grouping.get("Distance", "")
+        distance = group["distance"]
         if distance not in distance_buckets:
             distance_order.append(distance)
             distance_buckets[distance] = {"overall": [], "category": []}
 
-        name = _group_name(grouping, tier)
+        if tier == "overall":
+            in_group = [r for r in overall_racers if r["distance"] == distance]
+            rows = [
+                _racer_row(racer, place, _category_place_of(racer, category_places))
+                for racer, place in _rank_racers(in_group)
+            ]
+        else:
+            key = (distance, group["category"], group["gender"])
+            rows = [
+                _racer_row(racer, place)
+                for racer, place in _rank_racers(members.get(key, []))
+            ]
+
         distance_buckets[distance][tier].append({
-            "name": name,
+            "name": _group_name(group, tier),
             "tier": tier,
-            "racers": racers,
-            "leaders": racers[:3],
+            "racers": rows,
+            "leaders": rows[:3],
         })
 
     categories = []
@@ -173,82 +158,37 @@ def process_race_data(api_response, show_overall_results=True, show_category_res
         categories.extend(bucket["overall"])
         categories.extend(bucket["category"])
 
-    distance_stats = list(distance_stats_map.values())
-
     return {
-        "race_name": info.get("Name", ""),
-        "race_date": info.get("Date", ""),
-        "race_sport": info.get("Sport", ""),
-        "total_racers": total_racers,
-        "total_finished": total_finished,
-        "total_dns": total_dns,
-        "total_dnf": total_dnf,
-        "total_dsq": total_dsq,
+        "race_name": race["name"],
+        "race_date": race["date"],
+        "race_sport": race["sport"],
+        "total_racers": len(overall_racers),
+        "total_finished": counts["FINISHED"],
+        "total_dns": counts["DNS"],
+        "total_dnf": counts["DNF"],
+        "total_dsq": counts["DSQ"],
         "categories": categories,
         "distance_stats": distance_stats,
         "error": None,
     }
 
 
-def _parse_time_seconds(time_str):
-    parts = time_str.split(":")
-    if len(parts) == 3:
-        return int(parts[0]) * 3600 + int(parts[1]) * 60 + float(parts[2])
-    elif len(parts) == 2:
-        return int(parts[0]) * 60 + float(parts[1])
-    return float(parts[0])
-
-
-def _extract_race_start_seconds(start_time_str):
-    """Extract seconds-since-midnight from RaceInfo StartTime string.
-    Format: 'Thursday, August 13, 2026 2:08 PM (GMT-5)'
-    """
-    match = re.search(r'(\d{1,2}):(\d{2})\s*(AM|PM)', start_time_str, re.IGNORECASE)
-    if not match:
-        return 0
-    hour = int(match.group(1))
-    minute = int(match.group(2))
-    ampm = match.group(3).upper()
-    if ampm == "PM" and hour != 12:
-        hour += 12
-    elif ampm == "AM" and hour == 12:
-        hour = 0
-    return hour * 3600 + minute * 60
-
-
-def build_finish_chart_data(api_response, bucket_minutes=15):
-    if "Error" in api_response:
+def build_finish_chart_data(snapshot, bucket_minutes=15):
+    if snapshot["error"]:
         return None
 
-    results = api_response.get("Results", [])
-    race_info = api_response.get("RaceInfo", {})
-
-    start_time_str = race_info.get("StartTime", "")
-    race_start_seconds = _extract_race_start_seconds(start_time_str)
-    floor_hour = (race_start_seconds // 3600) * 3600
+    floor_hour = (snapshot["race"]["start_seconds"] // 3600) * 3600
 
     distance_order = []
     finishers_by_distance = {}
+    for group in snapshot["groups"]:
+        if group["tier"] == "overall":
+            distance_order.append(group["distance"])
+            finishers_by_distance[group["distance"]] = []
 
-    for group in results:
-        grouping = group.get("Grouping", {})
-        if not grouping.get("Overall"):
-            continue
-        distance = grouping.get("Distance", "")
-        if distance not in finishers_by_distance:
-            distance_order.append(distance)
-            finishers_by_distance[distance] = []
-
-        for racer in group.get("Racers", []):
-            if _classify_racer(racer) != "FINISHED":
-                continue
-            start_str = racer.get("StartTime")
-            if not start_str:
-                continue
-            start_secs = _parse_time_seconds(start_str)
-            elapsed_secs = _parse_time_seconds(racer["Time"])
-            finish_secs = start_secs + elapsed_secs
-            finishers_by_distance[distance].append(finish_secs)
+    for racer in snapshot["racers"]:
+        if racer["in_overall"] and racer["finish_tod_seconds"] is not None:
+            finishers_by_distance[racer["distance"]].append(racer["finish_tod_seconds"])
 
     all_finishes = [s for fins in finishers_by_distance.values() for s in fins]
     if not all_finishes:
@@ -287,18 +227,6 @@ _AGE_BUCKETS = [
     (60, 69, "60-69"),
     (70, 999, "70+"),
 ]
-
-
-def _as_age_int(age):
-    if isinstance(age, bool):
-        return None
-    if isinstance(age, int):
-        return age
-    if isinstance(age, float):
-        return int(age)
-    if isinstance(age, str) and age.strip().isdigit():
-        return int(age.strip())
-    return None
 
 
 def _build_age_stats(ages):
@@ -355,52 +283,37 @@ def _build_team_stats(solo_count, team_counts):
     }
 
 
-def build_demographics_data(api_response):
-    if "Error" in api_response:
+def build_demographics_data(snapshot):
+    if snapshot["error"]:
         return None
 
-    results = api_response.get("Results", [])
+    overall_racers = [r for r in snapshot["racers"] if r["in_overall"]]
+    if not overall_racers:
+        return None
 
-    total_registrants = 0
+    distance_order = [g["distance"] or "Overall" for g in snapshot["groups"] if g["tier"] == "overall"]
+    distance_counts = {name: 0 for name in distance_order}
     ages = []
     gender_counts = {}
-    distance_order = []
-    distance_counts = {}
     solo_count = 0
     team_counts = {}
 
-    for group in results:
-        grouping = group.get("Grouping", {})
-        if not grouping.get("Overall"):
-            continue
+    for racer in overall_racers:
+        distance_counts[racer["distance"] or "Overall"] += 1
 
-        distance = grouping.get("Distance") or "Overall"
-        if distance not in distance_counts:
-            distance_order.append(distance)
-            distance_counts[distance] = 0
+        if racer["age"] is not None:
+            ages.append(racer["age"])
 
-        for racer in group.get("Racers", []):
-            total_registrants += 1
-            distance_counts[distance] += 1
+        gender = racer["gender"] or "Unknown"
+        gender_counts[gender] = gender_counts.get(gender, 0) + 1
 
-            age = _as_age_int(racer.get("Age"))
-            if age is not None:
-                ages.append(age)
-
-            gender = (racer.get("Gender") or "").strip() or "Unknown"
-            gender_counts[gender] = gender_counts.get(gender, 0) + 1
-
-            team = (racer.get("TeamName") or "").strip()
-            if team:
-                team_counts[team] = team_counts.get(team, 0) + 1
-            else:
-                solo_count += 1
-
-    if total_registrants == 0:
-        return None
+        if racer["team"]:
+            team_counts[racer["team"]] = team_counts.get(racer["team"], 0) + 1
+        else:
+            solo_count += 1
 
     return {
-        "total_registrants": total_registrants,
+        "total_registrants": len(overall_racers),
         "age": _build_age_stats(ages),
         "gender": _build_gender_stats(gender_counts),
         "distance": {

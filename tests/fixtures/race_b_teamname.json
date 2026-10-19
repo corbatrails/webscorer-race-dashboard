@@ -1,0 +1,2406 @@
+{
+ "RaceInfo": {
+  "RaceId": 412060,
+  "Name": "CORBA Fall Back Blast Trail Run 2025",
+  "Date": "Nov 1, 2025",
+  "Sport": "Running - trail",
+  "StartTime": "Saturday, November 1, 2025 8:07 AM (GMT-5)",
+  "StartType": "Wave",
+  "CompletionState": "Final results"
+ },
+ "Results": [
+  {
+   "Grouping": {
+    "Distance": "12.5K",
+    "Overall": true
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "269",
+     "TeamName": "Blake Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 21,
+     "Gender": "Male",
+     "Time": "51:11.6",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "40.44%",
+     "PercentMedian": "40.16%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "214",
+     "TeamName": "Casey Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Male",
+     "Time": "53:03.2",
+     "Difference": "+1:51.6",
+     "PercentBack": "+3.63%",
+     "PercentWinning": "96.49%",
+     "PercentAverage": "38.27%",
+     "PercentMedian": "37.99%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "3",
+     "Bib": "165",
+     "TeamName": "Drew Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 29,
+     "Gender": "Male",
+     "Time": "59:25.5",
+     "Difference": "+8:13.9",
+     "PercentBack": "+16.08%",
+     "PercentWinning": "86.15%",
+     "PercentAverage": "30.86%",
+     "PercentMedian": "30.54%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "4",
+     "Bib": "255",
+     "TeamName": "Emery Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 39,
+     "Gender": "Male",
+     "Time": "1:00:04.0",
+     "Difference": "+8:52.4",
+     "PercentBack": "+17.33%",
+     "PercentWinning": "85.23%",
+     "PercentAverage": "30.11%",
+     "PercentMedian": "29.79%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "5",
+     "Bib": "305",
+     "TeamName": "Finley Alder",
+     "Distance": "12.5K",
+     "Category": "Masters",
+     "Age": 50,
+     "Gender": "Female",
+     "Time": "1:23:42.6",
+     "Difference": "+32:31.0",
+     "PercentBack": "+63.52%",
+     "PercentWinning": "61.16%",
+     "PercentAverage": "2.61%",
+     "PercentMedian": "2.15%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "6",
+     "Bib": "319",
+     "TeamName": "Gray Alder",
+     "Distance": "12.5K",
+     "Category": "Youth",
+     "Age": 17,
+     "Gender": "Female",
+     "Time": "1:25:29.0",
+     "Difference": "+34:17.4",
+     "PercentBack": "+66.98%",
+     "PercentWinning": "59.89%",
+     "PercentAverage": "0.54%",
+     "PercentMedian": "0.08%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "135",
+     "TeamName": "Harper Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 48,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    },
+    {
+     "Place": "-",
+     "Bib": "207",
+     "TeamName": "Indigo Alder",
+     "Distance": "12.5K",
+     "Category": "Masters",
+     "Age": 65,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "12.5K",
+    "Gender": "Female"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "305",
+     "TeamName": "Finley Alder",
+     "Distance": "12.5K",
+     "Category": "Masters",
+     "Age": 50,
+     "Gender": "Female",
+     "Time": "1:23:42.6",
+     "Difference": "+20:17.4",
+     "PercentBack": "+31.99%",
+     "PercentWinning": "75.76%",
+     "PercentAverage": "8.83%",
+     "PercentMedian": "8.53%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "319",
+     "TeamName": "Gray Alder",
+     "Distance": "12.5K",
+     "Category": "Youth",
+     "Age": 17,
+     "Gender": "Female",
+     "Time": "1:25:29.0",
+     "Difference": "+22:03.8",
+     "PercentBack": "+34.79%",
+     "PercentWinning": "74.19%",
+     "PercentAverage": "6.90%",
+     "PercentMedian": "6.59%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "135",
+     "TeamName": "Harper Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 48,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "12.5K",
+    "Gender": "Male"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "269",
+     "TeamName": "Blake Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 21,
+     "Gender": "Male",
+     "Time": "51:11.6",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "34.54%",
+     "PercentMedian": "33.62%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "214",
+     "TeamName": "Casey Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Male",
+     "Time": "53:03.2",
+     "Difference": "+1:51.6",
+     "PercentBack": "+3.63%",
+     "PercentWinning": "96.49%",
+     "PercentAverage": "32.16%",
+     "PercentMedian": "31.21%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "3",
+     "Bib": "165",
+     "TeamName": "Drew Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 29,
+     "Gender": "Male",
+     "Time": "59:25.5",
+     "Difference": "+8:13.9",
+     "PercentBack": "+16.08%",
+     "PercentWinning": "86.15%",
+     "PercentAverage": "24.02%",
+     "PercentMedian": "22.95%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "4",
+     "Bib": "255",
+     "TeamName": "Emery Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 39,
+     "Gender": "Male",
+     "Time": "1:00:04.0",
+     "Difference": "+8:52.4",
+     "PercentBack": "+17.33%",
+     "PercentWinning": "85.23%",
+     "PercentAverage": "23.20%",
+     "PercentMedian": "22.12%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "207",
+     "TeamName": "Indigo Alder",
+     "Distance": "12.5K",
+     "Category": "Masters",
+     "Age": 65,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "25K",
+    "Overall": true,
+    "LapCount": "2"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "160",
+     "TeamName": "Jordan Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 38,
+     "Gender": "Male",
+     "Time": "1:48:48.3",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "37.51%",
+     "PercentMedian": "37.01%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "178",
+     "TeamName": "Kai Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 37,
+     "Gender": "Male",
+     "Time": "2:14:07.7",
+     "Difference": "+25:19.4",
+     "PercentBack": "+23.27%",
+     "PercentWinning": "81.12%",
+     "PercentAverage": "22.97%",
+     "PercentMedian": "22.35%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "3",
+     "Bib": "221",
+     "TeamName": "Logan Alder",
+     "Distance": "25K",
+     "Category": "Youth",
+     "Age": 16,
+     "Gender": "Male",
+     "Time": "2:15:05.2",
+     "Difference": "+26:16.9",
+     "PercentBack": "+24.15%",
+     "PercentWinning": "80.54%",
+     "PercentAverage": "22.42%",
+     "PercentMedian": "21.79%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "4",
+     "Bib": "117",
+     "TeamName": "Morgan Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 46,
+     "Gender": "Female",
+     "Time": "2:17:55.4",
+     "Difference": "+29:07.1",
+     "PercentBack": "+26.76%",
+     "PercentWinning": "78.89%",
+     "PercentAverage": "20.79%",
+     "PercentMedian": "20.15%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "5",
+     "Bib": "153",
+     "TeamName": "Noel Alder",
+     "Distance": "25K",
+     "Category": "Masters",
+     "Age": 53,
+     "Gender": "Female",
+     "Time": "2:44:12.7",
+     "Difference": "+55:24.4",
+     "PercentBack": "+50.92%",
+     "PercentWinning": "66.26%",
+     "PercentAverage": "5.69%",
+     "PercentMedian": "4.93%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "132",
+     "TeamName": "Oakley Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 48,
+     "Gender": "Female",
+     "Time": "DNF",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "157",
+     "TeamName": "Parker Alder",
+     "Distance": "25K",
+     "Category": "Masters",
+     "Age": 63,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    },
+    {
+     "Place": "-",
+     "Bib": "246",
+     "TeamName": "Quinn Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 38,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "25K",
+    "Gender": "Female",
+    "LapCount": "2"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "117",
+     "TeamName": "Morgan Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 46,
+     "Gender": "Female",
+     "Time": "2:17:55.4",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "23.50%",
+     "PercentMedian": "19.29%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "153",
+     "TeamName": "Noel Alder",
+     "Distance": "25K",
+     "Category": "Masters",
+     "Age": 53,
+     "Gender": "Female",
+     "Time": "2:44:12.7",
+     "Difference": "+26:17.3",
+     "PercentBack": "+19.06%",
+     "PercentWinning": "83.99%",
+     "PercentAverage": "8.92%",
+     "PercentMedian": "3.91%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "132",
+     "TeamName": "Oakley Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 48,
+     "Gender": "Female",
+     "Time": "DNF",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "246",
+     "TeamName": "Quinn Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 38,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "25K",
+    "Gender": "Male",
+    "LapCount": "2"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "160",
+     "TeamName": "Jordan Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 38,
+     "Gender": "Male",
+     "Time": "1:48:48.3",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "34.99%",
+     "PercentMedian": "37.01%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "178",
+     "TeamName": "Kai Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 37,
+     "Gender": "Male",
+     "Time": "2:14:07.7",
+     "Difference": "+25:19.4",
+     "PercentBack": "+23.27%",
+     "PercentWinning": "81.12%",
+     "PercentAverage": "19.86%",
+     "PercentMedian": "22.35%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "3",
+     "Bib": "221",
+     "TeamName": "Logan Alder",
+     "Distance": "25K",
+     "Category": "Youth",
+     "Age": 16,
+     "Gender": "Male",
+     "Time": "2:15:05.2",
+     "Difference": "+26:16.9",
+     "PercentBack": "+24.15%",
+     "PercentWinning": "80.54%",
+     "PercentAverage": "19.29%",
+     "PercentMedian": "21.80%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "157",
+     "TeamName": "Parker Alder",
+     "Distance": "25K",
+     "Category": "Masters",
+     "Age": 63,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "50K",
+    "Overall": true,
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "193",
+     "TeamName": "Reese Alder",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 26,
+     "Gender": "Male",
+     "Time": "4:01:16.9",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "28.33%",
+     "PercentMedian": "27.29%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "203",
+     "TeamName": "Sage Alder",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 34,
+     "Gender": "Male",
+     "Time": "4:23:51.4",
+     "Difference": "+22:34.5",
+     "PercentBack": "+9.36%",
+     "PercentWinning": "91.44%",
+     "PercentAverage": "21.63%",
+     "PercentMedian": "20.48%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "3",
+     "Bib": "274",
+     "TeamName": "Tatum Alder",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 44,
+     "Gender": "Female",
+     "Time": "4:40:45.2",
+     "Difference": "+39:28.3",
+     "PercentBack": "+16.36%",
+     "PercentWinning": "85.94%",
+     "PercentAverage": "16.61%",
+     "PercentMedian": "15.39%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "4",
+     "Bib": "167",
+     "TeamName": "Avery Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 26,
+     "Gender": "Male",
+     "Time": "4:45:18.6",
+     "Difference": "+44:01.7",
+     "PercentBack": "+18.25%",
+     "PercentWinning": "84.57%",
+     "PercentAverage": "15.25%",
+     "PercentMedian": "14.02%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "5",
+     "Bib": "288",
+     "TeamName": "Blake Birch",
+     "Distance": "50K",
+     "Category": "Masters",
+     "Age": 56,
+     "Gender": "Female",
+     "Time": "5:50:59.6",
+     "Difference": "+1:49:42.7",
+     "PercentBack": "+45.47%",
+     "PercentWinning": "68.74%",
+     "PercentAverage": "-4.26%",
+     "PercentMedian": "-5.78%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "6",
+     "Bib": "295",
+     "TeamName": "Casey Birch",
+     "Distance": "50K",
+     "Category": "Masters",
+     "Age": 55,
+     "Gender": "Male",
+     "Time": "6:03:06.0",
+     "Difference": "+2:01:49.1",
+     "PercentBack": "+50.49%",
+     "PercentWinning": "66.45%",
+     "PercentAverage": "-7.85%",
+     "PercentMedian": "-9.42%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "266",
+     "TeamName": "Drew Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 33,
+     "Gender": "Male",
+     "Time": "DNF",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "188",
+     "TeamName": "Emery Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 47,
+     "Gender": "Female",
+     "Time": "DNF",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "127",
+     "TeamName": "Finley Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 34,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    },
+    {
+     "Place": "-",
+     "Bib": "150",
+     "TeamName": "Gray Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 44,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "50K",
+    "Gender": "Female",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "274",
+     "TeamName": "Tatum Alder",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 44,
+     "Gender": "Female",
+     "Time": "4:40:45.2",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "19.51%",
+     "PercentMedian": "18.38%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "288",
+     "TeamName": "Blake Birch",
+     "Distance": "50K",
+     "Category": "Masters",
+     "Age": 56,
+     "Gender": "Female",
+     "Time": "5:50:59.6",
+     "Difference": "+1:10:14.4",
+     "PercentBack": "+25.02%",
+     "PercentWinning": "79.99%",
+     "PercentAverage": "-0.63%",
+     "PercentMedian": "-2.04%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "188",
+     "TeamName": "Emery Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 47,
+     "Gender": "Female",
+     "Time": "DNF",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "150",
+     "TeamName": "Gray Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 44,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "50K",
+    "Gender": "Male",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "193",
+     "TeamName": "Reese Alder",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 26,
+     "Gender": "Male",
+     "Time": "4:01:16.9",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "26.47%",
+     "PercentMedian": "23.85%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "203",
+     "TeamName": "Sage Alder",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 34,
+     "Gender": "Male",
+     "Time": "4:23:51.4",
+     "Difference": "+22:34.5",
+     "PercentBack": "+9.36%",
+     "PercentWinning": "91.44%",
+     "PercentAverage": "19.59%",
+     "PercentMedian": "16.73%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "3",
+     "Bib": "167",
+     "TeamName": "Avery Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 26,
+     "Gender": "Male",
+     "Time": "4:45:18.6",
+     "Difference": "+44:01.7",
+     "PercentBack": "+18.25%",
+     "PercentWinning": "84.57%",
+     "PercentAverage": "13.06%",
+     "PercentMedian": "9.96%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "4",
+     "Bib": "295",
+     "TeamName": "Casey Birch",
+     "Distance": "50K",
+     "Category": "Masters",
+     "Age": 55,
+     "Gender": "Male",
+     "Time": "6:03:06.0",
+     "Difference": "+2:01:49.1",
+     "PercentBack": "+50.49%",
+     "PercentWinning": "66.45%",
+     "PercentAverage": "-10.65%",
+     "PercentMedian": "-14.59%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "266",
+     "TeamName": "Drew Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 33,
+     "Gender": "Male",
+     "Time": "DNF",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "127",
+     "TeamName": "Finley Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 34,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "50K Relay",
+    "Overall": true,
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "105",
+     "TeamName": "Harper Birch",
+     "Distance": "50K Relay",
+     "Category": "Relay",
+     "Age": null,
+     "Gender": "",
+     "Time": "4:29:52.4",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "1.29%",
+     "PercentMedian": "1.29%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "101",
+     "TeamName": "Indigo Birch",
+     "Distance": "50K Relay",
+     "Category": "Relay",
+     "Age": null,
+     "Gender": "",
+     "Time": "4:36:55.5",
+     "Difference": "+7:03.1",
+     "PercentBack": "+2.61%",
+     "PercentWinning": "97.45%",
+     "PercentAverage": "-1.29%",
+     "PercentMedian": "-1.29%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "50K Relay",
+    "Gender": "Male",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "105",
+     "TeamName": "Harper Birch",
+     "Distance": "50K Relay",
+     "Category": "Relay",
+     "Age": null,
+     "Gender": "",
+     "Time": "4:29:52.4",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "1.29%",
+     "PercentMedian": "1.29%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "101",
+     "TeamName": "Indigo Birch",
+     "Distance": "50K Relay",
+     "Category": "Relay",
+     "Age": null,
+     "Gender": "",
+     "Time": "4:36:55.5",
+     "Difference": "+7:03.1",
+     "PercentBack": "+2.61%",
+     "PercentWinning": "97.45%",
+     "PercentAverage": "-1.29%",
+     "PercentMedian": "-1.29%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "5K",
+    "Overall": true
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "192",
+     "TeamName": "Jordan Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Male",
+     "Time": "22:15.1",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "36.49%",
+     "PercentMedian": "32.85%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "2",
+     "Bib": "124",
+     "TeamName": "Kai Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Female",
+     "Time": "25:21.4",
+     "Difference": "+3:06.3",
+     "PercentBack": "+13.95%",
+     "PercentWinning": "87.75%",
+     "PercentAverage": "27.62%",
+     "PercentMedian": "23.47%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "3",
+     "Bib": "287",
+     "TeamName": "Logan Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Male",
+     "Time": "25:33.5",
+     "Difference": "+3:18.4",
+     "PercentBack": "+14.86%",
+     "PercentWinning": "87.06%",
+     "PercentAverage": "27.05%",
+     "PercentMedian": "22.87%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "4",
+     "Bib": "229",
+     "TeamName": "Morgan Birch",
+     "Distance": "5K",
+     "Category": "Youth",
+     "Age": 12,
+     "Gender": "Male",
+     "Time": "25:34.0",
+     "Difference": "+3:18.9",
+     "PercentBack": "+14.90%",
+     "PercentWinning": "87.03%",
+     "PercentAverage": "27.03%",
+     "PercentMedian": "22.84%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "5",
+     "Bib": "254",
+     "TeamName": "Noel Birch",
+     "Distance": "5K",
+     "Category": "Masters",
+     "Age": 61,
+     "Gender": "Male",
+     "Time": "30:52.1",
+     "Difference": "+8:37.0",
+     "PercentBack": "+38.72%",
+     "PercentWinning": "72.09%",
+     "PercentAverage": "11.89%",
+     "PercentMedian": "6.84%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "-",
+     "Bib": "128",
+     "TeamName": "Oakley Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 41,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    },
+    {
+     "Place": "-",
+     "Bib": "161",
+     "TeamName": "Parker Birch",
+     "Distance": "5K",
+     "Category": "Masters",
+     "Age": 52,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "5K",
+    "Gender": "Female"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "124",
+     "TeamName": "Kai Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Female",
+     "Time": "25:21.4",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "29.34%",
+     "PercentMedian": "28.03%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "-",
+     "Bib": "128",
+     "TeamName": "Oakley Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 41,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    },
+    {
+     "Place": "-",
+     "Bib": "161",
+     "TeamName": "Parker Birch",
+     "Distance": "5K",
+     "Category": "Masters",
+     "Age": 52,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "5K",
+    "Gender": "Male"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "192",
+     "TeamName": "Jordan Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Male",
+     "Time": "22:15.1",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "34.73%",
+     "PercentMedian": "30.75%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "2",
+     "Bib": "287",
+     "TeamName": "Logan Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Male",
+     "Time": "25:33.5",
+     "Difference": "+3:18.4",
+     "PercentBack": "+14.86%",
+     "PercentWinning": "87.06%",
+     "PercentAverage": "25.03%",
+     "PercentMedian": "20.46%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "3",
+     "Bib": "229",
+     "TeamName": "Morgan Birch",
+     "Distance": "5K",
+     "Category": "Youth",
+     "Age": 12,
+     "Gender": "Male",
+     "Time": "25:34.0",
+     "Difference": "+3:18.9",
+     "PercentBack": "+14.90%",
+     "PercentWinning": "87.03%",
+     "PercentAverage": "25.00%",
+     "PercentMedian": "20.43%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "4",
+     "Bib": "254",
+     "TeamName": "Noel Birch",
+     "Distance": "5K",
+     "Category": "Masters",
+     "Age": 61,
+     "Gender": "Male",
+     "Time": "30:52.1",
+     "Difference": "+8:37.0",
+     "PercentBack": "+38.72%",
+     "PercentWinning": "72.09%",
+     "PercentAverage": "9.45%",
+     "PercentMedian": "3.93%",
+     "StartTime": "08:07:39.9"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "Marathon",
+    "Overall": true,
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "169",
+     "TeamName": "Quinn Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 40,
+     "Gender": "Male",
+     "Time": "3:30:32.4",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "33.82%",
+     "PercentMedian": "36.23%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "2",
+     "Bib": "313",
+     "TeamName": "Reese Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 32,
+     "Gender": "Male",
+     "Time": "3:55:16.8",
+     "Difference": "+24:44.4",
+     "PercentBack": "+11.75%",
+     "PercentWinning": "89.48%",
+     "PercentAverage": "26.05%",
+     "PercentMedian": "28.74%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "3",
+     "Bib": "143",
+     "TeamName": "Sage Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 35,
+     "Gender": "Female",
+     "Time": "4:19:35.0",
+     "Difference": "+49:02.6",
+     "PercentBack": "+23.29%",
+     "PercentWinning": "81.11%",
+     "PercentAverage": "18.41%",
+     "PercentMedian": "21.38%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "4",
+     "Bib": "140",
+     "TeamName": "Tatum Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 35,
+     "Gender": "Female",
+     "Time": "4:32:06.6",
+     "Difference": "+1:01:34.2",
+     "PercentBack": "+29.24%",
+     "PercentWinning": "77.37%",
+     "PercentAverage": "14.47%",
+     "PercentMedian": "17.58%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "5",
+     "Bib": "247",
+     "TeamName": "Avery Cedar",
+     "Distance": "Marathon",
+     "Category": "Masters",
+     "Age": 58,
+     "Gender": "Female",
+     "Time": "5:36:16.8",
+     "Difference": "+2:05:44.4",
+     "PercentBack": "+59.72%",
+     "PercentWinning": "62.61%",
+     "PercentAverage": "-5.70%",
+     "PercentMedian": "-1.85%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "-",
+     "Bib": "121",
+     "TeamName": "Blake Cedar",
+     "Distance": "Marathon",
+     "Category": "Masters",
+     "Age": 56,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    },
+    {
+     "Place": "-",
+     "Bib": "172",
+     "TeamName": "Casey Cedar",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 22,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "Marathon",
+    "Gender": "Female",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "143",
+     "TeamName": "Sage Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 35,
+     "Gender": "Female",
+     "Time": "4:19:35.0",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "17.52%",
+     "PercentMedian": "18.18%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "2",
+     "Bib": "140",
+     "TeamName": "Tatum Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 35,
+     "Gender": "Female",
+     "Time": "4:32:06.6",
+     "Difference": "+12:31.6",
+     "PercentBack": "+4.83%",
+     "PercentWinning": "95.40%",
+     "PercentAverage": "13.54%",
+     "PercentMedian": "14.23%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "3",
+     "Bib": "247",
+     "TeamName": "Avery Cedar",
+     "Distance": "Marathon",
+     "Category": "Masters",
+     "Age": 58,
+     "Gender": "Female",
+     "Time": "5:36:16.8",
+     "Difference": "+1:16:41.8",
+     "PercentBack": "+29.55%",
+     "PercentWinning": "77.19%",
+     "PercentAverage": "-6.85%",
+     "PercentMedian": "-5.99%",
+     "StartTime": "08:07:39.9"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "Marathon",
+    "Gender": "Male",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "169",
+     "TeamName": "Quinn Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 40,
+     "Gender": "Male",
+     "Time": "3:30:32.4",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "34.63%",
+     "PercentMedian": "36.23%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "2",
+     "Bib": "313",
+     "TeamName": "Reese Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 32,
+     "Gender": "Male",
+     "Time": "3:55:16.8",
+     "Difference": "+24:44.4",
+     "PercentBack": "+11.75%",
+     "PercentWinning": "89.48%",
+     "PercentAverage": "26.94%",
+     "PercentMedian": "28.74%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "-",
+     "Bib": "121",
+     "TeamName": "Blake Cedar",
+     "Distance": "Marathon",
+     "Category": "Masters",
+     "Age": 56,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    },
+    {
+     "Place": "-",
+     "Bib": "172",
+     "TeamName": "Casey Cedar",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 22,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "12.5K",
+    "Category": "Masters",
+    "Gender": "Female"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "305",
+     "TeamName": "Finley Alder",
+     "Distance": "12.5K",
+     "Category": "Masters",
+     "Age": 50,
+     "Gender": "Female",
+     "Time": "1:23:42.6",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "19.31%",
+     "PercentMedian": "10.43%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "12.5K",
+    "Category": "Masters",
+    "Gender": "Male"
+   },
+   "Racers": [
+    {
+     "Place": "-",
+     "Bib": "207",
+     "TeamName": "Indigo Alder",
+     "Distance": "12.5K",
+     "Category": "Masters",
+     "Age": 65,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "12.5K",
+    "Category": "Open",
+    "Gender": "Female"
+   },
+   "Racers": [
+    {
+     "Place": "-",
+     "Bib": "135",
+     "TeamName": "Harper Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 48,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "12.5K",
+    "Category": "Open",
+    "Gender": "Male"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "269",
+     "TeamName": "Blake Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 21,
+     "Gender": "Male",
+     "Time": "51:11.6",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "28.06%",
+     "PercentMedian": "24.52%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "214",
+     "TeamName": "Casey Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Male",
+     "Time": "53:03.2",
+     "Difference": "+1:51.6",
+     "PercentBack": "+3.63%",
+     "PercentWinning": "96.49%",
+     "PercentAverage": "25.45%",
+     "PercentMedian": "21.78%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "3",
+     "Bib": "165",
+     "TeamName": "Drew Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 29,
+     "Gender": "Male",
+     "Time": "59:25.5",
+     "Difference": "+8:13.9",
+     "PercentBack": "+16.08%",
+     "PercentWinning": "86.15%",
+     "PercentAverage": "16.50%",
+     "PercentMedian": "12.38%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "4",
+     "Bib": "255",
+     "TeamName": "Emery Alder",
+     "Distance": "12.5K",
+     "Category": "Open",
+     "Age": 39,
+     "Gender": "Male",
+     "Time": "1:00:04.0",
+     "Difference": "+8:52.4",
+     "PercentBack": "+17.33%",
+     "PercentWinning": "85.23%",
+     "PercentAverage": "15.59%",
+     "PercentMedian": "11.44%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "12.5K",
+    "Category": "Youth",
+    "Gender": "Female"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "319",
+     "TeamName": "Gray Alder",
+     "Distance": "12.5K",
+     "Category": "Youth",
+     "Age": 17,
+     "Gender": "Female",
+     "Time": "1:25:29.0",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "0.08%",
+     "PercentMedian": "0.08%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "25K",
+    "Category": "Masters",
+    "Gender": "Female",
+    "LapCount": "2"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "153",
+     "TeamName": "Noel Alder",
+     "Distance": "25K",
+     "Category": "Masters",
+     "Age": 53,
+     "Gender": "Female",
+     "Time": "2:44:12.7",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "20.53%",
+     "PercentMedian": "23.50%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "25K",
+    "Category": "Masters",
+    "Gender": "Male",
+    "LapCount": "2"
+   },
+   "Racers": [
+    {
+     "Place": "-",
+     "Bib": "157",
+     "TeamName": "Parker Alder",
+     "Distance": "25K",
+     "Category": "Masters",
+     "Age": 63,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "25K",
+    "Category": "Open",
+    "Gender": "Female",
+    "LapCount": "2"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "117",
+     "TeamName": "Morgan Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 46,
+     "Gender": "Female",
+     "Time": "2:17:55.4",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "18.28%",
+     "PercentMedian": "18.11%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "132",
+     "TeamName": "Oakley Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 48,
+     "Gender": "Female",
+     "Time": "DNF",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "246",
+     "TeamName": "Quinn Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 38,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "25K",
+    "Category": "Open",
+    "Gender": "Male",
+    "LapCount": "2"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "160",
+     "TeamName": "Jordan Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 38,
+     "Gender": "Male",
+     "Time": "1:48:48.3",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "34.48%",
+     "PercentMedian": "37.02%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "178",
+     "TeamName": "Kai Alder",
+     "Distance": "25K",
+     "Category": "Open",
+     "Age": 37,
+     "Gender": "Male",
+     "Time": "2:14:07.7",
+     "Difference": "+25:19.4",
+     "PercentBack": "+23.27%",
+     "PercentWinning": "81.12%",
+     "PercentAverage": "19.23%",
+     "PercentMedian": "22.37%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "25K",
+    "Category": "Youth",
+    "Gender": "Male",
+    "LapCount": "2"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "221",
+     "TeamName": "Logan Alder",
+     "Distance": "25K",
+     "Category": "Youth",
+     "Age": 16,
+     "Gender": "Male",
+     "Time": "2:15:05.2",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "0.00%",
+     "PercentMedian": "0.00%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "50K",
+    "Category": "Masters",
+    "Gender": "Female",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "288",
+     "TeamName": "Blake Birch",
+     "Distance": "50K",
+     "Category": "Masters",
+     "Age": 56,
+     "Gender": "Female",
+     "Time": "5:50:59.6",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "11.84%",
+     "PercentMedian": "11.84%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "50K",
+    "Category": "Masters",
+    "Gender": "Male",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "295",
+     "TeamName": "Casey Birch",
+     "Distance": "50K",
+     "Category": "Masters",
+     "Age": 55,
+     "Gender": "Male",
+     "Time": "6:03:06.0",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "10.61%",
+     "PercentMedian": "11.99%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "50K",
+    "Category": "Open",
+    "Gender": "Female",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "274",
+     "TeamName": "Tatum Alder",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 44,
+     "Gender": "Female",
+     "Time": "4:40:45.2",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "17.57%",
+     "PercentMedian": "16.22%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "188",
+     "TeamName": "Emery Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 47,
+     "Gender": "Female",
+     "Time": "DNF",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "150",
+     "TeamName": "Gray Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 44,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "50K",
+    "Category": "Open",
+    "Gender": "Male",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "193",
+     "TeamName": "Reese Alder",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 26,
+     "Gender": "Male",
+     "Time": "4:01:16.9",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "23.25%",
+     "PercentMedian": "22.12%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "203",
+     "TeamName": "Sage Alder",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 34,
+     "Gender": "Male",
+     "Time": "4:23:51.4",
+     "Difference": "+22:34.5",
+     "PercentBack": "+9.36%",
+     "PercentWinning": "91.44%",
+     "PercentAverage": "16.07%",
+     "PercentMedian": "14.84%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "3",
+     "Bib": "167",
+     "TeamName": "Avery Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 26,
+     "Gender": "Male",
+     "Time": "4:45:18.6",
+     "Difference": "+44:01.7",
+     "PercentBack": "+18.25%",
+     "PercentWinning": "84.57%",
+     "PercentAverage": "9.25%",
+     "PercentMedian": "7.91%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "266",
+     "TeamName": "Drew Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 33,
+     "Gender": "Male",
+     "Time": "DNF",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "-",
+     "Bib": "127",
+     "TeamName": "Finley Birch",
+     "Distance": "50K",
+     "Category": "Open",
+     "Age": 34,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "50K Relay",
+    "Category": "Relay",
+    "Gender": "Male",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "105",
+     "TeamName": "Harper Birch",
+     "Distance": "50K Relay",
+     "Category": "Relay",
+     "Age": null,
+     "Gender": "",
+     "Time": "4:29:52.4",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "1.29%",
+     "PercentMedian": "1.29%",
+     "StartTime": "08:12:40.2"
+    },
+    {
+     "Place": "2",
+     "Bib": "101",
+     "TeamName": "Indigo Birch",
+     "Distance": "50K Relay",
+     "Category": "Relay",
+     "Age": null,
+     "Gender": "",
+     "Time": "4:36:55.5",
+     "Difference": "+7:03.1",
+     "PercentBack": "+2.61%",
+     "PercentWinning": "97.45%",
+     "PercentAverage": "-1.29%",
+     "PercentMedian": "-1.29%",
+     "StartTime": "08:12:40.2"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "5K",
+    "Category": "Masters",
+    "Gender": "Female"
+   },
+   "Racers": [
+    {
+     "Place": "-",
+     "Bib": "161",
+     "TeamName": "Parker Birch",
+     "Distance": "5K",
+     "Category": "Masters",
+     "Age": 52,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "5K",
+    "Category": "Masters",
+    "Gender": "Male"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "254",
+     "TeamName": "Noel Birch",
+     "Distance": "5K",
+     "Category": "Masters",
+     "Age": 61,
+     "Gender": "Male",
+     "Time": "30:52.1",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "21.28%",
+     "PercentMedian": "16.52%",
+     "StartTime": "08:07:39.9"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "5K",
+    "Category": "Open",
+    "Gender": "Female"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "124",
+     "TeamName": "Kai Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Female",
+     "Time": "25:21.4",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "27.05%",
+     "PercentMedian": "24.46%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "-",
+     "Bib": "128",
+     "TeamName": "Oakley Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 41,
+     "Gender": "Female",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "5K",
+    "Category": "Open",
+    "Gender": "Male"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "192",
+     "TeamName": "Jordan Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Male",
+     "Time": "22:15.1",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "21.21%",
+     "PercentMedian": "23.05%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "2",
+     "Bib": "287",
+     "TeamName": "Logan Birch",
+     "Distance": "5K",
+     "Category": "Open",
+     "Age": 19,
+     "Gender": "Male",
+     "Time": "25:33.5",
+     "Difference": "+3:18.4",
+     "PercentBack": "+14.86%",
+     "PercentWinning": "87.06%",
+     "PercentAverage": "9.51%",
+     "PercentMedian": "11.62%",
+     "StartTime": "08:07:39.9"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "5K",
+    "Category": "Youth",
+    "Gender": "Male"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "229",
+     "TeamName": "Morgan Birch",
+     "Distance": "5K",
+     "Category": "Youth",
+     "Age": 12,
+     "Gender": "Male",
+     "Time": "25:34.0",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "25.98%",
+     "PercentMedian": "19.79%",
+     "StartTime": "08:07:39.9"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "Marathon",
+    "Category": "Masters",
+    "Gender": "Female",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "247",
+     "TeamName": "Avery Cedar",
+     "Distance": "Marathon",
+     "Category": "Masters",
+     "Age": 58,
+     "Gender": "Female",
+     "Time": "5:36:16.8",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "0.00%",
+     "PercentMedian": "0.00%",
+     "StartTime": "08:07:39.9"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "Marathon",
+    "Category": "Masters",
+    "Gender": "Male",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "-",
+     "Bib": "121",
+     "TeamName": "Blake Cedar",
+     "Distance": "Marathon",
+     "Category": "Masters",
+     "Age": 56,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "Marathon",
+    "Category": "Open",
+    "Gender": "Female",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "143",
+     "TeamName": "Sage Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 35,
+     "Gender": "Female",
+     "Time": "4:19:35.0",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "16.70%",
+     "PercentMedian": "13.08%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "2",
+     "Bib": "140",
+     "TeamName": "Tatum Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 35,
+     "Gender": "Female",
+     "Time": "4:32:06.6",
+     "Difference": "+12:31.6",
+     "PercentBack": "+4.83%",
+     "PercentWinning": "95.40%",
+     "PercentAverage": "12.68%",
+     "PercentMedian": "8.89%",
+     "StartTime": "08:07:39.9"
+    }
+   ]
+  },
+  {
+   "Grouping": {
+    "Distance": "Marathon",
+    "Category": "Open",
+    "Gender": "Male",
+    "LapCount": "4"
+   },
+   "Racers": [
+    {
+     "Place": "1",
+     "Bib": "169",
+     "TeamName": "Quinn Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 40,
+     "Gender": "Male",
+     "Time": "3:30:32.4",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "100%",
+     "PercentAverage": "28.66%",
+     "PercentMedian": "29.51%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "2",
+     "Bib": "313",
+     "TeamName": "Reese Birch",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 32,
+     "Gender": "Male",
+     "Time": "3:55:16.8",
+     "Difference": "+24:44.4",
+     "PercentBack": "+11.75%",
+     "PercentWinning": "89.48%",
+     "PercentAverage": "20.28%",
+     "PercentMedian": "21.22%",
+     "StartTime": "08:07:39.9"
+    },
+    {
+     "Place": "-",
+     "Bib": "172",
+     "TeamName": "Casey Cedar",
+     "Distance": "Marathon",
+     "Category": "Open",
+     "Age": 22,
+     "Gender": "Male",
+     "Time": "DNS",
+     "Difference": "-",
+     "PercentBack": "-",
+     "PercentWinning": "-",
+     "PercentAverage": "-",
+     "PercentMedian": "-",
+     "StartTime": ""
+    }
+   ]
+  }
+ ]
+}

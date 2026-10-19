@@ -5,6 +5,7 @@ from datetime import datetime
 from flask import Flask, render_template, jsonify
 from webscorer_client import fetch_race_list, fetch_race_results
 from data_processing import process_race_data, build_pages, build_finish_chart_data, build_demographics_data
+from normalizer import normalize_webscorer
 from config import load_config
 
 _cache = {
@@ -82,14 +83,15 @@ def poll_once(app):
                 raw = json.load(f)
         else:
             raw = fetch_race_results(cfg["race_id"], cfg["api_id"], cfg["api_token"])
+        snapshot = normalize_webscorer(raw)
         data = process_race_data(
-            raw,
+            snapshot,
             show_overall_results=cfg.get("show_overall_results", True),
             show_category_results=cfg.get("show_category_results", True),
         )
-        demographics = build_demographics_data(raw)
+        demographics = build_demographics_data(snapshot)
         pages = build_pages(data, demographics)
-        finish_chart = build_finish_chart_data(raw, cfg.get("chart_bucket_minutes", 15))
+        finish_chart = build_finish_chart_data(snapshot, cfg.get("chart_bucket_minutes", 15))
         with _cache_lock:
             _cache["pages"] = pages
             _cache["last_refresh"] = datetime.now().strftime("%H:%M:%S")
@@ -199,7 +201,7 @@ def main():
         else:
             raw = fetch_race_results(config["race_id"], config["api_id"], config["api_token"])
         data = process_race_data(
-            raw,
+            normalize_webscorer(raw),
             show_overall_results=config.get("show_overall_results", True),
             show_category_results=config.get("show_category_results", True),
         )
