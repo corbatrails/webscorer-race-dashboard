@@ -5,6 +5,8 @@ from collections import namedtuple
 import yaml
 from dotenv import dotenv_values, find_dotenv, load_dotenv
 
+from providers import get_provider, provider_names
+
 
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
 
@@ -51,11 +53,19 @@ def _parse_color_scheme(value):
     return value if value in _COLOR_SCHEMES else "dark"
 
 
+def _parse_source(value):
+    value = str(value).strip().lower()
+    if value not in provider_names():
+        raise ValueError(f"expected one of: {', '.join(provider_names())}")
+    return value
+
+
 # reload: "live" options can change mid-run (Phase 4); "restart" options are
 # consumed once at startup and need a restart to change.
 Option = namedtuple("Option", "key env default parse reload")
 
 OPTIONS = (
+    Option("source", "RACE_SOURCE", "webscorer", _parse_source, "restart"),
     Option("race_id", "WEBSCORER_RACE_ID", None, _parse_optional_str, "restart"),
     Option("data_file", "DATA_FILE", None, _parse_optional_str, "restart"),
     Option("refresh_interval", "REFRESH_INTERVAL", 60, _parse_int, "restart"),
@@ -153,6 +163,7 @@ def load_config(config_path=None, env_path=None):
     values = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
 
     data_file = values["data_file"]
+    provider = get_provider(values["source"])
     api_id = os.environ.get("WEBSCORER_API_ID")
     api_token = os.environ.get("WEBSCORER_API_TOKEN")
 
@@ -160,12 +171,11 @@ def load_config(config_path=None, env_path=None):
         if not os.path.isfile(data_file):
             print(f"ERROR: DATA_FILE '{data_file}' not found.")
             sys.exit(1)
+    elif provider.requires_data_file:
+        _fail(f"source '{provider.name}' requires data_file.")
     else:
-        if not api_id:
-            print("ERROR: WEBSCORER_API_ID is required. Set it in .env file.")
-            sys.exit(1)
-        if not api_token:
-            print("ERROR: WEBSCORER_API_TOKEN is required. Set it in .env file.")
-            sys.exit(1)
+        for env_var in provider.required_secrets.values():
+            if not os.environ.get(env_var):
+                _fail(f"{env_var} is required. Set it in .env file.")
 
     return {"api_id": api_id, "api_token": api_token, **values}

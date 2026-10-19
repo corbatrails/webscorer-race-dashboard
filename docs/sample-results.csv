@@ -1,0 +1,26 @@
+# name: Sample Gravel Grinder
+# date: Saturday, June 6, 2026
+# sport: Cycling - gravel
+# start: 8:00
+bib,name,team,distance,category,gender,age,start time,time
+101,Maya Brooks,Corba Trails,40 mile,Women 30-39,F,34,8:00:00,2:41:12
+102,Luis Ortega,Ridge Runners,40 mile,Men 30-39,M,36,8:00:00,2:38:40
+103,Tom Hadley,,40 mile,Men 40-49,M,44,8:00:00,2:45:03
+104,Priya Nair,Corba Trails,40 mile,Women 40-49,F,41,8:00:00,2:45:03
+105,"Okafor, Daniel",Ridge Runners,40 mile,Men 40-49,M,47,8:00:00,2:52:30.5
+106,Hannah Lindqvist,,40 mile,Women 30-39,F,31,8:05:00,2:50:18
+107,Greg Pruitt,Dirt Dogs,40 mile,Men 50-59,M,53,8:05:00,3:04:47
+108,Sofia Marin,Dirt Dogs,40 mile,Women 40-49,F,45,8:05:00,3:10:09
+109,Ben Whitaker,,40 mile,Men 30-39,M,29,8:05:00,DNF
+110,Carla Jensen,Corba Trails,40 mile,Women 50-59,F,52,8:05:00,DNS
+111,Mike Dunleavy,,40 mile,Men 50-59,M,58,8:10:00,DSQ
+112,Eli Park,Dirt Dogs,40 mile,Men 30-39,M,33,8:10:00,
+113,Nora Fields,,40 mile,Women 30-39,F,38,8:10:00,-
+201,Jack Reyes,,20 mile,Men 18-29,M,24,9:00:00,1:12:15
+202,Ava Chen,Corba Trails,20 mile,Women 18-29,F,22,9:00:00,1:14:50
+203,Sam Patel,,20 mile,Men 18-29,M,27,9:00:00,1:14:50
+204,Rosa Alvarez,Dirt Dogs,20 mile,Women 30-39,F,35,9:00:00,1:21:33
+205,Walt Murphy,,20 mile,Men 60+,M,63,9:05:00,1:33:20
+206,Ivy Thompson,Ridge Runners,20 mile,Women 18-29,F,19,9:05:00,1:29:02
+207,Owen Clarke,Ridge Runners,20 mile,Men 18-29,M,26,9:05:00,DNF
+208,Lena Fischer,,20 mile,Women 60+,F,61,9:05:00,

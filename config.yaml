@@ -8,9 +8,13 @@
 # README.md), e.g. REFRESH_INTERVAL=30.
 
 # --- Race / data source ---
+# Ingestion provider: webscorer (live API or a saved JSON dump) or csv (a spreadsheet
+# export; needs data_file). Changing it needs a restart.
+source: webscorer
 # WebScorer race ID. null = prompt for a race at startup.
 race_id: null
-# Load results from a local JSON file instead of the API (no credentials needed).
+# File the provider reads instead of the network (a WebScorer JSON dump, or the CSV
+# for source csv). No credentials needed when set.
 data_file: null
 
 # --- Timing ---
