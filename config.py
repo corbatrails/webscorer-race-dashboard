@@ -205,6 +205,7 @@ class ConfigWatcher:
         self.path = config_path or DEFAULT_CONFIG_PATH
         self._applied = _signature(self.path)
         self._candidate = None
+        self._last_error = None
 
     def check(self, running):
         """One watch tick. Returns a Reload when a settled edit changes the config, else None."""
@@ -216,7 +217,15 @@ class ConfigWatcher:
             self._candidate = sig
             return None
         self._applied, self._candidate = sig, None
-        return self._reload(running)
+        try:
+            result = self._reload(running)
+        except ConfigError as e:
+            if str(e) != self._last_error:
+                self._last_error = str(e)
+                _warn(f"Ignoring {os.path.basename(self.path)} edit, keeping previous settings: {e}")
+            return None
+        self._last_error = None
+        return result
 
     def _reload(self, running):
         yaml_data = _read_yaml(self.path)

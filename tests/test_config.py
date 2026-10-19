@@ -601,3 +601,65 @@ def test_watcher_warns_about_unknown_keys(clean_env, tmp_path, capsys):
     result = _settle(watcher, running)
     assert result.config["scroll_speed"] == 200
     assert "scrol_speed" in capsys.readouterr().err
+
+
+def _write_raw(path, text):
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(text)
+    _edit_counter[0] += 1
+    stamp = 1_700_000_000_000_000_000 + _edit_counter[0] * 1_000_000_000
+    os.utime(path, ns=(stamp, stamp))
+
+
+@pytest.mark.parametrize("text,fragment", [
+    ("scroll_speed: [unclosed\n", "config.yaml"),
+    ("- a\n- b\n", "mapping"),
+    ("scroll_speed: fast\n", "scroll_speed"),
+    ("refresh_interval: 0\n", "refresh_interval"),
+])
+def test_watcher_keeps_last_good_config_on_bad_edit(clean_env, tmp_path, capsys, text, fragment):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _write_raw(path, text)
+
+    assert _settle(watcher, running) is None
+
+    err = capsys.readouterr().err
+    assert "WARNING" in err
+    assert fragment in err
+    assert "keeping" in err
+
+
+def test_watcher_warns_once_per_distinct_error(clean_env, tmp_path, capsys):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _write_raw(path, "scroll_speed: fast\n")
+    for _ in range(4):
+        watcher.check(running)
+    assert capsys.readouterr().err.count("WARNING") == 1
+
+    _write_raw(path, "scroll_speed: fast\n")  # same error, new mtime
+    assert _settle(watcher, running) is None
+    assert capsys.readouterr().err == ""
+
+    _write_raw(path, "pinned_leaders: many\n")  # different error
+    assert _settle(watcher, running) is None
+    assert capsys.readouterr().err.count("WARNING") == 1
+
+
+def test_watcher_recovers_when_file_is_fixed(clean_env, tmp_path):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _write_raw(path, "scroll_speed: [unclosed\n")
+    assert _settle(watcher, running) is None
+    _edit_config(path, {"scroll_speed": 200})
+    assert _settle(watcher, running).config["scroll_speed"] == 200
+
+
+def test_watcher_warns_again_if_same_error_returns_after_recovery(clean_env, tmp_path, capsys):
+    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
+    _write_raw(path, "scroll_speed: fast\n")
+    _settle(watcher, running)
+    _edit_config(path, {"scroll_speed": 200})
+    _settle(watcher, running)
+    capsys.readouterr()
+    _write_raw(path, "scroll_speed: fast\n")
+    _settle(watcher, running)
+    assert capsys.readouterr().err.count("WARNING") == 1
