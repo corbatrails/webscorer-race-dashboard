@@ -1,6 +1,6 @@
 # Race Dashboard: Platform & Refactor Roadmap
 
-> Status: **Proposed** · Owner: maintainers · Last updated: 2026-10-17
+> Status: **In progress** (Phases 1-2 shipped) · Owner: maintainers · Last updated: 2026-10-18
 >
 > This is a strategic roadmap, not an implementation plan. Each phase below is
 > delivered through the normal workflow: `brainstorming` → a design spec in
@@ -86,7 +86,10 @@ duplication. Groupings become *attributes you filter on*, not *containers you
 iterate*.
 
 ```python
-# Illustrative shape, finalized in the Phase 1 spec.
+# Illustrative shape, finalized in the Phase 1 spec. The shipped schema is
+# documented in the normalizer.py module docstring and differs in places
+# (start_seconds, finish_tod_seconds, in_overall, category_groups, string
+# source_place).
 RaceSnapshot = {
     "race": {
         "name": str,
@@ -174,6 +177,10 @@ Each phase is independently shippable and gets its own spec + plan.
 > before the work that needs it.
 
 ### Phase 1: Normalize to a single filterable racer list (keystone)
+**Status: Shipped** in v1.18.0 (#74, issue #68). Lives in `normalizer.py` plus
+the projections in `data_processing.py`. Spec:
+[racer snapshot design](superpowers/specs/2026-10-17-racer-snapshot-design.md).
+
 **Goal:** Introduce `RaceSnapshot` + flat `Racer` list and route **all** views
 through it. No behavior change visible on the TV; big change underneath.
 
@@ -200,6 +207,10 @@ before touching logic.
 ---
 
 ### Phase 2: Config split (secrets vs. `config.yaml`)
+**Status: Shipped** in v1.17.0 (#73, issue #69). Lives in the `config.py`
+`OPTIONS` table (each option tagged live or restart) plus `config.yaml`. Spec:
+[config.yaml design](superpowers/specs/2026-10-17-config-yaml-design.md).
+
 **Goal:** Move all non-secret config into a committable `config.yaml`; keep only
 secrets in `.env`. Small, low-risk, and unblocks the control plane (hot-reload,
 admin) that follows.
@@ -357,13 +368,21 @@ flowchart TD
 
 ## Open questions
 
-- Migration path for existing `.env`-only deployments when `config.yaml` lands
-  (auto-generate on first run vs. documented manual step?).
-- Exact `config.yaml` schema and which keys are hot-reloadable vs.
-  restart-required.
+- ~~Migration path for existing `.env`-only deployments when `config.yaml`
+  lands.~~ Resolved in Phase 2: legacy `.env` keys still apply as overrides and
+  log a deprecation warning.
+- ~~Exact `config.yaml` schema and which keys are hot-reloadable vs.
+  restart-required.~~ Resolved in Phase 2: the `OPTIONS` table in `config.py`,
+  `reload` column.
 - Whether normalization should retain any raw display strings beyond `Time`
   (e.g. formatted pace) or recompute all formatting in projections.
 - Admin write model: edit full `config.yaml` vs. a curated subset of safe keys.
+
+## Known follow-ups
+
+- Finish chart x-axis labels run past 24:00 for finishes after midnight.
+  Cosmetic; deferred in the Phase 1 spec.
+- `refresh_interval` is restart-only today. Make it live in Phase 4.
 
 ---
 
