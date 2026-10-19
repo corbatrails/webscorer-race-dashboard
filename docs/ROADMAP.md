@@ -1,6 +1,6 @@
 # Race Dashboard: Platform & Refactor Roadmap
 
-> Status: **In progress** (Phases 1-2 shipped) · Owner: maintainers · Last updated: 2026-10-18
+> Status: **In progress** (Phases 1-3 shipped) · Owner: maintainers · Last updated: 2026-10-19
 >
 > This is a strategic roadmap, not an implementation plan. Each phase below is
 > delivered through the normal workflow: `brainstorming` → a design spec in
@@ -236,6 +236,11 @@ one-time migration note and a fallback that reads legacy `.env` keys.
 ---
 
 ### Phase 3: Provider abstraction (make it pluggable)
+**Status: Shipped** (#77, issue #70). Lives in the `providers/` package (contract in
+`providers/base.py`, registry in `providers/__init__.py`, `webscorer` and `csv`
+providers) and the `source` option. Spec:
+[provider abstraction design](superpowers/specs/2026-10-18-provider-abstraction-design.md).
+
 **Goal:** Define the ingestion boundary so a new platform is one adapter, not a
 new pipeline. Ship with WebScorer as the reference adapter.
 
