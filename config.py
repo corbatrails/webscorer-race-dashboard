@@ -40,6 +40,13 @@ def _parse_bool(value):
     raise ValueError("expected true or false")
 
 
+def _parse_refresh_interval(value):
+    seconds = _parse_int(value)
+    if seconds < 1:
+        raise ValueError("expected a whole number of at least 1")
+    return seconds
+
+
 def _parse_optional_str(value):
     return str(value).strip() or None
 
@@ -68,7 +75,7 @@ OPTIONS = (
     Option("source", "RACE_SOURCE", "webscorer", _parse_source, "restart"),
     Option("race_id", "WEBSCORER_RACE_ID", None, _parse_optional_str, "restart"),
     Option("data_file", "DATA_FILE", None, _parse_optional_str, "restart"),
-    Option("refresh_interval", "REFRESH_INTERVAL", 60, _parse_int, "restart"),
+    Option("refresh_interval", "REFRESH_INTERVAL", 60, _parse_refresh_interval, "live"),
     Option("summary_display_time", "SUMMARY_DISPLAY_TIME", 20, _parse_int, "live"),
     Option("scroll_speed", "SCROLL_SPEED", 100, _parse_int, "live"),
     Option("scroll_pause_time", "SCROLL_PAUSE_TIME", 2, _parse_int, "live"),
@@ -87,6 +94,10 @@ OPTIONS = (
 )
 
 
+class ConfigError(Exception):
+    """A config source is unreadable or holds an invalid value."""
+
+
 def _fail(message):
     print(f"ERROR: {message}")
     sys.exit(1)
@@ -103,11 +114,11 @@ def _read_yaml(path):
         with open(path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
-        _fail(f"Could not parse {os.path.basename(path)}: {e}")
+        raise ConfigError(f"Could not parse {os.path.basename(path)}: {e}")
     if data is None:
         return {}
     if not isinstance(data, dict):
-        _fail(f"{os.path.basename(path)} must be a mapping of option names to values.")
+        raise ConfigError(f"{os.path.basename(path)} must be a mapping of option names to values.")
     return data
 
 
@@ -148,19 +159,21 @@ def _resolve_option(opt, yaml_data, yaml_name):
     try:
         return opt.parse(raw)
     except ValueError as e:
-        _fail(f"Invalid value {raw!r} for '{opt.key}' (from {source}): {e}")
+        raise ConfigError(f"Invalid value {raw!r} for '{opt.key}' (from {source}): {e}")
 
 
 def load_config(config_path=None, env_path=None):
     env_path = env_path or find_dotenv()
     load_dotenv(env_path)
     config_path = config_path or DEFAULT_CONFIG_PATH
-    yaml_data = _read_yaml(config_path)
     yaml_name = os.path.basename(config_path)
-    _check_yaml_keys(yaml_data, config_path)
-    _warn_legacy_dotenv(env_path)
-
-    values = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
+    try:
+        yaml_data = _read_yaml(config_path)
+        _check_yaml_keys(yaml_data, config_path)
+        _warn_legacy_dotenv(env_path)
+        values = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
+    except ConfigError as e:
+        _fail(str(e))
 
     data_file = values["data_file"]
     provider = get_provider(values["source"])
@@ -179,3 +192,81 @@ def load_config(config_path=None, env_path=None):
                 _fail(f"{env_var} is required. Set it in .env file.")
 
     return {"api_id": api_id, "api_token": api_token, **values}
+
+
+Reload = namedtuple("Reload", "config changed restart_required")
+
+
+def _signature(path):
+    try:
+        st = os.stat(path)
+    except OSError:
+        return None
+    return (st.st_mtime_ns, st.st_size)
+
+
+class ConfigWatcher:
+    """Detects config.yaml edits and builds a validated replacement config.
+
+    The environment layer and secrets are not re-read; they keep their startup values.
+    """
+
+    def __init__(self, config_path=None):
+        self.path = config_path or DEFAULT_CONFIG_PATH
+        self._applied = _signature(self.path)
+        self._candidate = None
+        self._last_error = None
+        self._pending = []
+        self._baseline = self._file_restart_values()
+
+    def _file_restart_values(self):
+        """Restart-key values config.yaml resolves to now, or None if it cannot be read."""
+        try:
+            yaml_data = _read_yaml(self.path)
+            name = os.path.basename(self.path)
+            return {
+                opt.key: _resolve_option(opt, yaml_data, name)
+                for opt in OPTIONS if opt.reload == "restart"
+            }
+        except ConfigError:
+            return None
+
+    def check(self, running):
+        """One watch tick. Returns a Reload when a settled edit changes the config, else None."""
+        sig = _signature(self.path)
+        if sig is None or sig == self._applied:
+            self._candidate = None
+            return None
+        if sig != self._candidate:
+            self._candidate = sig
+            return None
+        self._applied, self._candidate = sig, None
+        try:
+            result = self._reload(running)
+        except ConfigError as e:
+            if str(e) != self._last_error:
+                self._last_error = str(e)
+                _warn(f"Ignoring {os.path.basename(self.path)} edit, keeping previous settings: {e}")
+            return None
+        self._last_error = None
+        return result
+
+    def _reload(self, running):
+        yaml_data = _read_yaml(self.path)
+        _check_yaml_keys(yaml_data, self.path)
+        yaml_name = os.path.basename(self.path)
+        resolved = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
+        live = {opt.key: resolved[opt.key] for opt in OPTIONS if opt.reload == "live"}
+        changed = [key for key, value in live.items() if running.get(key) != value]
+        restart_keys = [opt.key for opt in OPTIONS if opt.reload == "restart"]
+        if self._baseline is None:
+            self._baseline = {key: running.get(key) for key in restart_keys}
+        pending = sorted(key for key in restart_keys if resolved[key] != self._baseline[key])
+        newly_pending = [key for key in pending if key not in self._pending]
+        if newly_pending:
+            _warn(f"{', '.join(newly_pending)} changed in {yaml_name} and requires restart.")
+        pending_changed = pending != self._pending
+        self._pending = pending
+        if not changed and not pending_changed:
+            return None
+        return Reload({**running, **live}, changed, pending)

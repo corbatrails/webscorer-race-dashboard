@@ -6,15 +6,18 @@
 #   built-in defaults < config.yaml < .env < process environment variables
 # Any option below can be overridden by its environment variable (shown in
 # README.md), e.g. REFRESH_INTERVAL=30.
+#
+# Edits to this file apply while the app runs; only source, race_id and data_file
+# need a restart. An invalid edit is ignored and the last good settings keep running.
 
 # --- Race / data source ---
 # Ingestion provider: webscorer (live API or a saved JSON dump) or csv (a spreadsheet
-# export; needs data_file). Changing it needs a restart.
+# export; needs data_file). Restart required.
 source: webscorer
-# WebScorer race ID. null = prompt for a race at startup.
+# WebScorer race ID. null = prompt for a race at startup. Restart required.
 race_id: null
 # File the provider reads instead of the network (a WebScorer JSON dump, or the CSV
-# for source csv). No credentials needed when set.
+# for source csv). No credentials needed when set. Restart required.
 data_file: null
 
 # --- Timing ---
