@@ -1,4 +1,5 @@
 import json
+import sys
 import threading
 import time
 from datetime import datetime
@@ -6,7 +7,7 @@ from flask import Flask, render_template, jsonify
 from webscorer_client import fetch_race_list, fetch_race_results
 from data_processing import process_race_data, build_pages, build_finish_chart_data, build_demographics_data
 from normalizer import normalize_webscorer
-from config import load_config
+from config import ConfigWatcher, load_config
 
 _cache = {
     "pages": [],
@@ -20,11 +21,28 @@ _cache = {
     "finish_chart": None,
 }
 _cache_lock = threading.Lock()
+# Set when refresh_interval changes so the poll loop re-reads it.
+_config_changed = threading.Event()
+
+
+def apply_config_reload(app, reload):
+    """Swap in a reloaded config and its state; neither dict is ever mutated in place."""
+    with _cache_lock:
+        old = app.config["dashboard"]
+        state = app.config["dashboard_state"]
+        app.config["dashboard"] = reload.config
+        app.config["dashboard_state"] = {
+            "config_version": state["config_version"] + (1 if reload.changed else 0),
+            "restart_required": list(reload.restart_required),
+        }
+        if old.get("refresh_interval") != reload.config.get("refresh_interval"):
+            _config_changed.set()
 
 
 def create_app(config=None, start_polling=True):
     app = Flask(__name__)
     app.config["dashboard"] = config or {}
+    app.config["dashboard_state"] = {"config_version": 1, "restart_required": []}
     _start_time = int(time.time())
 
     @app.route("/")
@@ -35,6 +53,8 @@ def create_app(config=None, start_polling=True):
     @app.route("/api/data")
     def api_data():
         with _cache_lock:
+            cfg = app.config["dashboard"]
+            state = app.config["dashboard_state"]
             return jsonify({
                 "pages": _cache["pages"],
                 "last_refresh": _cache["last_refresh"],
@@ -45,24 +65,22 @@ def create_app(config=None, start_polling=True):
                 "race_date": _cache["race_date"],
                 "race_sport": _cache["race_sport"],
                 "finish_chart": _cache["finish_chart"],
-                "summary_display_time": app.config["dashboard"].get("summary_display_time", 20),
-                "scroll_speed": app.config["dashboard"].get("scroll_speed", 100),
-                "scroll_pause_time": app.config["dashboard"].get("scroll_pause_time", 2),
-                "pinned_leaders": app.config["dashboard"].get("pinned_leaders", 3),
-                "show_summary": app.config["dashboard"].get("show_summary", True),
-                "show_demographics": app.config["dashboard"].get("show_demographics", False),
-                "chart_bucket_minutes": app.config["dashboard"].get("chart_bucket_minutes", 15),
-                "show_toasts": app.config["dashboard"].get("show_toasts", True),
-                "overall_results_layout": app.config["dashboard"].get("overall_results_layout", "standard"),
-                "display_unfinished_in_category": app.config["dashboard"].get(
-                    "display_unfinished_in_category", False
-                ),
-                "display_unfinished_in_overall": app.config["dashboard"].get(
-                    "display_unfinished_in_overall", False
-                ),
-                "pinned_leaders_on_overall_results": app.config["dashboard"].get(
-                    "pinned_leaders_on_overall_results", False
-                ),
+                "summary_display_time": cfg.get("summary_display_time", 20),
+                "scroll_speed": cfg.get("scroll_speed", 100),
+                "scroll_pause_time": cfg.get("scroll_pause_time", 2),
+                "pinned_leaders": cfg.get("pinned_leaders", 3),
+                "show_summary": cfg.get("show_summary", True),
+                "show_demographics": cfg.get("show_demographics", False),
+                "chart_bucket_minutes": cfg.get("chart_bucket_minutes", 15),
+                "show_toasts": cfg.get("show_toasts", True),
+                "overall_results_layout": cfg.get("overall_results_layout", "standard"),
+                "display_unfinished_in_category": cfg.get("display_unfinished_in_category", False),
+                "display_unfinished_in_overall": cfg.get("display_unfinished_in_overall", False),
+                "pinned_leaders_on_overall_results": cfg.get("pinned_leaders_on_overall_results", False),
+                "color_scheme": cfg.get("color_scheme", "dark"),
+                "refresh_interval": cfg.get("refresh_interval", 60),
+                "config_version": state["config_version"],
+                "config_restart_required": state["restart_required"],
             })
 
     if start_polling:
@@ -72,9 +90,7 @@ def create_app(config=None, start_polling=True):
 
 
 def _start_polling(app, sleep_first=False):
-    race_id = app.config["dashboard"]["race_id"]
-    interval = app.config["dashboard"]["refresh_interval"]
-    t = threading.Thread(target=_poll_loop, args=(app, race_id, interval, sleep_first), daemon=True)
+    t = threading.Thread(target=_poll_loop, args=(app, sleep_first), daemon=True)
     t.start()
 
 
@@ -117,13 +133,47 @@ def poll_once(app):
             _cache["error"] = error_msg
 
 
-def _poll_loop(app, race_id, interval, sleep_first=False):
+def _wait_for_next_poll(app, since):
+    """Block until refresh_interval seconds have passed since `since`, re-reading the interval if it changes."""
+    while True:
+        interval = app.config["dashboard"].get("refresh_interval", 60)
+        remaining = since + interval - time.monotonic()
+        if remaining <= 0:
+            return
+        if _config_changed.wait(remaining):
+            _config_changed.clear()
+
+
+def _poll_loop(app, sleep_first=False):
     if sleep_first:
-        time.sleep(interval)
+        _wait_for_next_poll(app, time.monotonic())
     while True:
         with app.app_context():
             poll_once(app)
-        time.sleep(interval)
+        _wait_for_next_poll(app, time.monotonic())
+
+
+def _watch_config_once(app, watcher):
+    try:
+        reload = watcher.check(app.config["dashboard"])
+        if reload is not None:
+            apply_config_reload(app, reload)
+            if reload.changed:
+                print(f"Config reloaded: {', '.join(reload.changed)}")
+    except Exception as e:
+        print(f"WARNING: config watcher error: {e}", file=sys.stderr)
+
+
+def _watch_config(app, watcher):
+    while True:
+        _watch_config_once(app, watcher)
+        time.sleep(1)
+
+
+def _start_config_watcher(app):
+    watcher = ConfigWatcher()
+    t = threading.Thread(target=_watch_config, args=(app, watcher), daemon=True)
+    t.start()
 
 
 def select_race(api_id, api_token):
@@ -206,8 +256,10 @@ def main():
 
     # Priming poll already fetched, so the loop waits one interval before its first poll
     _start_polling(app, sleep_first=True)
+    _start_config_watcher(app)
     for line in _format_config_lines(config, race_name, race_date):
         print(line)
+    print("\nConfig: live options reload from config.yaml; changes to race_id/data_file need a restart.")
     print(f"\nDashboard running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=False)
 
