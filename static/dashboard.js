@@ -6,6 +6,7 @@
   var config = {};
   var scrollAnimationId = null;
   var advanceTimer = null;
+  var navToken = 0;
   var lastData = null;
   var knownFinishedBibs = null;
   var finishChart = null;
@@ -127,19 +128,34 @@
   }
 
   // Re-read data and config first so a settings change applies on the next page, not the next poll
-  function advance() {
+  function advance(step) {
+    var delta = typeof step === "number" ? step : 1;
+    var token = ++navToken;
     stopAnimations();
     fetchData(true).then(function () {
+      // A newer navigation superseded this one while data was loading
+      if (token !== navToken) return;
       var totalPages = getTotalPages();
       if (totalPages === 0) {
         currentIndex = 0;
         renderCurrentPage();
         return;
       }
-      currentIndex = (currentIndex + 1) % totalPages;
+      currentIndex = (((currentIndex + delta) % totalPages) + totalPages) % totalPages;
       renderCurrentPage();
     });
   }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      advance(1);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      advance(-1);
+    }
+  });
 
   function stopAnimations() {
     if (scrollAnimationId) {
