@@ -1,12 +1,10 @@
-import json
 import sys
 import threading
 import time
 from datetime import datetime
 from flask import Flask, render_template, jsonify
-from webscorer_client import fetch_race_list, fetch_race_results
 from data_processing import process_race_data, build_pages, build_finish_chart_data, build_demographics_data
-from normalizer import normalize_webscorer
+from providers import get_provider
 from config import ConfigWatcher, load_config
 
 _cache = {
@@ -94,16 +92,20 @@ def _start_polling(app, sleep_first=False):
     t.start()
 
 
+def _provider_for(cfg):
+    return get_provider(cfg.get("source", "webscorer"))
+
+
+def _secrets_for(provider, cfg):
+    return {key: cfg.get(key) for key in provider.required_secrets}
+
+
 def poll_once(app):
     cfg = app.config["dashboard"]
     try:
-        if cfg.get("data_file"):
-            print(f"Loading data from local file: {cfg['data_file']}")
-            with open(cfg["data_file"], "r", encoding="utf-8") as f:
-                raw = json.load(f)
-        else:
-            raw = fetch_race_results(cfg["race_id"], cfg["api_id"], cfg["api_token"])
-        snapshot = normalize_webscorer(raw)
+        provider = _provider_for(cfg)
+        raw = provider.fetch(cfg, _secrets_for(provider, cfg))
+        snapshot = provider.normalize(raw)
         data = process_race_data(
             snapshot,
             show_overall_results=cfg.get("show_overall_results", True),
@@ -176,9 +178,9 @@ def _start_config_watcher(app):
     t.start()
 
 
-def select_race(api_id, api_token):
+def select_race(provider, config):
     try:
-        races = fetch_race_list(api_id, api_token)
+        races = provider.list_races(config, _secrets_for(provider, config))
     except Exception as e:
         print(f"\nERROR: Failed to fetch race list: {e}")
         print("Set WEBSCORER_RACE_ID in your .env file to skip race selection.")
@@ -190,15 +192,15 @@ def select_race(api_id, api_token):
 
     print("\nAvailable races:")
     for i, race in enumerate(races, 1):
-        print(f"  {i}. [{race['RaceId']}] {race['Name']} ({race.get('Date', 'N/A')}) - {race.get('Sport', '')}")
+        print(f"  {i}. [{race['id']}] {race['name']} ({race['date']}) - {race['sport']}")
 
     while True:
         try:
             choice = int(input(f"\nSelect race [1-{len(races)}]: "))
             if 1 <= choice <= len(races):
                 selected = races[choice - 1]
-                print(f"Selected: {selected['Name']}")
-                return str(selected["RaceId"])
+                print(f"Selected: {selected['name']}")
+                return selected["id"]
         except (ValueError, EOFError):
             pass
         print(f"Please enter a number between 1 and {len(races)}")
@@ -214,6 +216,7 @@ def _format_config_lines(config, race_name, race_date):
     return [
         "",
         "--- Configuration ---",
+        f"  Source:                         {config.get('source', 'webscorer')}",
         f"  Data file:                      {config.get('data_file') or '-'}",
         f"  API ID:                         {config.get('api_id') or '-'}",
         f"  API Token:                      {_mask_token(config.get('api_token'))}",
@@ -241,9 +244,10 @@ def _format_config_lines(config, race_name, race_date):
 
 def main():
     config = load_config()
+    provider = _provider_for(config)
 
-    if not config.get("data_file") and not config["race_id"]:
-        config["race_id"] = select_race(config["api_id"], config["api_token"])
+    if provider.list_races and not config.get("data_file") and not config["race_id"]:
+        config["race_id"] = select_race(provider, config)
         print("Waiting 5s to prevent API rate limit...")
         time.sleep(5)
 
@@ -259,7 +263,7 @@ def main():
     _start_config_watcher(app)
     for line in _format_config_lines(config, race_name, race_date):
         print(line)
-    print("\nConfig: live options reload from config.yaml; changes to race_id/data_file need a restart.")
+    print("\nConfig: live options reload from config.yaml; changes to source/race_id/data_file need a restart.")
     print(f"\nDashboard running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=False)
 

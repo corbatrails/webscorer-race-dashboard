@@ -15,7 +15,7 @@
   var hasRenderedPage = false;
   var configVersion = null;
 
-  function fetchData() {
+  function fetchData(skipRender) {
     return fetch("/api/data")
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -41,7 +41,7 @@
         var configChanged = configVersion !== null && data.config_version !== configVersion;
         configVersion = data.config_version;
         // Render on first data arrival or a settings change; ongoing animations pick up new data on next advance
-        if (!hasRenderedPage || (previousTotalPages === 0 && getTotalPages() > 0) || configChanged) {
+        if (!skipRender && (!hasRenderedPage || (previousTotalPages === 0 && getTotalPages() > 0) || configChanged)) {
           renderCurrentPage();
         }
       })
@@ -126,16 +126,19 @@
     }
   }
 
+  // Re-read data and config first so a settings change applies on the next page, not the next poll
   function advance() {
     stopAnimations();
-    var totalPages = getTotalPages();
-    if (totalPages === 0) {
-      currentIndex = 0;
+    fetchData(true).then(function () {
+      var totalPages = getTotalPages();
+      if (totalPages === 0) {
+        currentIndex = 0;
+        renderCurrentPage();
+        return;
+      }
+      currentIndex = (currentIndex + 1) % totalPages;
       renderCurrentPage();
-      return;
-    }
-    currentIndex = (currentIndex + 1) % totalPages;
-    renderCurrentPage();
+    });
   }
 
   function stopAnimations() {

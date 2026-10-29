@@ -4,7 +4,7 @@ A TV-mounted dashboard that displays live race results from WebScorer. Designed 
 
 ## Features
 
-- Polls WebScorer API for live race results
+- Polls WebScorer API for live race results, or reads a CSV spreadsheet (see [Sources](#sources))
 - Auto-rotating dashboard pages: summary overview + per-category results
 - Large, high-contrast dark theme optimized for TV readability
 - Configurable refresh and rotation intervals
@@ -64,8 +64,9 @@ A blank environment value (`KEY=`) counts as unset. Every `config.yaml` option c
 
 | `config.yaml` key | Environment override | Default | Description | Reload |
 |---|---|---|---|---|
+| `source` | `RACE_SOURCE` | `webscorer` | Ingestion provider: `webscorer` or `csv` | restart |
 | `race_id` | `WEBSCORER_RACE_ID` | `null` | Race ID (prompts at startup if omitted) | restart |
-| `data_file` | `DATA_FILE` | `null` | Load results from a local JSON file instead of the API (no credentials needed) | restart |
+| `data_file` | `DATA_FILE` | `null` | File the provider reads instead of the network: a WebScorer JSON dump, or the CSV for `source: csv` (no credentials needed) | restart |
 | `refresh_interval` | `REFRESH_INTERVAL` | 60 | Seconds between API polls | live |
 | `summary_display_time` | `SUMMARY_DISPLAY_TIME` | 20 | Seconds the summary page displays | live |
 | `scroll_speed` | `SCROLL_SPEED` | 100 | Scroll speed in pixels per second | live |
@@ -101,6 +102,76 @@ The app watches `config.yaml` and applies edits to `live` options without a rest
 ### Migrating from an `.env`-only setup
 
 Existing setups keep working with no changes: non-secret values in `.env` still apply (and override `config.yaml`), but the app prints a deprecation warning listing them. To migrate, move those values into `config.yaml` (lowercase keys, see the table) and leave only `WEBSCORER_API_ID` and `WEBSCORER_API_TOKEN` in `.env`.
+
+## Sources
+
+The `source` option selects where results come from. It needs a restart to change.
+
+| `source` | Reads | Credentials |
+|---|---|---|
+| `webscorer` (default) | The WebScorer API, or a saved JSON dump when `data_file` is set | `WEBSCORER_API_ID` and `WEBSCORER_API_TOKEN` in `.env`, unless `data_file` is set |
+| `csv` | The CSV file named by `data_file`, re-read on every poll | None |
+
+With `source: csv`, `data_file` is required. Save the spreadsheet and the TV updates within one `refresh_interval`. If the file is invalid, the last good pages stay on screen and the error is shown until the file is fixed.
+
+### Offline demo
+
+The repo ships a sample file, [`docs/sample-results.csv`](docs/sample-results.csv). The start scripts expect a `.env` file, which can be empty for this source:
+
+```bash
+cp .env.example .env    # leave the credentials blank
+RACE_SOURCE=csv DATA_FILE=docs/sample-results.csv ./start.sh
+```
+
+```powershell
+$env:RACE_SOURCE = 'csv'; $env:DATA_FILE = 'docs/sample-results.csv'; .\start.ps1
+```
+
+Or set `source: csv` and `data_file: docs/sample-results.csv` in `config.yaml`.
+
+### CSV format
+
+UTF-8, comma-separated, with a header row. A byte-order mark from Excel is accepted. Places are computed by the dashboard, so the sheet needs no place column and row order does not matter.
+
+**Race details (optional)** go in `# key: value` comment lines before the header:
+
+```
+# name: 2026 Coon Fork 40
+# date: Aug 13, 2026
+# sport: Cycling - gravel
+# start: 14:08
+```
+
+| Key | Meaning | Default |
+|---|---|---|
+| `name` | Race name shown in the header | File name without extension |
+| `date` | Date text, shown as given | empty |
+| `sport` | Sport text, shown as given | empty |
+| `start` | Race start, 24-hour `H:MM` or `H:MM:SS` | Earliest racer `start time`, else `0` |
+
+**Columns.** Names are case-insensitive, and `_` equals a space (`start_time` is `start time`). Other columns are ignored.
+
+| Column | Required | Rules |
+|---|---|---|
+| `bib` | yes | Text. May be blank. A bib must be unique within its distance. |
+| `name` | yes | Must not be blank. |
+| `time` | yes | See below. |
+| `team` | no | Text. |
+| `distance` | no | Text. Each distinct value gets its own Overall page. Blank rows share one "Overall" page. |
+| `category` | no | Text. Each distinct distance and category pair gets a category page. Blank means no category page. For gender-split pages, put the split in the text (`Women 40-49`). |
+| `gender` | no | Text, any value. |
+| `age` | no | Whole number 0-120, or blank. |
+| `start time` | no | 24-hour `H:MM` or `H:MM:SS`. Needed for the finish chart. |
+
+**`time` values:**
+
+| Value | Meaning |
+|---|---|
+| `H:MM:SS`, `H:MM:SS.ff`, `M:SS`, `M:SS.ff` | Finished. Hours may exceed 23. |
+| `DNS`, `DNF`, `DSQ` (any case) | Did not start, did not finish, disqualified |
+| blank or `-` | Still racing |
+
+Anything else is an error. An invalid file is rejected as a whole, and each problem is reported as `row N, column 'x': ...` (up to 10, then a count), where `N` is the line number a spreadsheet shows.
 
 ## Requirements
 
