@@ -44,6 +44,9 @@
                     {% else %}
                     <input type="text" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" autocomplete="off">
                     {% endif %}
+                    {% endif %}
+                    {% if f.help %}<p class="help">{{ f.help }}</p>{% endif %}
+                    {% if f.error %}<p class="field-error">{{ f.error }}</p>{% endif %}
                     {% if f.key == "race_id" %}
                     <div class="race-picker" id="race-picker" hidden>
                         <label for="race-list">Pick from your WebScorer races</label>
@@ -54,9 +57,6 @@
                         <p class="help" id="race-status" role="status"></p>
                     </div>
                     {% endif %}
-                    {% endif %}
-                    {% if f.help %}<p class="help">{{ f.help }}</p>{% endif %}
-                    {% if f.error %}<p class="field-error">{{ f.error }}</p>{% endif %}
                 </div>
                 {% endfor %}
             </fieldset>

@@ -419,3 +419,70 @@ def test_form_loads_external_script_only(tmp_path):
     body = c.get("/admin").get_data(as_text=True)
     assert 'src="/static/admin.js' in body
     assert "<script>" not in body
+
+
+FIXTURES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures")
+RACE_A = os.path.join(FIXTURES, "race_a_live.json")
+RACE_B = os.path.join(FIXTURES, "race_b_teamname.json")
+DISPLAY_KEYS = ("scroll_speed", "pinned_leaders", "refresh_interval", "show_toasts", "color_scheme")
+
+
+@patch("providers.webscorer.fetch_race_results", side_effect=AssertionError("no network"))
+@patch("providers.webscorer.fetch_race_list")
+def test_fixture_admin_flow_persists_and_reloads(mock_list, _no_results, tmp_path):
+    from app import apply_config_reload, poll_once
+    from config import ConfigWatcher
+
+    mock_list.return_value = [{"RaceId": 1, "Name": "Fake Race", "Date": "2026-10-30", "Sport": "Running"}]
+    app, c, path = _settings_app(tmp_path, "refresh_interval: 30\n")
+    api = lambda: c.get("/api/data").get_json()
+
+    start = api()
+    assert start["race_selection_required"] is True
+    assert not app.extensions["startup_race_selected"].is_set()
+    assert c.get("/admin/races?source=webscorer").get_json()["races"][0]["name"] == "Fake Race"
+
+    # Initial selection through the admin form, then a poll reads the fixture
+    assert _post_form(c, _form(c), data_file=RACE_A).status_code == 303
+    assert app.extensions["startup_race_selected"].is_set()
+    poll_once(app)
+    first = api()
+    assert first["race_selection_required"] is False
+    assert first["race_generation"] == start["race_generation"] + 1
+    assert first["race_name"] == "2026 Coon Fork 40 TEST"
+    assert first["waiting"] is False and first["pages"]
+
+    # A display setting keeps the race and its cached results
+    assert _post_form(c, _form(c), scroll_speed="250", show_toasts=None).status_code == 303
+    tuned = api()
+    assert tuned["race_generation"] == first["race_generation"]
+    assert tuned["config_version"] > first["config_version"]
+    assert tuned["race_name"] == first["race_name"]
+
+    # A hand edit is picked up by the watcher once it settles
+    watcher = ConfigWatcher(str(path))
+    text = path.read_text(encoding="utf-8")
+    edited = re.sub(r"^pinned_leaders:.*$", "pinned_leaders: 10", text, flags=re.M)
+    assert edited != text
+    path.write_text(edited, encoding="utf-8")
+    assert watcher.check(app.config["dashboard"]) is None
+    reload = watcher.check(app.config["dashboard"])
+    assert reload is not None
+    apply_config_reload(app, reload)
+    assert api()["pinned_leaders"] == 10
+    assert _form(c)["pinned_leaders"] == "10"
+
+    # A later switch replaces the old race entirely
+    assert _post_form(c, _form(c), data_file=RACE_B).status_code == 303
+    switched = api()
+    assert switched["race_generation"] == first["race_generation"] + 1
+    assert switched["waiting"] is True and switched["pages"] == [] and switched["race_name"] != first["race_name"]
+    poll_once(app)
+    final = api()
+    assert final["race_name"] == "CORBA Fall Back Blast Trail Run 2025"
+
+    saved = _yaml(path)
+    assert saved["data_file"] == RACE_B
+    for key in DISPLAY_KEYS:
+        assert saved[key] == final[key], key
+    assert final["scroll_speed"] == 250 and final["show_toasts"] is False

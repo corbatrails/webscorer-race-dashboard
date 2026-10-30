@@ -38,7 +38,7 @@ A TV-mounted dashboard that displays live race results from WebScorer. Designed 
    .\start.ps1 --kiosk     # Server + fullscreen Chromium
    ```
 
-5. If `race_id` is not set in `config.yaml`, select a race from the list when prompted.
+5. If `race_id` is not set in `config.yaml`, pick a race: either type its number at the terminal prompt or choose it on the [admin page](#admin-page). Whichever answers first wins; the other side is told a race was already chosen and the console switches to normal logging. The choice is saved to `config.yaml`, so the next start skips the prompt. The TV shows "No race selected" until then.
 
 6. Open http://localhost:5000 (or view the TV in kiosk mode).
 
@@ -93,7 +93,7 @@ The app watches its config file (`config.yaml`, or the `--config` path) and appl
 - **Applied at the next poll:** `show_overall_results`, `show_category_results`, and `chart_bucket_minutes` shape the cached pages, so they take effect on the next API poll (within one `refresh_interval`).
 - **Secrets are not reloaded.** `.env`, the API credentials and `ADMIN_PASSWORD` keep their startup values; restart to change them.
 - **Bad edits are rejected whole.** If the file has invalid YAML or an invalid value (including `refresh_interval` below 1), the last good settings keep running and a warning is printed to the console once per distinct error. Fix the file and it is picked up automatically.
-- **Switching races:** changing `source`, `race_id`, or `data_file` clears the current race from the TV right away, shows a waiting screen, and polls the new race immediately. Results from the old race that arrive afterward are discarded. If the new race cannot be fetched yet, the selection is kept and the app retries every `refresh_interval`.
+- **Switching races:** changing `source`, `race_id`, or `data_file` clears the current race from the TV right away, shows a waiting screen, and polls the new race immediately. Results from the old race that arrive afterward are discarded. If the new race cannot be fetched yet, the selection is kept and the app retries every `refresh_interval`. The TV drops the old race's pages, charts and finish pop-ups, and racers who had already finished in the new race don't trigger pop-ups; only later finishers do.
 - **`/api/data` fields:** `config_version` starts at 1 and increments each time an option changes. `race_generation` changes each time the race (`source`, `race_id`, `data_file`) changes. `race_selection_required` is true while a live WebScorer setup has no race chosen. `color_scheme` and `refresh_interval` report the active values. `admin_enabled` says whether the admin page is on (never the password).
 
 ### Migrating from an `.env`-only setup
@@ -184,6 +184,19 @@ UTF-8, comma-separated, with a header row. A byte-order mark from Excel is accep
 | blank or `-` | Still racing |
 
 Anything else is an error. An invalid file is rejected as a whole, and each problem is reported as `row N, column 'x': ...` (up to 10, then a count), where `N` is the line number a spreadsheet shows.
+
+## Development
+
+Run the tests from the repo root:
+
+```bash
+pytest                                  # server, config and admin tests
+node --test tests/dashboard.test.cjs    # TV page script (Node 22+, no npm install needed)
+```
+
+For a quick manual check, point `--config` at a throwaway YAML file with `data_file` set to one of the files in `tests/fixtures/` (or use the [offline demo](#offline-demo)); no WebScorer credentials are needed.
+
+Design notes live in `docs/superpowers/specs/`. The [admin UI design](docs/superpowers/specs/2026-10-29-admin-ui-design.md) replaces the restart-only race selection and environment-variable overrides described in older specs.
 
 ## Requirements
 
