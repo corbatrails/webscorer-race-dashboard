@@ -1,12 +1,15 @@
 import argparse
+import logging
 import os
 import sys
 import threading
 import time
 from datetime import datetime
 from flask import Flask, render_template, jsonify
+from werkzeug.serving import make_server
 from data_processing import process_race_data, build_pages, build_finish_chart_data, build_demographics_data
 from providers import get_provider
+from race_prompt import prompt_for_race
 from config import (
     DEFAULT_CONFIG_PATH,
     OPTIONS,
@@ -261,32 +264,71 @@ def _start_config_watcher(app):
     t.start()
 
 
-def select_race(provider, config):
-    try:
-        races = provider.list_races(config, _secrets_for(provider, config))
-    except Exception as e:
-        print(f"\nERROR: Failed to fetch race list: {e}")
-        print("Set race_id in config.yaml to skip race selection.")
-        raise SystemExit(1)
+class _AccessLogBuffer:
+    """Hold routine access-log lines while the terminal prompt is open.
 
-    if not races:
-        print("No posted races found.")
-        raise SystemExit(1)
+    Warnings and errors pass straight through; held lines are replayed on flush.
+    """
 
-    print("\nAvailable races:")
-    for i, race in enumerate(races, 1):
-        print(f"  {i}. [{race['id']}] {race['name']} ({race['date']}) - {race['sport']}")
+    def __init__(self, logger):
+        self._logger = logger
+        self._held = []
+        self._lock = threading.Lock()
+        self._active = False
 
-    while True:
+    def filter(self, record):
+        if record.levelno >= logging.WARNING:
+            return True
+        with self._lock:
+            if not self._active:
+                return True
+            self._held.append(record)
+        return False
+
+    def start(self):
+        with self._lock:
+            self._active = True
+        self._logger.addFilter(self)
+
+    def flush(self):
+        with self._lock:
+            held, self._held, self._active = self._held, [], False
+        self._logger.removeFilter(self)
+        for record in held:
+            self._logger.handle(record)
+
+
+def _start_race_prompt(app, stop):
+    """Run the terminal race prompt in a worker; returns ``(worker, stop)``.
+
+    ``stop`` is also set once any selector picks the startup race.
+    """
+    selected = app.extensions["startup_race_selected"]
+    cfg = app.config["dashboard"]
+    provider = _provider_for(cfg)
+    log_buffer = _AccessLogBuffer(logging.getLogger("werkzeug"))
+
+    def submit(race_id):
+        return update_dashboard(app, {"race_id": race_id}, startup_only=True)
+
+    def relay():
+        selected.wait()
+        stop.set()
+
+    def run():
         try:
-            choice = int(input(f"\nSelect race [1-{len(races)}]: "))
-            if 1 <= choice <= len(races):
-                selected = races[choice - 1]
-                print(f"Selected: {selected['name']}")
-                return selected["id"]
-        except (ValueError, EOFError):
-            pass
-        print(f"Please enter a number between 1 and {len(races)}")
+            prompt_for_race(provider, cfg, submit, stop, sys.stdin, sys.stdout)
+        except Exception as e:
+            print(f"WARNING: terminal race prompt stopped: {e}", file=sys.stderr)
+        finally:
+            stop.set()
+            log_buffer.flush()
+
+    log_buffer.start()
+    threading.Thread(target=relay, daemon=True).start()
+    worker = threading.Thread(target=run, daemon=True)
+    worker.start()
+    return worker, stop
 
 
 def _mask_token(token):
@@ -339,28 +381,42 @@ def main(argv=None):
     args = _parse_args(argv)
     config_path = os.path.abspath(args.config)
     config = load_config(config_path=config_path)
-    provider = _provider_for(config)
-
-    if provider.list_races and not config.get("data_file") and not config["race_id"]:
-        config["race_id"] = select_race(provider, config)
-        print("Waiting 5s to prevent API rate limit...")
-        time.sleep(5)
-
-    # Fetch initial data before starting the server to avoid rate-limit conflicts
     app = create_app(config, start_polling=False, config_path=config_path)
-    poll_once(app)
-    with _cache_lock:
-        race_name = _cache["race_name"]
-        race_date = _cache["race_date"]
+    needs_race = race_selection_required(config)
 
-    # Priming poll already fetched, so the loop waits one interval before its first poll
-    _start_polling(app, sleep_first=True)
+    if needs_race:
+        race_name = race_date = "-"
+        _start_polling(app)
+    else:
+        # Fetch initial data before serving; the loop then waits one interval
+        poll_once(app)
+        with _cache_lock:
+            race_name = _cache["race_name"]
+            race_date = _cache["race_date"]
+        _start_polling(app, sleep_first=True)
     _start_config_watcher(app)
     for line in _format_config_lines(config, race_name, race_date):
         print(line)
     print(f"\nConfig: edits to {os.path.basename(config_path)} apply while running, including source, race_id and data_file.")
+
+    server = make_server("0.0.0.0", 5000, app, threaded=True)
     print(f"\nDashboard running at http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    prompt = None
+    if needs_race:
+        if sys.stdin is not None and sys.stdin.isatty():
+            prompt = _start_race_prompt(app, threading.Event())
+        else:
+            print("No interactive terminal: choose a race in the admin page or set race_id in config.yaml.")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nShutting down.")
+    finally:
+        if prompt is not None:
+            worker, stop = prompt
+            stop.set()
+            worker.join(timeout=2)
+        server.server_close()
 
 
 if __name__ == "__main__":
