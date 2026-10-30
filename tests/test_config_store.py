@@ -195,3 +195,39 @@ def test_save_round_trips_committed_config_except_changed_line(tmp_path):
     changed = [(a, b) for a, b in zip(before, after) if a != b]
     assert len(before) == len(after)
     assert changed == [("scroll_speed: 100", "scroll_speed: 120")]
+
+
+
+def test_save_keeps_yaml_1_1_meanings_of_untouched_keys(tmp_path):
+    path = tmp_path / "config.yaml"
+    path.write_text("race_id: null\nshow_summary: yes\nshow_toasts: off\n", encoding="utf-8")
+
+    config.save_config(str(path), {"race_id": "123"}, SECRETS)
+
+    resolved, _ = config.read_config_snapshot(str(path), SECRETS)
+    assert resolved["race_id"] == "123"
+    assert resolved["show_summary"] is True
+    assert resolved["show_toasts"] is False
+    assert "show_summary: yes" in path.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("text", ["on", "yes", "No", "~", "100", "1e3", "a: b", "x #y"])
+def test_saved_strings_reload_unchanged(tmp_path, text):
+    path = tmp_path / "config.yaml"
+    path.write_text("", encoding="utf-8")
+
+    saved = config.save_config(str(path), {"race_id": text}, SECRETS)
+
+    resolved, _ = config.read_config_snapshot(str(path), SECRETS)
+    assert saved["race_id"] == resolved["race_id"] == text
+
+
+def test_save_resolves_duplicate_keys_like_the_loader(tmp_path):
+    path = tmp_path / "config.yaml"
+    path.write_text("scroll_speed: 10\nscroll_speed: 20\n", encoding="utf-8")
+    before, _ = config.read_config_snapshot(str(path), SECRETS)
+
+    config.save_config(str(path), {"race_id": "1"}, SECRETS)
+
+    after, _ = config.read_config_snapshot(str(path), SECRETS)
+    assert after["scroll_speed"] == before["scroll_speed"] == 20

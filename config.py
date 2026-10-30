@@ -8,6 +8,7 @@ from collections import namedtuple
 import yaml
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString
 from dotenv import find_dotenv, load_dotenv
 
 from providers import get_provider, provider_names
@@ -277,11 +278,33 @@ def read_config_snapshot(config_path, secrets):
 def _round_trip_yaml():
     rt = YAML()
     rt.preserve_quotes = True
+    rt.allow_duplicate_keys = True
     rt.indent(mapping=2, sequence=4, offset=2)
     rt.representer.add_representer(
         type(None), lambda rep, _: rep.represent_scalar("tag:yaml.org,2002:null", "null")
     )
     return rt
+
+
+_MISSING = object()
+
+
+def _yaml_value(value):
+    """Force quotes on strings PyYAML would otherwise read as something else."""
+    if isinstance(value, str):
+        try:
+            plain_ok = yaml.safe_load(value) == value and "\n" not in value
+        except yaml.YAMLError:
+            plain_ok = False
+        if not plain_ok:
+            return DoubleQuotedScalarString(value)
+    return value
+
+
+def _dump(rt, doc):
+    stream = io.StringIO()
+    rt.dump(doc, stream)
+    return stream.getvalue()
 
 
 def save_config(config_path, updates, secrets, *, expected_revision=None):
@@ -306,30 +329,48 @@ def save_config(config_path, updates, secrets, *, expected_revision=None):
     if expected_revision is not None and expected_revision != revision:
         raise ConfigConflict(f"{os.path.basename(config_path)} changed since it was loaded")
 
+    # Meaning comes from PyYAML (YAML 1.1), like every other reader; ruamel only
+    # does the comment-preserving write.
+    name = os.path.basename(config_path)
+    intended = {k: v for k, v in _parse_mapping(original, config_path).items()
+                if str(k).lower() not in _SECRET_FIELD_NAMES}
+    intended.update(updates)
+    for opt in OPTIONS:
+        intended.setdefault(opt.key, opt.default)
+    resolved = resolve_config(dict(intended), secrets)
+    for key in updates:
+        intended[key] = resolved[key]
+
     rt = _round_trip_yaml()
     try:
         doc = rt.load(original.decode("utf-8")) if original else None
     except Exception as e:
-        raise ConfigError(f"Could not parse {os.path.basename(config_path)}: {e}")
+        raise ConfigError(f"Could not parse {name}: {e}")
     if doc is None:
         doc = CommentedMap()
     if not isinstance(doc, dict):
-        raise ConfigError(f"{os.path.basename(config_path)} must be a mapping of option names to values.")
+        raise ConfigError(f"{name} must be a mapping of option names to values.")
 
     for key in [k for k in doc if str(k).lower() in _SECRET_FIELD_NAMES]:
         del doc[key]
-    for key, value in updates.items():
-        doc[key] = value
+    for key in updates:
+        doc[key] = _yaml_value(intended[key])
     for opt in OPTIONS:
         if opt.key not in doc:
-            doc[opt.key] = opt.default
+            doc[opt.key] = _yaml_value(opt.default)
 
-    resolved = resolve_config(dict(doc), secrets)
-    for key in updates:
-        doc[key] = resolved[key]
+    text = _dump(rt, doc)
+    written = _parse_mapping(text.encode("utf-8"), config_path)
+    drifted = [k for k in intended if k in doc and written.get(k, _MISSING) != intended[k]]
+    if drifted:
+        for key in drifted:
+            doc[key] = _yaml_value(intended[key])
+        text = _dump(rt, doc)
+        written = _parse_mapping(text.encode("utf-8"), config_path)
+    if written != intended:
+        raise ConfigError(f"Could not save {name} without changing the meaning of other settings")
 
-    stream = io.StringIO()
-    rt.dump(doc, stream)
+    stream = io.StringIO(text)
     directory = os.path.dirname(os.path.abspath(config_path))
     fd, tmp_path = tempfile.mkstemp(prefix=".config-", suffix=".tmp", dir=directory)
     try:
