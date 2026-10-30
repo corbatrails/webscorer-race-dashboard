@@ -66,30 +66,29 @@ def _parse_source(value):
     return _parse_choice(tuple(provider_names()))(value)
 
 
-# reload: "live" options can change mid-run (Phase 4); "restart" options are
-# consumed once at startup and need a restart to change.
-Option = namedtuple("Option", "key default parse reload")
+# Every option applies while the app runs, including source, race_id and data_file.
+Option = namedtuple("Option", "key default parse")
 
 OPTIONS = (
-    Option("source", "webscorer", _parse_source, "restart"),
-    Option("race_id", None, _parse_optional_str, "restart"),
-    Option("data_file", None, _parse_optional_str, "restart"),
-    Option("refresh_interval", 60, _int_at_least(1), "live"),
-    Option("summary_display_time", 20, _int_at_least(1), "live"),
-    Option("scroll_speed", 100, _int_at_least(1), "live"),
-    Option("scroll_pause_time", 2, _int_at_least(0), "live"),
-    Option("pinned_leaders", 3, _int_at_least(0), "live"),
-    Option("show_summary", True, _parse_bool, "live"),
-    Option("show_overall_results", True, _parse_bool, "live"),
-    Option("show_category_results", True, _parse_bool, "live"),
-    Option("show_demographics", False, _parse_bool, "live"),
-    Option("pinned_leaders_on_overall_results", False, _parse_bool, "live"),
-    Option("overall_results_layout", "standard", _parse_choice(_OVERALL_RESULTS_LAYOUTS), "live"),
-    Option("display_unfinished_in_category", False, _parse_bool, "live"),
-    Option("display_unfinished_in_overall", False, _parse_bool, "live"),
-    Option("chart_bucket_minutes", 15, _int_at_least(1), "live"),
-    Option("color_scheme", "dark", _parse_choice(_COLOR_SCHEMES), "live"),
-    Option("show_toasts", True, _parse_bool, "live"),
+    Option("source", "webscorer", _parse_source),
+    Option("race_id", None, _parse_optional_str),
+    Option("data_file", None, _parse_optional_str),
+    Option("refresh_interval", 60, _int_at_least(1)),
+    Option("summary_display_time", 20, _int_at_least(1)),
+    Option("scroll_speed", 100, _int_at_least(1)),
+    Option("scroll_pause_time", 2, _int_at_least(0)),
+    Option("pinned_leaders", 3, _int_at_least(0)),
+    Option("show_summary", True, _parse_bool),
+    Option("show_overall_results", True, _parse_bool),
+    Option("show_category_results", True, _parse_bool),
+    Option("show_demographics", False, _parse_bool),
+    Option("pinned_leaders_on_overall_results", False, _parse_bool),
+    Option("overall_results_layout", "standard", _parse_choice(_OVERALL_RESULTS_LAYOUTS)),
+    Option("display_unfinished_in_category", False, _parse_bool),
+    Option("display_unfinished_in_overall", False, _parse_bool),
+    Option("chart_bucket_minutes", 15, _int_at_least(1)),
+    Option("color_scheme", "dark", _parse_choice(_COLOR_SCHEMES)),
+    Option("show_toasts", True, _parse_bool),
 )
 
 
@@ -332,7 +331,7 @@ def save_config(config_path, updates, secrets, *, expected_revision=None):
     return resolved
 
 
-Reload = namedtuple("Reload", "config changed restart_required")
+Reload = namedtuple("Reload", "config changed")
 
 
 def _signature(path):
@@ -344,7 +343,7 @@ def _signature(path):
 
 
 class ConfigWatcher:
-    """Detects config.yaml edits and builds a validated replacement config.
+    """Detects config file edits and builds a validated replacement config.
 
     Secrets are not re-read; they keep their startup values.
     """
@@ -354,20 +353,6 @@ class ConfigWatcher:
         self._applied = _signature(self.path)
         self._candidate = None
         self._last_error = None
-        self._pending = []
-        self._baseline = self._file_restart_values()
-
-    def _file_restart_values(self):
-        """Restart-key values config.yaml resolves to now, or None if it cannot be read."""
-        try:
-            yaml_data = _read_yaml(self.path)
-            name = os.path.basename(self.path)
-            return {
-                opt.key: _resolve_option(opt, yaml_data, name)
-                for opt in OPTIONS if opt.reload == "restart"
-            }
-        except ConfigError:
-            return None
 
     def check(self, running):
         """One watch tick. Returns a Reload when a settled edit changes the config, else None."""
@@ -381,30 +366,26 @@ class ConfigWatcher:
         self._applied, self._candidate = sig, None
         try:
             result = self._reload(running)
+        except ConfigValidationError as e:
+            message = "; ".join(_format_validation_errors(e.errors, os.path.basename(self.path)))
+            return self._report(message)
         except ConfigError as e:
-            if str(e) != self._last_error:
-                self._last_error = str(e)
-                _warn(f"Ignoring {os.path.basename(self.path)} edit, keeping previous settings: {e}")
-            return None
+            return self._report(str(e))
         self._last_error = None
         return result
+
+    def _report(self, message):
+        if message != self._last_error:
+            self._last_error = message
+            _warn(f"Ignoring {os.path.basename(self.path)} edit, keeping previous settings: {message}")
+        return None
 
     def _reload(self, running):
         yaml_data = _read_yaml(self.path)
         _check_yaml_keys(yaml_data, self.path)
-        yaml_name = os.path.basename(self.path)
-        resolved = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
-        live = {opt.key: resolved[opt.key] for opt in OPTIONS if opt.reload == "live"}
-        changed = [key for key, value in live.items() if running.get(key) != value]
-        restart_keys = [opt.key for opt in OPTIONS if opt.reload == "restart"]
-        if self._baseline is None:
-            self._baseline = {key: running.get(key) for key in restart_keys}
-        pending = sorted(key for key in restart_keys if resolved[key] != self._baseline[key])
-        newly_pending = [key for key in pending if key not in self._pending]
-        if newly_pending:
-            _warn(f"{', '.join(newly_pending)} changed in {yaml_name} and requires restart.")
-        pending_changed = pending != self._pending
-        self._pending = pending
-        if not changed and not pending_changed:
+        secrets = {"api_id": running.get("api_id"), "api_token": running.get("api_token")}
+        resolved = resolve_config(yaml_data, secrets)
+        changed = [opt.key for opt in OPTIONS if running.get(opt.key) != resolved[opt.key]]
+        if not changed:
             return None
-        return Reload({**running, **live}, changed, pending)
+        return Reload({**running, **resolved}, changed)

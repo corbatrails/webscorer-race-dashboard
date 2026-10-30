@@ -5,17 +5,17 @@
 # Environment variables never override these options. A missing option uses
 # its built-in default. Run with --config <path> to use a different file.
 #
-# Edits to this file apply while the app runs; only source, race_id and data_file
-# need a restart. An invalid edit is ignored and the last good settings keep running.
+# Edits to this file apply while the app runs, including race changes. An invalid
+# edit is ignored and the last good settings keep running.
 
 # --- Race / data source ---
 # Ingestion provider: webscorer (live API or a saved JSON dump) or csv (a spreadsheet
-# export; needs data_file). Restart required.
+# export; needs data_file).
 source: webscorer
-# WebScorer race ID. null = prompt for a race at startup. Restart required.
+# WebScorer race ID. null = prompt for a race at startup.
 race_id: null
 # File the provider reads instead of the network (a WebScorer JSON dump, or the CSV
-# for source csv). No credentials needed when set. Restart required.
+# for source csv). No credentials needed when set.
 data_file: null
 
 # --- Timing ---

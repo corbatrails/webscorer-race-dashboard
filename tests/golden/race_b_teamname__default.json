@@ -1,7 +1,6 @@
 {
  "chart_bucket_minutes": 15,
  "color_scheme": "dark",
- "config_restart_required": [],
  "config_version": 1,
  "display_unfinished_in_category": false,
  "display_unfinished_in_overall": false,
@@ -769,7 +768,9 @@
  "pinned_leaders": 3,
  "pinned_leaders_on_overall_results": false,
  "race_date": "Nov 1, 2025",
+ "race_generation": 1,
  "race_name": "CORBA Fall Back Blast Trail Run 2025",
+ "race_selection_required": false,
  "race_sport": "Running - trail",
  "refresh_interval": 60,
  "scroll_pause_time": 2,

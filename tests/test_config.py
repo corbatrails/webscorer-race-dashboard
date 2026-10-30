@@ -209,11 +209,10 @@ def test_committed_config_yaml_lists_every_option_with_defaults(clean_env):
     assert cfg == defaults
 
 
-def test_every_option_declares_reload_mode():
-    assert {opt.reload for opt in OPTIONS} <= {"live", "restart"}
-    assert {opt.key for opt in OPTIONS if opt.reload == "restart"} == {
-        "source", "race_id", "data_file",
-    }
+def test_reload_carries_config_and_changed_keys_only():
+    from config import Reload
+
+    assert Reload._fields == ("config", "changed")
 
 
 # --- source option and per-provider credentials ------------------------------
@@ -574,53 +573,42 @@ def test_watcher_warns_again_if_same_error_returns_after_recovery(clean_env, tmp
     assert capsys.readouterr().err.count("WARNING") == 1
 
 
-def test_watcher_reports_restart_only_change_without_applying_it(clean_env, tmp_path, capsys):
+def test_watcher_applies_source_race_and_file_changes(clean_env, tmp_path):
     path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
-    _edit_config(path, {"race_id": 222, "data_file": "other.json"})
+    _edit_config(path, {"race_id": 222})
 
     result = _settle(watcher, running)
 
-    assert result.restart_required == ["data_file", "race_id"]
-    assert result.changed == []
-    assert result.config == running
-    err = capsys.readouterr().err
-    assert "requires restart" in err
-    assert "other.json" not in err
+    assert result.changed == ["race_id"]
+    assert result.config["race_id"] == "222"
     assert _settle(watcher, result.config) is None
 
+    data_file = tmp_path / "results.csv"
+    data_file.write_text("bib,name,time\n1,A,1:00:00\n", encoding="utf-8")
+    _edit_config(path, {"source": "csv", "data_file": str(data_file)})
 
-def test_watcher_warns_once_per_restart_change(clean_env, tmp_path, capsys):
+    switched = _settle(watcher, result.config)
+
+    assert set(switched.changed) == {"source", "race_id", "data_file"}
+    assert switched.config["source"] == "csv"
+    assert switched.config["data_file"] == str(data_file)
+    assert switched.config["race_id"] is None
+
+
+def test_watcher_rejects_switch_to_missing_data_file(clean_env, tmp_path, capsys):
     path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
-    _edit_config(path, {"race_id": 222})
-    _settle(watcher, running)
-    capsys.readouterr()
+    _edit_config(path, {"data_file": str(tmp_path / "missing.json")})
 
-    _edit_config(path, {"race_id": 222, "scroll_speed": 150})
-    result = _settle(watcher, running)
+    assert _settle(watcher, running) is None
 
-    assert result.restart_required == ["race_id"]
-    assert result.changed == ["scroll_speed"]
-    assert "requires restart" not in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "data_file" in err
+    assert "keeping" in err
 
 
-def test_watcher_clears_restart_required_when_file_reverts(clean_env, tmp_path):
+def test_watcher_keeps_startup_secrets(clean_env, tmp_path, monkeypatch):
     path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "changed-later")
     _edit_config(path, {"race_id": 222})
-    assert _settle(watcher, running).restart_required == ["race_id"]
 
-    _edit_config(path, {"race_id": 111})
-    result = _settle(watcher, running)
-
-    assert result.restart_required == []
-    assert result.changed == []
-
-
-def test_watcher_ignores_interactively_chosen_race_id(clean_env, tmp_path):
-    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
-    running = {**running, "race_id": "999"}
-    _edit_config(path, {"scroll_speed": 200})
-
-    result = _settle(watcher, running)
-
-    assert result.restart_required == []
-    assert result.config["race_id"] == "999"
+    assert _settle(watcher, running).config["api_token"] == "abc123de"
