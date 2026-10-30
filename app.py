@@ -9,6 +9,7 @@ from flask import Flask, render_template, jsonify
 from werkzeug.serving import make_server
 from data_processing import process_race_data, build_pages, build_finish_chart_data, build_demographics_data
 from providers import get_provider
+from admin import register_admin
 from race_prompt import prompt_for_race
 from config import (
     DEFAULT_CONFIG_PATH,
@@ -99,7 +100,7 @@ def update_dashboard(app, updates, *, expected_revision=None, startup_only=False
         return True
 
 
-def create_app(config=None, start_polling=True, *, config_path=None):
+def create_app(config=None, start_polling=True, *, config_path=None, admin_password=None):
     app = Flask(__name__)
     app.config["dashboard"] = config or {}
     app.config["dashboard_config_path"] = os.path.abspath(config_path or DEFAULT_CONFIG_PATH)
@@ -110,6 +111,11 @@ def create_app(config=None, start_polling=True, *, config_path=None):
     if not race_selection_required(app.config["dashboard"]):
         app.extensions["startup_race_selected"].set()
     _start_time = int(time.time())
+    register_admin(
+        app,
+        admin_password,
+        lambda updates, revision: update_dashboard(app, updates, expected_revision=revision),
+    )
 
     @app.route("/")
     def index():
@@ -148,6 +154,7 @@ def create_app(config=None, start_polling=True, *, config_path=None):
                 "config_version": state["config_version"],
                 "race_generation": state["race_generation"],
                 "race_selection_required": race_selection_required(cfg),
+                "admin_enabled": app.config["admin_enabled"],
             })
 
     if start_polling:
@@ -381,7 +388,8 @@ def main(argv=None):
     args = _parse_args(argv)
     config_path = os.path.abspath(args.config)
     config = load_config(config_path=config_path)
-    app = create_app(config, start_polling=False, config_path=config_path)
+    admin_password = os.environ.get("ADMIN_PASSWORD") or None
+    app = create_app(config, start_polling=False, config_path=config_path, admin_password=admin_password)
     needs_race = race_selection_required(config)
 
     if needs_race:
@@ -401,6 +409,10 @@ def main(argv=None):
 
     server = make_server("0.0.0.0", 5000, app, threaded=True)
     print(f"\nDashboard running at http://localhost:5000")
+    if admin_password:
+        print("Admin page: http://localhost:5000/admin")
+    else:
+        print("Admin page: disabled (set ADMIN_PASSWORD in .env to enable)")
     prompt = None
     if needs_race:
         if sys.stdin is not None and sys.stdin.isatty():

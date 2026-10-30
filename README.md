@@ -46,7 +46,7 @@ A TV-mounted dashboard that displays live race results from WebScorer. Designed 
 
 Options are split by sensitivity:
 
-- **`.env` (secrets only, never committed):** `WEBSCORER_API_ID`, `WEBSCORER_API_TOKEN`.
+- **`.env` (secrets only, never committed):** `WEBSCORER_API_ID`, `WEBSCORER_API_TOKEN`, and optionally `ADMIN_PASSWORD`.
 - **`config.yaml` (committed):** every other option. Edit it to change intervals, which pages show, layout, colors, etc.
 
 ### Choosing a config file
@@ -57,7 +57,7 @@ The app reads `config.yaml` next to `app.py` by default. Pass `--config` to use 
 python app.py --config /tmp/demo.yaml
 ```
 
-Environment variables never override non-secret options; only the two secrets above are read from the environment (a real environment variable wins over `.env`). Options missing from the file use the built-in default.
+Environment variables never override non-secret options; only the secrets above are read from the environment (a real environment variable wins over `.env`). Options missing from the file use the built-in default.
 
 ### Options
 
@@ -91,14 +91,22 @@ The app watches its config file (`config.yaml`, or the `--config` path) and appl
 
 - **Latency:** a saved edit is picked up in about 2 seconds. The browser follows on its next fetch. The theme and page layout update without a page reload, and the fetch cadence follows `refresh_interval`.
 - **Applied at the next poll:** `show_overall_results`, `show_category_results`, and `chart_bucket_minutes` shape the cached pages, so they take effect on the next API poll (within one `refresh_interval`).
-- **Secrets are not reloaded.** `.env` and the API credentials keep their startup values.
+- **Secrets are not reloaded.** `.env`, the API credentials and `ADMIN_PASSWORD` keep their startup values; restart to change them.
 - **Bad edits are rejected whole.** If the file has invalid YAML or an invalid value (including `refresh_interval` below 1), the last good settings keep running and a warning is printed to the console once per distinct error. Fix the file and it is picked up automatically.
 - **Switching races:** changing `source`, `race_id`, or `data_file` clears the current race from the TV right away, shows a waiting screen, and polls the new race immediately. Results from the old race that arrive afterward are discarded. If the new race cannot be fetched yet, the selection is kept and the app retries every `refresh_interval`.
-- **`/api/data` fields:** `config_version` starts at 1 and increments each time an option changes. `race_generation` changes each time the race (`source`, `race_id`, `data_file`) changes. `race_selection_required` is true while a live WebScorer setup has no race chosen. `color_scheme` and `refresh_interval` report the active values.
+- **`/api/data` fields:** `config_version` starts at 1 and increments each time an option changes. `race_generation` changes each time the race (`source`, `race_id`, `data_file`) changes. `race_selection_required` is true while a live WebScorer setup has no race chosen. `color_scheme` and `refresh_interval` report the active values. `admin_enabled` says whether the admin page is on (never the password).
 
 ### Migrating from an `.env`-only setup
 
-Non-secret values in `.env` or the process environment (for example `REFRESH_INTERVAL` or `WEBSCORER_RACE_ID`) are ignored. Move them into `config.yaml` (lowercase keys, see the table) and leave only `WEBSCORER_API_ID` and `WEBSCORER_API_TOKEN` in `.env`.
+Non-secret values in `.env` or the process environment (for example `REFRESH_INTERVAL` or `WEBSCORER_RACE_ID`) are ignored. Move them into `config.yaml` (lowercase keys, see the table) and leave only `WEBSCORER_API_ID`, `WEBSCORER_API_TOKEN` and (optionally) `ADMIN_PASSWORD` in `.env`.
+
+### Admin page
+
+Set `ADMIN_PASSWORD` in `.env` and restart to enable `http://<host>:5000/admin`. Leave it empty and the admin page is disabled (every `/admin` URL returns 404). Startup prints whether the admin page is enabled, never the password.
+
+- One shared password; no user accounts. Logging in gives a browser session that lasts until you log out or the app restarts.
+- Forms are protected against cross-site requests, and admin pages send no-cache and anti-framing headers.
+- **The dashboard serves plain HTTP.** The password and session cookie cross the network unencrypted, so only run the admin page on a network you trust (the race LAN), and use a password you don't use elsewhere.
 
 ## Sources
 

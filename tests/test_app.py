@@ -1061,3 +1061,24 @@ def test_access_log_buffer_holds_info_until_flush():
     finally:
         logger.removeHandler(handler)
         logger.setLevel(old_level)
+
+
+@patch("app.threading.Thread")
+@patch("app.make_server")
+@patch("app.load_config")
+def test_main_reports_admin_status_without_password(mock_load_config, mock_server, mock_thread, monkeypatch, capsys):
+    import app as app_module
+    fixture = os.path.join(os.path.dirname(__file__), "fixtures", "race_a_finished.json")
+    mock_load_config.return_value = _main_config(data_file=fixture)
+
+    monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+    app_module.main([])
+    assert "Admin page: disabled" in capsys.readouterr().out
+
+    monkeypatch.setenv("ADMIN_PASSWORD", "SENTINEL-pw-123")
+    app_module.main([])
+    out = capsys.readouterr().out
+    assert "Admin page: http://localhost:5000/admin" in out
+    assert "SENTINEL-pw-123" not in out
+    application = mock_server.call_args.args[2]
+    assert application.config["admin_enabled"] is True

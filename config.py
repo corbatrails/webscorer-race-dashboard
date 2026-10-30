@@ -16,7 +16,7 @@ from providers import get_provider, provider_names
 DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
 
 # Secrets are read from the environment (.env) only, never from config.yaml.
-SECRET_ENV_VARS = ("WEBSCORER_API_ID", "WEBSCORER_API_TOKEN")
+SECRET_ENV_VARS = ("WEBSCORER_API_ID", "WEBSCORER_API_TOKEN", "ADMIN_PASSWORD")
 
 _OVERALL_RESULTS_LAYOUTS = ("standard", "detailed")
 _COLOR_SCHEMES = ("dark", "light")

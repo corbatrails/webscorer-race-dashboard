@@ -1,4 +1,5 @@
 {
+ "admin_enabled": false,
  "chart_bucket_minutes": 15,
  "color_scheme": "dark",
  "config_version": 1,
