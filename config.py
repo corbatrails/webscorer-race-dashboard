@@ -38,7 +38,10 @@ def _parse_int(value, minimum=None):
 
 
 def _int_at_least(minimum):
-    return lambda value: _parse_int(value, minimum)
+    def parse(value):
+        return _parse_int(value, minimum)
+    parse.minimum = minimum
+    return parse
 
 
 def _parse_bool(value):
@@ -59,11 +62,24 @@ def _parse_choice(choices):
         if text not in choices:
             raise ValueError(f"expected one of: {', '.join(choices)}")
         return text
+    parse.choices = tuple(choices)
     return parse
 
 
 def _parse_source(value):
     return _parse_choice(tuple(provider_names()))(value)
+
+
+def option_choices(opt):
+    """Allowed values for a choice option, or None for free-form options."""
+    if opt.parse is _parse_source:
+        return tuple(provider_names())
+    return getattr(opt.parse, "choices", None)
+
+
+def option_minimum(opt):
+    """Smallest allowed value for an integer option, or None."""
+    return getattr(opt.parse, "minimum", None)
 
 
 # Every option applies while the app runs, including source, race_id and data_file.
@@ -245,6 +261,11 @@ def _parse_mapping(data, path):
     if not isinstance(parsed, dict):
         raise ConfigError(f"{name} must be a mapping of option names to values.")
     return parsed
+
+
+def config_revision(config_path):
+    """Revision of the file's current bytes, readable even when its contents are invalid."""
+    return _revision(_read_bytes(config_path))
 
 
 def read_config_snapshot(config_path, secrets):

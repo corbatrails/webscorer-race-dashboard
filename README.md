@@ -104,6 +104,12 @@ Non-secret values in `.env` or the process environment (for example `REFRESH_INT
 
 Set `ADMIN_PASSWORD` in `.env` and restart to enable `http://<host>:5000/admin`. Leave it empty and the admin page is disabled (every `/admin` URL returns 404). Startup prints whether the admin page is enabled, never the password.
 
+The page edits every option in `config.yaml`, grouped by purpose. Saving validates the values, writes `config.yaml` (keeping its comments), and applies them to the running dashboard within one poll; no restart is needed. Invalid values are listed next to their fields and nothing is written.
+
+- **Race picker:** with `source: webscorer` and API credentials in `.env`, the page lists your WebScorer races; choosing one fills in the race ID. You can also type an ID. Picking a race here while the terminal is still asking for one answers the terminal prompt too.
+- **Conflicts:** if `config.yaml` changed after you opened the page (a hand edit, or a race picked in the terminal), saving is refused and nothing is written. Reload the page to see the current values, then make your change again.
+- If `config.yaml` itself has errors, the page shows the running settings instead; saving replaces the file's values with the form's.
+- Secrets never appear on the page and can't be set from it; they stay in `.env`.
 - One shared password; no user accounts. Logging in gives a browser session that lasts until you log out or the app restarts.
 - Forms are protected against cross-site requests, and admin pages send no-cache and anti-framing headers.
 - **The dashboard serves plain HTTP.** The password and session cookie cross the network unencrypted, so only run the admin page on a network you trust (the race LAN), and use a password you don't use elsewhere.

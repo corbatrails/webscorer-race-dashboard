@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard admin</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+    <script src="{{ url_for('static', filename='admin.js') }}" defer></script>
 </head>
 <body>
     <header class="admin-header">
@@ -14,8 +15,57 @@
             <button type="submit" class="secondary">Log out</button>
         </form>
     </header>
-    <main class="admin-card">
-        <p>Settings are coming soon.</p>
+    <main class="admin-main">
+        {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
+        {% if form_error %}<p class="form-error" role="alert">{{ form_error }}</p>{% endif %}
+        <form method="post" action="{{ url_for('admin.save') }}" class="settings-form" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="revision" value="{{ revision }}">
+            {% for group in groups %}
+            <fieldset class="admin-card">
+                <legend>{{ group.title }}</legend>
+                {% for f in group.fields %}
+                <div class="field field-{{ f.kind }}{% if f.error %} has-error{% endif %}">
+                    {% if f.kind == "bool" %}
+                    <label class="check">
+                        <input type="checkbox" id="field-{{ f.key }}" name="{{ f.key }}" value="true"{% if f.value %} checked{% endif %}>
+                        {{ f.label }}
+                    </label>
+                    {% else %}
+                    <label for="field-{{ f.key }}">{{ f.label }}</label>
+                    {% if f.kind == "choice" %}
+                    <select id="field-{{ f.key }}" name="{{ f.key }}">
+                        {% for choice in f.choices %}
+                        <option value="{{ choice }}"{% if choice == f.value %} selected{% endif %}>{{ choice }}</option>
+                        {% endfor %}
+                    </select>
+                    {% elif f.kind == "int" %}
+                    <input type="number" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}"{% if f.minimum is not none %} min="{{ f.minimum }}"{% endif %} step="1">
+                    {% else %}
+                    <input type="text" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" autocomplete="off">
+                    {% endif %}
+                    {% if f.key == "race_id" %}
+                    <div class="race-picker" id="race-picker" hidden>
+                        <label for="race-list">Pick from your WebScorer races</label>
+                        <div class="race-picker-row">
+                            <select id="race-list"><option value="">Loading races...</option></select>
+                            <button type="button" class="secondary" id="race-reload">Reload list</button>
+                        </div>
+                        <p class="help" id="race-status" role="status"></p>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    {% if f.help %}<p class="help">{{ f.help }}</p>{% endif %}
+                    {% if f.error %}<p class="field-error">{{ f.error }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </fieldset>
+            {% endfor %}
+            <div class="actions">
+                <button type="submit">Save settings</button>
+                <a class="secondary-link" href="{{ url_for('admin.settings') }}">Discard changes</a>
+            </div>
+        </form>
     </main>
 </body>
 </html>
