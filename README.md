@@ -66,11 +66,11 @@ Environment variables never override non-secret options; only the two secrets ab
 | `source` | `webscorer` | Ingestion provider: `webscorer` or `csv` | restart |
 | `race_id` | `null` | Race ID (prompts at startup if omitted) | restart |
 | `data_file` | `null` | File the provider reads instead of the network: a WebScorer JSON dump, or the CSV for `source: csv` (no credentials needed) | restart |
-| `refresh_interval` | 60 | Seconds between API polls | live |
-| `summary_display_time` | 20 | Seconds the summary page displays | live |
-| `scroll_speed` | 100 | Scroll speed in pixels per second | live |
-| `scroll_pause_time` | 2 | Seconds to pause before and after scrolling | live |
-| `pinned_leaders` | 3 | Leader rows pinned at the top | live |
+| `refresh_interval` | 60 | Seconds between API polls (at least 1) | live |
+| `summary_display_time` | 20 | Seconds the summary page displays (at least 1) | live |
+| `scroll_speed` | 100 | Scroll speed in pixels per second (at least 1) | live |
+| `scroll_pause_time` | 2 | Seconds to pause before and after scrolling (0 or more) | live |
+| `pinned_leaders` | 3 | Leader rows pinned at the top (0 or more) | live |
 | `show_summary` | true | Show the summary page | live |
 | `show_overall_results` | true | Show Overall result pages | live |
 | `show_category_results` | true | Show category result pages | live |
@@ -79,11 +79,11 @@ Environment variables never override non-secret options; only the two secrets ab
 | `overall_results_layout` | standard | Overall table layout: `standard` or `detailed` | live |
 | `display_unfinished_in_category` | false | Show in-progress category pages before racers finish | live |
 | `display_unfinished_in_overall` | false | Show in-progress Overall pages before racers finish | live |
-| `chart_bucket_minutes` | 15 | Minutes per bucket in the finish chart | live |
+| `chart_bucket_minutes` | 15 | Minutes per bucket in the finish chart (at least 1) | live |
 | `color_scheme` | dark | `dark` or `light` | live |
 | `show_toasts` | true | Toast notifications when racers finish | live |
 
-The full set of effective options is printed at startup. Unknown keys in `config.yaml` and secrets placed in it are ignored with a warning.
+The full set of effective options is printed at startup. Booleans must be `true` or `false`, and choice options must use one of the listed values; an invalid value stops startup with a message naming the option. Unknown keys in `config.yaml` and secrets placed in it are ignored with a warning.
 
 The `Reload` column says whether a change needs a restart: `live` options apply while the app runs, `restart` options are read once at startup.
 

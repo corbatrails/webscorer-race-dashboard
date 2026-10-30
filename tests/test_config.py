@@ -170,14 +170,6 @@ def test_empty_config_yaml_uses_defaults(clean_env, tmp_path):
     assert cfg["refresh_interval"] == 60
 
 
-
-
-
-
-
-
-
-
 def test_secrets_come_from_dotenv_file(clean_env, tmp_path, monkeypatch):
     monkeypatch.delenv("WEBSCORER_API_ID")
     monkeypatch.delenv("WEBSCORER_API_TOKEN")
@@ -245,8 +237,6 @@ def test_source_from_config_yaml_is_case_insensitive(clean_env, tmp_path, monkey
     import providers
     monkeypatch.setitem(providers._REGISTRY, "stub", _stub_provider())
     assert _load(tmp_path, {"source": " STUB "})["source"] == "stub"
-
-
 
 
 def test_unknown_source_exits_naming_option_and_valid_names(clean_env, tmp_path, capsys):
@@ -326,22 +316,39 @@ def test_invalid_integer_in_config_yaml_names_option(clean_env, tmp_path, capsys
     assert "config.yaml" in out
 
 
-
-
 def test_non_boolean_yaml_value_exits(clean_env, tmp_path, capsys):
     with pytest.raises(SystemExit):
         _load(tmp_path, {"show_summary": 5})
     assert "show_summary" in capsys.readouterr().out
 
 
-def test_invalid_enum_values_fall_back_to_defaults(clean_env, tmp_path):
-    cfg = _load(tmp_path, {"overall_results_layout": "wide", "color_scheme": "neon"})
-    assert cfg["overall_results_layout"] == "standard"
-    assert cfg["color_scheme"] == "dark"
+def test_invalid_enum_values_exit_naming_options(clean_env, tmp_path, capsys):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"overall_results_layout": "wide", "color_scheme": "neon"})
+    out = capsys.readouterr().out
+    assert "overall_results_layout" in out
+    assert "color_scheme" in out
 
 
+@pytest.mark.parametrize("key", ["summary_display_time", "scroll_speed", "chart_bucket_minutes"])
+def test_positive_integer_options_reject_zero(clean_env, tmp_path, capsys, key):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {key: 0})
+    assert key in capsys.readouterr().out
 
 
+@pytest.mark.parametrize("key", ["scroll_pause_time", "pinned_leaders"])
+def test_non_negative_integer_options_accept_zero_reject_negative(clean_env, tmp_path, capsys, key):
+    assert _load(tmp_path, {key: 0})[key] == 0
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {key: -1})
+    assert key in capsys.readouterr().out
+
+
+def test_text_boolean_other_than_true_false_exits(clean_env, tmp_path, capsys):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"show_toasts": "yes"})
+    assert "show_toasts" in capsys.readouterr().out
 
 
 def test_secrets_only_dotenv_does_not_warn(clean_env, tmp_path, capsys):
@@ -489,8 +496,6 @@ def test_watcher_ignores_edit_with_no_live_change(clean_env, tmp_path):
     path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
     _edit_config(path, {"scroll_speed": 150})
     assert _settle(watcher, running) is None
-
-
 
 
 def test_watcher_ignores_missing_file(clean_env, tmp_path):
