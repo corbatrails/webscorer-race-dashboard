@@ -49,40 +49,39 @@ Options are split by sensitivity:
 - **`.env` (secrets only, never committed):** `WEBSCORER_API_ID`, `WEBSCORER_API_TOKEN`.
 - **`config.yaml` (committed):** every other option. Edit it to change intervals, which pages show, layout, colors, etc.
 
-### Precedence
+### Choosing a config file
 
-Each option is resolved from these sources; a later one overrides an earlier one:
+The app reads `config.yaml` next to `app.py` by default. Pass `--config` to use another file, for example a throwaway test setup:
 
-1. Built-in default
-2. `config.yaml`
-3. `.env`
-4. Real environment variables (e.g. `REFRESH_INTERVAL=30 ./start.sh`)
+```bash
+python app.py --config /tmp/demo.yaml
+```
 
-A blank environment value (`KEY=`) counts as unset. Every `config.yaml` option can be overridden with the environment variable shown below, which is handy for one-off changes on race day without editing the file.
+Environment variables never override non-secret options; only the two secrets above are read from the environment (a real environment variable wins over `.env`). Options missing from the file use the built-in default.
 
 ### Options
 
-| `config.yaml` key | Environment override | Default | Description | Reload |
-|---|---|---|---|---|
-| `source` | `RACE_SOURCE` | `webscorer` | Ingestion provider: `webscorer` or `csv` | restart |
-| `race_id` | `WEBSCORER_RACE_ID` | `null` | Race ID (prompts at startup if omitted) | restart |
-| `data_file` | `DATA_FILE` | `null` | File the provider reads instead of the network: a WebScorer JSON dump, or the CSV for `source: csv` (no credentials needed) | restart |
-| `refresh_interval` | `REFRESH_INTERVAL` | 60 | Seconds between API polls | live |
-| `summary_display_time` | `SUMMARY_DISPLAY_TIME` | 20 | Seconds the summary page displays | live |
-| `scroll_speed` | `SCROLL_SPEED` | 100 | Scroll speed in pixels per second | live |
-| `scroll_pause_time` | `SCROLL_PAUSE_TIME` | 2 | Seconds to pause before and after scrolling | live |
-| `pinned_leaders` | `PINNED_LEADERS` | 3 | Leader rows pinned at the top | live |
-| `show_summary` | `SHOW_SUMMARY` | true | Show the summary page | live |
-| `show_overall_results` | `SHOW_OVERALL_RESULTS` | true | Show Overall result pages | live |
-| `show_category_results` | `SHOW_CATEGORY_RESULTS` | true | Show category result pages | live |
-| `show_demographics` | `SHOW_DEMOGRAPHICS` | false | Show the demographics page (age/gender/distance/team breakdown) | live |
-| `pinned_leaders_on_overall_results` | `PINNED_LEADERS_ON_OVERALL_RESULTS` | false | Pinned leaders row + medal coloring on Overall pages | live |
-| `overall_results_layout` | `OVERALL_RESULTS_LAYOUT` | standard | Overall table layout: `standard` or `detailed` | live |
-| `display_unfinished_in_category` | `DISPLAY_UNFINISHED_IN_CATEGORY` | false | Show in-progress category pages before racers finish | live |
-| `display_unfinished_in_overall` | `DISPLAY_UNFINISHED_IN_OVERALL` | false | Show in-progress Overall pages before racers finish | live |
-| `chart_bucket_minutes` | `CHART_BUCKET_MINUTES` | 15 | Minutes per bucket in the finish chart | live |
-| `color_scheme` | `COLOR_SCHEME` | dark | `dark` or `light` | live |
-| `show_toasts` | `SHOW_TOASTS` | true | Toast notifications when racers finish | live |
+| `config.yaml` key | Default | Description | Reload |
+|---|---|---|---|
+| `source` | `webscorer` | Ingestion provider: `webscorer` or `csv` | restart |
+| `race_id` | `null` | Race ID (prompts at startup if omitted) | restart |
+| `data_file` | `null` | File the provider reads instead of the network: a WebScorer JSON dump, or the CSV for `source: csv` (no credentials needed) | restart |
+| `refresh_interval` | 60 | Seconds between API polls | live |
+| `summary_display_time` | 20 | Seconds the summary page displays | live |
+| `scroll_speed` | 100 | Scroll speed in pixels per second | live |
+| `scroll_pause_time` | 2 | Seconds to pause before and after scrolling | live |
+| `pinned_leaders` | 3 | Leader rows pinned at the top | live |
+| `show_summary` | true | Show the summary page | live |
+| `show_overall_results` | true | Show Overall result pages | live |
+| `show_category_results` | true | Show category result pages | live |
+| `show_demographics` | false | Show the demographics page (age/gender/distance/team breakdown) | live |
+| `pinned_leaders_on_overall_results` | false | Pinned leaders row + medal coloring on Overall pages | live |
+| `overall_results_layout` | standard | Overall table layout: `standard` or `detailed` | live |
+| `display_unfinished_in_category` | false | Show in-progress category pages before racers finish | live |
+| `display_unfinished_in_overall` | false | Show in-progress Overall pages before racers finish | live |
+| `chart_bucket_minutes` | 15 | Minutes per bucket in the finish chart | live |
+| `color_scheme` | dark | `dark` or `light` | live |
+| `show_toasts` | true | Toast notifications when racers finish | live |
 
 The full set of effective options is printed at startup. Unknown keys in `config.yaml` and secrets placed in it are ignored with a warning.
 
@@ -90,18 +89,18 @@ The `Reload` column says whether a change needs a restart: `live` options apply 
 
 ### Changing settings while running
 
-The app watches `config.yaml` and applies edits to `live` options without a restart or a blank screen. This is the intended way to adjust the TV during an event.
+The app watches its config file (`config.yaml`, or the `--config` path) and applies edits to `live` options without a restart or a blank screen. This is the intended way to adjust the TV during an event.
 
 - **Latency:** a saved edit is picked up in about 2 seconds. The browser follows on its next fetch. The theme and page layout update without a page reload, and the fetch cadence follows `refresh_interval`.
 - **Applied at the next poll:** `show_overall_results`, `show_category_results`, and `chart_bucket_minutes` shape the cached pages, so they take effect on the next API poll (within one `refresh_interval`).
-- **Environment overrides still win.** Editing `config.yaml` for a key that is set in `.env` or the process environment has no effect. `.env` and the API credentials are never reloaded.
+- **Secrets are not reloaded.** `.env` and the API credentials keep their startup values.
 - **Bad edits are rejected whole.** If the file has invalid YAML or an invalid value (including `refresh_interval` below 1), the last good settings keep running and a warning is printed to the console once per distinct error. Fix the file and it is picked up automatically.
 - **Restart-only options:** changes to `race_id` or `data_file` are not applied. The console logs that a restart is needed, and `/api/data` lists the pending keys in `config_restart_required`. The value in use does not change.
 - **`/api/data` fields:** `config_version` starts at 1 and increments each time a live option changes. `config_restart_required` lists restart-only keys edited since startup. `color_scheme` and `refresh_interval` report the active values.
 
 ### Migrating from an `.env`-only setup
 
-Existing setups keep working with no changes: non-secret values in `.env` still apply (and override `config.yaml`), but the app prints a deprecation warning listing them. To migrate, move those values into `config.yaml` (lowercase keys, see the table) and leave only `WEBSCORER_API_ID` and `WEBSCORER_API_TOKEN` in `.env`.
+Non-secret values in `.env` or the process environment (for example `REFRESH_INTERVAL` or `WEBSCORER_RACE_ID`) are ignored. Move them into `config.yaml` (lowercase keys, see the table) and leave only `WEBSCORER_API_ID` and `WEBSCORER_API_TOKEN` in `.env`.
 
 ## Sources
 
@@ -116,15 +115,16 @@ With `source: csv`, `data_file` is required. Save the spreadsheet and the TV upd
 
 ### Offline demo
 
-The repo ships a sample file, [`docs/sample-results.csv`](docs/sample-results.csv). The start scripts expect a `.env` file, which can be empty for this source:
+The repo ships a sample file, [`docs/sample-results.csv`](docs/sample-results.csv), and a matching config, [`docs/demo-config.yaml`](docs/demo-config.yaml). No credentials are needed. From the repo root, after `./start.sh` or `.\start.ps1` has created the virtual environment:
 
 ```bash
-cp .env.example .env    # leave the credentials blank
-RACE_SOURCE=csv DATA_FILE=docs/sample-results.csv ./start.sh
+source venv/bin/activate
+python app.py --config docs/demo-config.yaml
 ```
 
 ```powershell
-$env:RACE_SOURCE = 'csv'; $env:DATA_FILE = 'docs/sample-results.csv'; .\start.ps1
+.\venv\Scripts\Activate.ps1
+python app.py --config docs/demo-config.yaml
 ```
 
 Or set `source: csv` and `data_file: docs/sample-results.csv` in `config.yaml`.

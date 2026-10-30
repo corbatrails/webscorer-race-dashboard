@@ -1,3 +1,5 @@
+import argparse
+import os
 import sys
 import threading
 import time
@@ -5,7 +7,7 @@ from datetime import datetime
 from flask import Flask, render_template, jsonify
 from data_processing import process_race_data, build_pages, build_finish_chart_data, build_demographics_data
 from providers import get_provider
-from config import ConfigWatcher, load_config
+from config import DEFAULT_CONFIG_PATH, ConfigWatcher, load_config
 
 _cache = {
     "pages": [],
@@ -37,9 +39,10 @@ def apply_config_reload(app, reload):
             _config_changed.set()
 
 
-def create_app(config=None, start_polling=True):
+def create_app(config=None, start_polling=True, *, config_path=None):
     app = Flask(__name__)
     app.config["dashboard"] = config or {}
+    app.config["dashboard_config_path"] = os.path.abspath(config_path or DEFAULT_CONFIG_PATH)
     app.config["dashboard_state"] = {"config_version": 1, "restart_required": []}
     _start_time = int(time.time())
 
@@ -173,7 +176,7 @@ def _watch_config(app, watcher):
 
 
 def _start_config_watcher(app):
-    watcher = ConfigWatcher()
+    watcher = ConfigWatcher(app.config["dashboard_config_path"])
     t = threading.Thread(target=_watch_config, args=(app, watcher), daemon=True)
     t.start()
 
@@ -183,7 +186,7 @@ def select_race(provider, config):
         races = provider.list_races(config, _secrets_for(provider, config))
     except Exception as e:
         print(f"\nERROR: Failed to fetch race list: {e}")
-        print("Set WEBSCORER_RACE_ID in your .env file to skip race selection.")
+        print("Set race_id in config.yaml to skip race selection.")
         raise SystemExit(1)
 
     if not races:
@@ -242,8 +245,20 @@ def _format_config_lines(config, race_name, race_date):
     ]
 
 
-def main():
-    config = load_config()
+def _parse_args(argv):
+    parser = argparse.ArgumentParser(description="Webscorer race results dashboard")
+    parser.add_argument(
+        "--config",
+        default=DEFAULT_CONFIG_PATH,
+        help="path to the YAML configuration file (default: config.yaml next to app.py)",
+    )
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    args = _parse_args(argv)
+    config_path = os.path.abspath(args.config)
+    config = load_config(config_path=config_path)
     provider = _provider_for(config)
 
     if provider.list_races and not config.get("data_file") and not config["race_id"]:
@@ -252,7 +267,7 @@ def main():
         time.sleep(5)
 
     # Fetch initial data before starting the server to avoid rate-limit conflicts
-    app = create_app(config, start_polling=False)
+    app = create_app(config, start_polling=False, config_path=config_path)
     poll_once(app)
     with _cache_lock:
         race_name = _cache["race_name"]
@@ -263,7 +278,7 @@ def main():
     _start_config_watcher(app)
     for line in _format_config_lines(config, race_name, race_date):
         print(line)
-    print("\nConfig: live options reload from config.yaml; changes to source/race_id/data_file need a restart.")
+    print(f"\nConfig: live options reload from {os.path.basename(config_path)}; changes to source/race_id/data_file need a restart.")
     print(f"\nDashboard running at http://localhost:5000")
     app.run(host="0.0.0.0", port=5000, debug=False)
 

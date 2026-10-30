@@ -1,0 +1,4 @@
+# Offline demo: python app.py --config docs/demo-config.yaml (run from the repo root).
+source: csv
+data_file: docs/sample-results.csv
+

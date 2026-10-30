@@ -176,7 +176,7 @@ def test_main_skips_race_prompt_without_list_races(
     stub = _stub_provider(list_races=None)
     monkeypatch.setitem(providers._REGISTRY, "stub", stub)
     mock_load_config.return_value = _main_config(source="stub", api_token="t")
-    app_module.main()
+    app_module.main([])
     mock_select.assert_not_called()
 
 
@@ -192,7 +192,7 @@ def test_main_prompts_for_webscorer_without_race_id_or_data_file(
     import app as app_module
     mock_fetch.return_value = MOCK_RACE_RESULTS
     mock_load_config.return_value = _main_config(api_id="1", api_token="t")
-    app_module.main()
+    app_module.main([])
     mock_select.assert_called_once()
 
 
@@ -263,7 +263,7 @@ def test_main_with_csv_source_never_prompts_or_calls_webscorer(
 ):
     import app as app_module
     mock_load_config.return_value = _main_config(source="csv", data_file=SAMPLE_CSV)
-    app_module.main()
+    app_module.main([])
     mock_select.assert_not_called()
     mock_list.assert_not_called()
     mock_fetch.assert_not_called()
@@ -470,7 +470,7 @@ def test_main_initial_load_populates_demographics_and_finish_chart(
     config.update({"api_id": "12345", "api_token": "abc123de", "data_file": fixture})
     mock_load_config.return_value = config
 
-    app_module.main()
+    app_module.main([])
 
     with app_module._cache_lock:
         types = [p["type"] for p in app_module._cache["pages"]]
@@ -483,6 +483,23 @@ def test_main_initial_load_populates_demographics_and_finish_chart(
     assert mock_thread.return_value.start.call_count == 2
     assert "live options reload from config.yaml" in out
     mock_run.assert_called_once()
+
+
+@patch("app.threading.Thread")
+@patch("app.Flask.run")
+@patch("app.ConfigWatcher")
+@patch("app.load_config")
+def test_main_uses_selected_config_path(mock_load_config, mock_watcher, mock_run, mock_thread, tmp_path):
+    import app as app_module
+
+    path = tmp_path / "dir with spaces" / "demo.yaml"
+    fixture = os.path.join(os.path.dirname(__file__), "fixtures", "race_a_finished.json")
+    mock_load_config.return_value = _main_config(data_file=fixture)
+
+    app_module.main(["--config", str(path)])
+
+    assert mock_load_config.call_args.kwargs["config_path"] == os.path.abspath(str(path))
+    mock_watcher.assert_called_once_with(os.path.abspath(str(path)))
 
 
 @patch("app._wait_for_next_poll")

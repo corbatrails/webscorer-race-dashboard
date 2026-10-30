@@ -3,7 +3,7 @@ import sys
 from collections import namedtuple
 
 import yaml
-from dotenv import dotenv_values, find_dotenv, load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
 from providers import get_provider, provider_names
 
@@ -69,28 +69,28 @@ def _parse_source(value):
 
 # reload: "live" options can change mid-run (Phase 4); "restart" options are
 # consumed once at startup and need a restart to change.
-Option = namedtuple("Option", "key env default parse reload")
+Option = namedtuple("Option", "key default parse reload")
 
 OPTIONS = (
-    Option("source", "RACE_SOURCE", "webscorer", _parse_source, "restart"),
-    Option("race_id", "WEBSCORER_RACE_ID", None, _parse_optional_str, "restart"),
-    Option("data_file", "DATA_FILE", None, _parse_optional_str, "restart"),
-    Option("refresh_interval", "REFRESH_INTERVAL", 60, _parse_refresh_interval, "live"),
-    Option("summary_display_time", "SUMMARY_DISPLAY_TIME", 20, _parse_int, "live"),
-    Option("scroll_speed", "SCROLL_SPEED", 100, _parse_int, "live"),
-    Option("scroll_pause_time", "SCROLL_PAUSE_TIME", 2, _parse_int, "live"),
-    Option("pinned_leaders", "PINNED_LEADERS", 3, _parse_int, "live"),
-    Option("show_summary", "SHOW_SUMMARY", True, _parse_bool, "live"),
-    Option("show_overall_results", "SHOW_OVERALL_RESULTS", True, _parse_bool, "live"),
-    Option("show_category_results", "SHOW_CATEGORY_RESULTS", True, _parse_bool, "live"),
-    Option("show_demographics", "SHOW_DEMOGRAPHICS", False, _parse_bool, "live"),
-    Option("pinned_leaders_on_overall_results", "PINNED_LEADERS_ON_OVERALL_RESULTS", False, _parse_bool, "live"),
-    Option("overall_results_layout", "OVERALL_RESULTS_LAYOUT", "standard", _parse_layout, "live"),
-    Option("display_unfinished_in_category", "DISPLAY_UNFINISHED_IN_CATEGORY", False, _parse_bool, "live"),
-    Option("display_unfinished_in_overall", "DISPLAY_UNFINISHED_IN_OVERALL", False, _parse_bool, "live"),
-    Option("chart_bucket_minutes", "CHART_BUCKET_MINUTES", 15, _parse_int, "live"),
-    Option("color_scheme", "COLOR_SCHEME", "dark", _parse_color_scheme, "live"),
-    Option("show_toasts", "SHOW_TOASTS", True, _parse_bool, "live"),
+    Option("source", "webscorer", _parse_source, "restart"),
+    Option("race_id", None, _parse_optional_str, "restart"),
+    Option("data_file", None, _parse_optional_str, "restart"),
+    Option("refresh_interval", 60, _parse_refresh_interval, "live"),
+    Option("summary_display_time", 20, _parse_int, "live"),
+    Option("scroll_speed", 100, _parse_int, "live"),
+    Option("scroll_pause_time", 2, _parse_int, "live"),
+    Option("pinned_leaders", 3, _parse_int, "live"),
+    Option("show_summary", True, _parse_bool, "live"),
+    Option("show_overall_results", True, _parse_bool, "live"),
+    Option("show_category_results", True, _parse_bool, "live"),
+    Option("show_demographics", False, _parse_bool, "live"),
+    Option("pinned_leaders_on_overall_results", False, _parse_bool, "live"),
+    Option("overall_results_layout", "standard", _parse_layout, "live"),
+    Option("display_unfinished_in_category", False, _parse_bool, "live"),
+    Option("display_unfinished_in_overall", False, _parse_bool, "live"),
+    Option("chart_bucket_minutes", 15, _parse_int, "live"),
+    Option("color_scheme", "dark", _parse_color_scheme, "live"),
+    Option("show_toasts", True, _parse_bool, "live"),
 )
 
 
@@ -133,33 +133,15 @@ def _check_yaml_keys(yaml_data, path):
             _warn(f"{name} contains unknown option '{key}', which is ignored.")
 
 
-def _warn_legacy_dotenv(env_path):
-    """Non-secret settings in .env still apply (as overrides) but are deprecated."""
-    if not env_path or not os.path.isfile(env_path):
-        return
-    env_names = {opt.env for opt in OPTIONS}
-    legacy = [k for k, v in dotenv_values(env_path).items() if k in env_names and (v or "").strip()]
-    if legacy:
-        _warn(
-            f"Non-secret settings found in .env are deprecated ({', '.join(legacy)}). "
-            "They still apply and override config.yaml; move them to config.yaml "
-            "so .env only holds WEBSCORER_API_ID and WEBSCORER_API_TOKEN."
-        )
-
-
 def _resolve_option(opt, yaml_data, yaml_name):
-    """Environment (process env, then .env) > config.yaml > built-in default."""
-    raw = os.environ.get(opt.env)
-    source = opt.env
-    if raw is None or raw.strip() == "":
-        raw = yaml_data.get(opt.key)
-        source = yaml_name
+    """config.yaml value, else the built-in default. The environment is never consulted."""
+    raw = yaml_data.get(opt.key)
     if raw is None:
         return opt.default
     try:
         return opt.parse(raw)
     except ValueError as e:
-        raise ConfigError(f"Invalid value {raw!r} for '{opt.key}' (from {source}): {e}")
+        raise ConfigError(f"Invalid value {raw!r} for '{opt.key}' (from {yaml_name}): {e}")
 
 
 def load_config(config_path=None, env_path=None):
@@ -170,7 +152,6 @@ def load_config(config_path=None, env_path=None):
     try:
         yaml_data = _read_yaml(config_path)
         _check_yaml_keys(yaml_data, config_path)
-        _warn_legacy_dotenv(env_path)
         values = {opt.key: _resolve_option(opt, yaml_data, yaml_name) for opt in OPTIONS}
     except ConfigError as e:
         _fail(str(e))
@@ -208,7 +189,7 @@ def _signature(path):
 class ConfigWatcher:
     """Detects config.yaml edits and builds a validated replacement config.
 
-    The environment layer and secrets are not re-read; they keep their startup values.
+    Secrets are not re-read; they keep their startup values.
     """
 
     def __init__(self, config_path=None):
