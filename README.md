@@ -61,7 +61,7 @@ Press these on a keyboard attached to the dashboard browser:
 
 - The left side lists the same distance/category groupings as the TV dashboard's result pages, following the `display_unfinished_*` options. Click one to show its finishers on the right.
 - **Show top** (default 3) sets how many places to show. Places are used exactly as ranked on the dashboard (overall winners are not removed from category lists), and everyone tied at the cutoff is included, so "top 3" with a tie for third shows four racers. DNS/DNF/DSQ and unplaced racers are never shown.
-- The page refreshes on `refresh_interval` and keeps your grouping and count. It doesn't rotate or scroll by itself, and it uses the configured `color_scheme`.
+- The page refreshes on `refresh_interval` and keeps your grouping and count. Press `R` to refresh from the source right away (same `POST /api/refresh` and 5-second cooldown as the TV dashboard). It doesn't rotate or scroll by itself, and it uses the configured `color_scheme`.
 - Like `/` and `/api/data`, it needs no login.
 
 ## Configuration
