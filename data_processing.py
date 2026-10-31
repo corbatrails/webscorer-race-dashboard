@@ -474,6 +474,8 @@ def build_race_control_data(snapshot, observation_seconds):
             entry["distance"] = group["distance"]
     latest.sort(key=lambda r: r["FinishSeconds"], reverse=True)
     return {
+        "race_name": snapshot["race"]["name"],
+        "race_date": snapshot["race"]["date"],
         "progress": progress,
         "groups": groups,
         "latest_finishers": latest[:12],

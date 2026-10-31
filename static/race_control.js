@@ -115,8 +115,9 @@
 
     function renderHeader() {
       var data = state.data;
-      el("race-name").textContent = data && data.race_name || "Race control";
-      el("race-date").textContent = data && data.race_date || "Director & timing desk";
+      var snapshot = control();
+      el("race-name").textContent = data && data.race_name || snapshot && snapshot.race_name || "Race control";
+      el("race-date").textContent = data && data.race_date || snapshot && snapshot.race_date || "Director & timing desk";
       var warnings = [];
       if (state.fetchFailed) warnings.push("Can't reach the dashboard server; data may be out of date. Retrying...");
       else if (data && data.is_stale) warnings.push("Data may be out of date.");

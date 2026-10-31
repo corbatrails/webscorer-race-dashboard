@@ -29,6 +29,7 @@ def test_control_projection_keeps_rank_ties_statuses_and_lap_state():
     assert [r["GapSeconds"] for r in rows] == [0, 0, None, None, None, None, None]
     assert control["progress"]["totals"]["on_course"] == 1
     assert control["clock_seconds"] == 2000
+    assert control["race_name"] == "Race"
 
 
 def test_control_group_metadata_handles_blank_distances_and_category_only_members():
@@ -74,7 +75,6 @@ def test_race_control_route_renders_configured_theme(scheme):
 
 
 def test_control_payload_ignores_tv_visibility_options_and_resets_on_race_switch(tmp_path):
-    import app as app_module
     from pathlib import Path
 
     config = {

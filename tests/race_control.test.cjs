@@ -34,6 +34,7 @@ function payload(groups, extra = {}) {
     race_name: "Race", race_date: "Today", color_scheme: "dark", race_generation: 1,
     last_refresh: "10:00:00", refresh_interval: 30, waiting: false,
     race_control: {
+      race_name: "Race", race_date: "Today",
       groups, progress: { totals: { registered: 1, on_course: 0, finished: 1 }, distances: [] },
       latest_finishers: [], clock_seconds: 3600, sampled_at: 1000,
     }, ...extra,
@@ -133,6 +134,15 @@ test("fetch failure retains rows, warns explicitly and retries in five seconds",
   assert.deepEqual(app.rows(), rows);
   assert.match(app.get("control-status").textContent, /out of date.*Retrying/);
   assert.equal(app.timers.at(-1).ms, 5000);
+});
+
+test("provider errors retain the successful snapshot's event identity", () => {
+  const app = ui();
+  app.page.applyData(payload([group("A")]));
+  app.page.applyData(payload([group("A")], { race_name: "", race_date: "", error: "Provider unavailable" }));
+  assert.equal(app.get("race-name").textContent, "Race");
+  assert.equal(app.get("race-date").textContent, "Today");
+  assert.match(app.get("control-status").textContent, /Provider unavailable/);
 });
 
 test("manual refresh reports cooldown and HTTP errors rather than claiming success", async () => {
