@@ -10,6 +10,7 @@ A TV-mounted dashboard that displays live race results from WebScorer. Designed 
 - Configurable refresh and rotation intervals
 - Interactive race selection or pre-configured race ID
 - [Race results page](#race-results-page) for announcing winners: pick a distance/category, show its top finishers
+- [Race control](#race-control) for directors and timers: fixed progress overview and paginated results
 
 ## Quick Start
 
@@ -63,6 +64,18 @@ Press these on a keyboard attached to the dashboard browser:
 - **Show top** (default 3) sets how many places to show. Places are used exactly as ranked on the dashboard (overall winners are not removed from category lists), and everyone tied at the cutoff is included, so "top 3" with a tie for third shows four racers. DNS/DNF/DSQ and unplaced racers are never shown.
 - The page refreshes on `refresh_interval` and keeps your grouping and count. Press `R` to refresh from the source right away (same `POST /api/refresh` and 5-second cooldown as the TV dashboard). It doesn't rotate or scroll by itself, and it uses the configured `color_scheme`.
 - Like `/` and `/api/data`, it needs no login.
+
+## Race control
+
+`http://<host>:5000/race-control` is a read-only workspace for race directors and timers. The admin header links to **Race control** in a new tab; the TV dashboard stays unchanged.
+
+- **Race progress:** registered/on-course/finished/DNS/not-started/DNF/DSQ totals, on-course racers by distance and lap, DNFs by lap, distance completion (finished + DNS + DNF + DSQ), and the latest finishers ordered by their actual finish time. Progress cells do not drill into results yet.
+- **Results:** choose a distance and grouping, then view all racers or finishers only. Ranking and ties match the dashboard. Completed laps, time/status and gap to the grouping leader are shown; narrow screens omit secondary columns.
+- Nothing rotates or scrolls. Results, distance/grouping navigation and large lap grids use explicit pagination to fit the available viewport. Compact screens use dropdowns for distance and grouping.
+- The page follows `color_scheme`, including configuration changes while it is open. There is no independent theme toggle. It refreshes on `refresh_interval`, preserves your view, filters, selection and page, and marks stale data or errors explicitly. A race switch resets selections.
+- Press **1** for progress, **2** for results, **Left/Right arrows** for result pages, or **R** / **Refresh** to poll the source immediately (shared 5-second cooldown).
+- Operational data includes all groupings and unfinished racers regardless of TV `show_*` and `display_unfinished_*` settings. Those settings still govern the TV and announcer pages.
+- The race clock is elapsed time since the event-local start, including days for multi-day/historical events and a negative countdown before the start. Like `/results`, this page and its data need no login; admin settings still require one.
 
 ## Configuration
 
@@ -214,7 +227,7 @@ Run the tests from the repo root:
 
 ```bash
 pytest                                  # server, config and admin tests
-node --test tests/dashboard.test.cjs tests/results.test.cjs    # TV and results page scripts (Node 22+, no npm install needed)
+node --test tests/dashboard.test.cjs tests/results.test.cjs tests/race_control.test.cjs    # Page scripts (Node 22+, no npm install needed)
 ```
 
 For a quick manual check, point `--config` at a throwaway YAML file with `data_file` set to one of the files in `tests/fixtures/` (or use the [offline demo](#offline-demo)); no WebScorer credentials are needed.

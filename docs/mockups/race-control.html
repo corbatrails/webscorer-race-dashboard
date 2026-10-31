@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Race control (mockup)</title>
+<!-- Static design mockup with sample data. Open directly in a browser; uses the app's real color palette. -->
+<link rel="stylesheet" href="../../static/theme.css">
+<style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: "Segoe UI", Arial, sans-serif; font-size: 14px;
+  background: var(--bg-primary); color: var(--text-body);
+  height: 100dvh; overflow: hidden;
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* Top bar */
+.topbar {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px;
+  padding: 10px 20px; background: var(--bg-card); border-bottom: 1px solid var(--border-color);
+}
+.race h1 { margin: 0; font-size: 18px; color: var(--text-primary); }
+.race p { margin: 2px 0 0; font-size: 12px; color: var(--text-muted); }
+.views { display: flex; gap: 4px; justify-self: center; background: var(--bg-primary); border-radius: 8px; padding: 4px; }
+.views button { border: 0; background: none; padding: 7px 18px; border-radius: 6px; font-weight: 600; color: var(--text-muted); white-space: nowrap; }
+.views button[aria-selected="true"] { background: var(--accent-primary); color: var(--bg-primary); }
+.views kbd { font-size: 10px; opacity: .6; margin-left: 6px; font-family: inherit; }
+.status { display: flex; align-items: center; gap: 18px; font-size: 12px; color: var(--text-muted); }
+.clock { text-align: right; }
+.clock strong { display: block; font-size: 22px; color: var(--text-primary); line-height: 1; }
+.live::before { content: "\25CF"; color: #2ecc71; margin-right: 5px; }
+.icon-btn { border: 1px solid var(--border-color); background: none; border-radius: 6px; padding: 5px 9px; color: var(--text-muted); }
+.badge { font-size: 10px; letter-spacing: 1px; font-weight: 700; color: var(--accent-secondary); border: 1px solid var(--accent-secondary); border-radius: 4px; padding: 3px 6px; }
+
+/* Shared panels */
+.view { min-height: 0; padding: 14px 20px 16px; gap: 14px; }
+.view[hidden] { display: none !important; }
+.panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 16px 8px; }
+.panel-head h2 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+.panel-head span { font-size: 11px; color: var(--text-dim); }
+
+/* Progress view */
+#progress { display: grid; grid-template-rows: auto minmax(0, 1fr); }
+.stats { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.stat { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 14px; }
+.stat strong { display: block; font-size: clamp(22px, 3.2vh, 34px); color: var(--text-primary); line-height: 1.1; }
+.stat span { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+.stat.primary strong { color: var(--accent-primary); }
+.stat.warn strong { color: var(--accent-secondary); }
+.progress-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 24vw); gap: 14px; min-height: 0; }
+.side { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 14px; min-height: 0; }
+
+.lap-grid { flex: 1; min-height: 0; display: grid; gap: 6px; padding: 4px 16px 16px; }
+.lap-head { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); align-self: end; text-align: center; }
+.lap-head:first-child { text-align: left; }
+.lap-label { display: flex; flex-direction: column; justify-content: center; }
+.lap-label strong { color: var(--text-primary); font-size: clamp(14px, 2vh, 20px); }
+.lap-label small { color: var(--text-muted); font-size: 11px; }
+.cell {
+  border-radius: 8px; background: var(--row-even); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px; position: relative; min-height: 0;
+}
+.cell b { font-size: clamp(18px, 3.4vh, 36px); color: var(--text-dim); }
+.cell.active b { color: var(--accent-primary); }
+.cell.done b { color: #2ecc71; }
+.cell.na { background: none; border: 1px dashed var(--border-color); color: var(--text-dim); font-size: 11px; }
+.share { width: 60%; height: 4px; background: var(--bg-track); border-radius: 2px; overflow: hidden; }
+.share i { display: block; height: 100%; background: var(--accent-primary); }
+.dnf { font-size: 11px; color: var(--error-color); }
+.cell:not(.na):hover { outline: 1px solid var(--border-color); }
+
+.bars { padding: 0 16px 14px; display: flex; flex-direction: column; gap: 10px; }
+.bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.bar-label span:last-child { color: var(--text-muted); }
+.bar { height: 8px; background: var(--bg-track); border-radius: 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent-primary); }
+
+.feed { list-style: none; margin: 0; padding: 0 16px 12px; overflow: hidden; flex: 1; }
+.feed li { display: grid; grid-template-columns: 52px 1fr auto; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+.feed li:first-child { animation: flash 2s ease-out; }
+.feed .when { color: var(--text-dim); font-size: 11px; }
+.feed .who small { display: block; color: var(--text-muted); font-size: 11px; }
+.feed .t { color: var(--text-primary); }
+@keyframes flash { from { background: color-mix(in srgb, var(--accent-primary) 25%, transparent); } }
+
+/* Results view */
+#results { display: grid; grid-template-columns: 180px 220px minmax(0, 1fr); }
+.rail { padding: 6px; overflow: hidden; }
+.rail button {
+  display: block; width: 100%; text-align: left; border: 0; background: none;
+  padding: 8px 10px; border-radius: 6px; margin-bottom: 2px;
+}
+.rail button small { display: block; font-size: 11px; color: var(--text-muted); }
+.rail button[aria-pressed="true"] { background: var(--bg-track); color: var(--text-primary); box-shadow: inset 3px 0 var(--accent-primary); }
+.rail .tier { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); margin: 10px 10px 4px; }
+.results-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+.results-head h2 { margin: 0; font-size: 18px; color: var(--text-primary); }
+.results-head .filters { display: flex; gap: 6px; font-size: 12px; }
+.chip { border: 1px solid var(--border-color); background: none; border-radius: 12px; padding: 3px 10px; color: var(--text-muted); }
+.chip[aria-pressed="true"] { border-color: var(--accent-primary); color: var(--accent-primary); }
+.table-wrap { flex: 1; min-height: 0; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+th { background: var(--bg-card); text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-dim); padding: 8px 12px; font-weight: 600; }
+td { padding: 0 12px; height: 36px; border-top: 1px solid var(--border-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+tr:nth-child(even) td { background: var(--row-even); }
+.c-place { width: 64px; } .c-bib { width: 70px; } .c-laps { width: 70px; } .c-time, .c-gap { width: 110px; text-align: right; }
+td.c-time, td.c-gap { text-align: right; }
+td.c-place { font-weight: 700; color: var(--text-primary); }
+tr.podium td.c-place { color: var(--accent-secondary); }
+td.c-gap { color: var(--text-muted); }
+td .team { color: var(--text-muted); font-size: 12px; margin-left: 8px; }
+tr.unfinished td { color: var(--text-dim); }
+.pill { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; border: 1px solid currentColor; }
+.pill.dnf { color: var(--error-color); } .pill.oc { color: var(--accent-primary); }
+.pager { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-top: 1px solid var(--border-color); font-size: 12px; color: var(--text-muted); }
+.pager button { border: 1px solid var(--border-color); background: none; border-radius: 6px; padding: 4px 12px; }
+.pager button:disabled { opacity: .35; cursor: default; }
+.dots { display: flex; gap: 5px; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--bg-track); }
+.dots i.on { background: var(--accent-primary); }
+
+.tip { position: fixed; pointer-events: none; background: var(--text-primary); color: var(--bg-primary); font-size: 11px; padding: 4px 8px; border-radius: 4px; opacity: 0; transition: opacity .15s; }
+
+@media (max-width: 1100px) {
+  .progress-body { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .side { grid-template-columns: 1fr 1fr; grid-template-rows: none; max-height: 30vh; }
+  #results { grid-template-columns: 130px 150px minmax(0, 1fr); }
+  .c-place { width: 48px; } .c-bib { width: 56px; } .c-time, .c-gap { width: 86px; }
+  .c-laps { display: none; }
+}
+</style>
+</head>
+<body data-theme="dark">
+<header class="topbar">
+  <div class="race">
+    <h1>Sample Gravel Grinder</h1>
+    <p>Saturday, June 6, 2026 &middot; Start 8:00 AM</p>
+  </div>
+  <nav class="views" role="tablist" aria-label="Race control views">
+    <button role="tab" aria-selected="true" aria-controls="progress" data-view="progress">Race progress<kbd>1</kbd></button>
+    <button role="tab" aria-selected="false" aria-controls="results" data-view="results">Results<kbd>2</kbd></button>
+  </nav>
+  <div class="status">
+    <span class="badge">MOCKUP</span>
+    <span class="live">Updated 8s ago</span>
+    <div class="clock"><strong class="num" id="clock">3:42:17</strong>race clock</div>
+    <button class="icon-btn" id="theme" title="Toggle light/dark">&#9680;</button>
+  </div>
+</header>
+
+<!-- RACE PROGRESS -->
+<section class="view" id="progress" role="tabpanel">
+  <div class="stats">
+    <div class="stat"><strong class="num">212</strong><span>Registered</span></div>
+    <div class="stat primary"><strong class="num">74</strong><span>On course</span></div>
+    <div class="stat primary"><strong class="num">118</strong><span>Finished</span></div>
+    <div class="stat"><strong class="num">9</strong><span>DNS</span></div>
+    <div class="stat"><strong class="num">2</strong><span>Not started</span></div>
+    <div class="stat warn"><strong class="num">8</strong><span>DNF</span></div>
+    <div class="stat warn"><strong class="num">1</strong><span>DSQ</span></div>
+  </div>
+  <div class="progress-body">
+    <div class="panel">
+      <div class="panel-head"><h2>On course by lap</h2><span>Hover a cell &mdash; drill-down to racers comes later</span></div>
+      <div class="lap-grid" id="lap-grid"></div>
+    </div>
+    <div class="side">
+      <div class="panel">
+        <div class="panel-head"><h2>Distance completion</h2><span>resolved / total</span></div>
+        <div class="bars" id="bars"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>Latest finishers</h2><span>newest first</span></div>
+        <ul class="feed" id="feed"></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section class="view" id="results" role="tabpanel" hidden>
+  <div class="panel rail" id="distance-rail" aria-label="Distance"></div>
+  <div class="panel rail" id="group-rail" aria-label="Result grouping"></div>
+  <div class="panel">
+    <div class="results-head">
+      <h2 id="results-title"></h2>
+      <div class="filters">
+        <button class="chip" aria-pressed="true" data-filter="all">All racers</button>
+        <button class="chip" aria-pressed="false" data-filter="finished">Finished only</button>
+      </div>
+    </div>
+    <div class="table-wrap" id="table-wrap">
+      <table>
+        <thead><tr><th class="c-place">Place</th><th class="c-bib">Bib</th><th>Name</th><th class="c-laps">Laps</th><th class="c-time">Time</th><th class="c-gap">Gap</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="pager">
+      <button id="prev">&larr; Prev</button>
+      <span id="page-info"></span>
+      <div class="dots" id="dots"></div>
+      <button id="next">Next &rarr;</button>
+    </div>
+  </div>
+</section>
+
+<div class="tip" id="tip"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Sample data shaped like the lap overview and result pages in /api/data.
+  var distances = [
+    { id: "100k", name: "100K", detail: "4 laps \u00b7 62 mi", lap_count: 4, total: 78, started: 74, on_course_by_lap: [3, 9, 14, 11], dnf_by_lap: [1, 2, 0, 0], finished: 34 },
+    { id: "50k", name: "50K", detail: "2 laps \u00b7 31 mi", lap_count: 2, total: 72, started: 69, on_course_by_lap: [6, 17], dnf_by_lap: [2, 1], finished: 43 },
+    { id: "25k", name: "25K", detail: "1 lap \u00b7 15.5 mi", lap_count: 1, total: 52, started: 49, on_course_by_lap: [8], dnf_by_lap: [1], finished: 40 },
+    { id: "kids", name: "Kids 5K", detail: "1 lap", lap_count: 1, total: 10, started: 10, on_course_by_lap: [0], dnf_by_lap: [0], finished: 10 }
+  ];
+  var first = ["Avery","Blake","Casey","Drew","Emery","Finley","Gray","Harper","Jordan","Kai","Logan","Morgan","Noel","Parker","Quinn","Riley","Sage","Taylor","Rowan","Jules"];
+  var last = ["Reed","Alder","Brooks","Hayes","Lane","Carter","Ellis","Wells","Stone","Price","Vega","Moss","Hart","Nash","Shaw","Ford","Kerr","Bloom"];
+  var teams = ["", "", "Velo Club", "", "Dirt Dawgs", "", "", "Gravel Gang", ""];
+  var groups = ["Overall", "Overall Women", "Overall Men", "Women 19-29", "Women 30-39", "Women 40-49", "Women 50+", "Men 19-29", "Men 30-39", "Men 40-49", "Men 50+"];
+  var baseTime = { "100k": 13000, "50k": 7200, "25k": 3900, "kids": 1500 };
+  var bibBase = { "100k": 100, "50k": 300, "25k": 500, "kids": 700 };
+
+  function fmt(sec) {
+    var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = Math.floor(sec % 60);
+    return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+  }
+  function racers(dist, group) {
+    var seed = dist.id.length * 7 + group.length * 13, list = [];
+    var n = group === "Overall" ? dist.total : group.indexOf("Overall") === 0 ? Math.round(dist.total / 2) : 4 + (seed % 9);
+    var finishers = Math.round(n * dist.finished / dist.total), t = baseTime[dist.id], leader = 0;
+    for (var i = 0; i < n; i++) {
+      seed = (seed * 9301 + 49297) % 233280;
+      var finished = i < finishers;
+      t += 40 + seed % 420;
+      if (i === 0) leader = t;
+      list.push({
+        place: finished ? String(i + 1) : "",
+        bib: String(bibBase[dist.id] + (seed % 199)),
+        name: first[seed % first.length] + " " + last[(seed >> 3) % last.length],
+        team: teams[seed % teams.length],
+        laps: finished ? dist.lap_count : Math.max(0, dist.lap_count - 1 - seed % 2),
+        time: finished ? fmt(t) : "",
+        gap: finished && i > 0 ? "+" + fmt(t - leader) : "",
+        status: finished ? "" : (seed % 5 === 0 ? "DNF" : "On course")
+      });
+    }
+    return list;
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  // Race progress
+  function renderLapGrid() {
+    var max = Math.max.apply(null, distances.map(function (d) { return d.lap_count; }));
+    var grid = $("lap-grid");
+    grid.style.gridTemplateColumns = "minmax(110px, 1.3fr) repeat(" + (max + 1) + ", minmax(0, 1fr))";
+    grid.style.gridTemplateRows = "auto repeat(" + distances.length + ", minmax(0, 1fr))";
+    var html = '<div class="lap-head">Distance</div>';
+    for (var l = 1; l <= max; l++) html += '<div class="lap-head">Lap ' + l + "</div>";
+    html += '<div class="lap-head">Finished</div>';
+    distances.forEach(function (d) {
+      html += '<div class="lap-label"><strong>' + esc(d.name) + "</strong><small>" + esc(d.detail) + " \u00b7 " + d.started + " started</small></div>";
+      for (var i = 0; i < max; i++) {
+        if (i >= d.lap_count) { html += '<div class="cell na">no lap ' + (i + 1) + "</div>"; continue; }
+        var c = d.on_course_by_lap[i], pct = Math.round(c / d.started * 100);
+        html += '<div class="cell' + (c ? " active" : "") + '" data-tip="' + esc(d.name + " lap " + (i + 1) + ": " + c + " racers (" + pct + "% of starters)") + '">' +
+          '<b class="num">' + c + '</b><div class="share"><i style="width:' + pct + '%"></i></div>' +
+          (d.dnf_by_lap[i] ? '<span class="dnf">' + d.dnf_by_lap[i] + " DNF</span>" : "") + "</div>";
+      }
+      html += '<div class="cell done" data-tip="' + esc(d.name + ": " + d.finished + " finished") + '"><b class="num">' + d.finished + "</b></div>";
+    });
+    grid.innerHTML = html;
+  }
+  function renderBars() {
+    $("bars").innerHTML = distances.map(function (d) {
+      var dnf = d.dnf_by_lap.reduce(function (a, b) { return a + b; }, 0);
+      var resolved = d.finished + dnf + (d.total - d.started);
+      return '<div><div class="bar-label"><span>' + esc(d.name) + '</span><span class="num">' + resolved + " / " + d.total + '</span></div><div class="bar"><i style="width:' + Math.round(resolved / d.total * 100) + '%"></i></div></div>';
+    }).join("");
+  }
+  var feed = [], feedCount = 0;
+  function addFinisher() {
+    var d = distances[feedCount % 3];
+    var r = racers(d, "Overall")[(feedCount * 7) % 30];
+    var at = new Date(Date.now() - (8 - feedCount) * 60000);
+    feedCount++;
+    feed.unshift({ when: at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }), name: r.name, bib: r.bib, dist: d.name, place: 20 + feedCount, time: r.time || fmt(baseTime[d.id] + feedCount * 300) });
+    feed = feed.slice(0, 12);
+    $("feed").innerHTML = feed.map(function (f) {
+      return '<li><span class="when">' + f.when + '</span><span class="who">' + esc(f.name) + "<small>#" + f.bib + " \u00b7 " + esc(f.dist) + " \u00b7 " + f.place + ' overall</small></span><span class="t num">' + f.time + "</span></li>";
+    }).join("");
+  }
+
+  // Results: rows per page are computed from the available height, so the table never scrolls.
+  var state = { dist: distances[0], group: "Overall", page: 0, filter: "all" };
+  function renderRails() {
+    $("distance-rail").innerHTML = '<div class="tier">Distance</div>' + distances.map(function (d) {
+      return '<button aria-pressed="' + (d === state.dist) + '" data-dist="' + d.id + '">' + esc(d.name) + "<small>" + d.finished + " of " + d.total + " finished</small></button>";
+    }).join("");
+    var html = "";
+    groups.forEach(function (g, i) {
+      if (i === 0) html += '<div class="tier">Overall</div>';
+      if (i === 3) html += '<div class="tier">Age groups</div>';
+      html += '<button aria-pressed="' + (g === state.group) + '" data-group="' + esc(g) + '">' + esc(g) + "</button>";
+    });
+    $("group-rail").innerHTML = html;
+  }
+  function renderResults() {
+    var all = racers(state.dist, state.group).filter(function (r) { return state.filter === "all" || r.place; });
+    var wrap = $("table-wrap"), head = wrap.querySelector("thead").offsetHeight;
+    var per = Math.max(3, Math.floor((wrap.clientHeight - head) / 36));
+    var pages = Math.max(1, Math.ceil(all.length / per));
+    state.page = Math.max(0, Math.min(state.page, pages - 1));
+    var slice = all.slice(state.page * per, state.page * per + per);
+    $("results-title").textContent = state.dist.name + " \u2014 " + state.group;
+    $("rows").innerHTML = slice.map(function (r) {
+      var podium = r.place && +r.place <= 3;
+      var status = r.status ? '<span class="pill ' + (r.status === "DNF" ? "dnf" : "oc") + '">' + r.status + "</span>" : "";
+      return '<tr class="' + (podium ? "podium" : "") + (r.place ? "" : " unfinished") + '"><td class="c-place num">' + (r.place || "\u2014") + '</td><td class="c-bib num">' + r.bib +
+        "</td><td>" + esc(r.name) + (r.team ? '<span class="team">' + esc(r.team) + "</span>" : "") +
+        '</td><td class="c-laps num">' + r.laps + "/" + state.dist.lap_count + '</td><td class="c-time num">' + (r.time || status) + '</td><td class="c-gap num">' + r.gap + "</td></tr>";
+    }).join("");
+    $("page-info").textContent = all.length ? "Showing " + (state.page * per + 1) + "\u2013" + (state.page * per + slice.length) + " of " + all.length + " \u00b7 page " + (state.page + 1) + "/" + pages : "No racers";
+    $("dots").innerHTML = Array.from({ length: Math.min(pages, 15) }, function (_, i) { return '<i class="' + (i === state.page ? "on" : "") + '"></i>'; }).join("");
+    $("prev").disabled = state.page === 0;
+    $("next").disabled = state.page >= pages - 1;
+  }
+
+  function setView(v) {
+    document.querySelectorAll(".views button").forEach(function (b) { b.setAttribute("aria-selected", String(b.dataset.view === v)); });
+    $("progress").hidden = v !== "progress";
+    $("results").hidden = v !== "results";
+    if (v === "results") renderResults();
+  }
+  function turnPage(step) { state.page += step; renderResults(); }
+
+  document.querySelectorAll(".views button").forEach(function (b) { b.onclick = function () { setView(b.dataset.view); }; });
+  $("distance-rail").onclick = function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    state.dist = distances.filter(function (d) { return d.id === b.dataset.dist; })[0]; state.page = 0; renderRails(); renderResults();
+  };
+  $("group-rail").onclick = function (e) {
+    var b = e.target.closest("button"); if (!b) return;
+    state.group = b.dataset.group; state.page = 0; renderRails(); renderResults();
+  };
+  document.querySelectorAll(".chip").forEach(function (c) {
+    c.onclick = function () {
+      state.filter = c.dataset.filter; state.page = 0;
+      document.querySelectorAll(".chip").forEach(function (x) { x.setAttribute("aria-pressed", String(x === c)); });
+      renderResults();
+    };
+  });
+  $("prev").onclick = function () { turnPage(-1); };
+  $("next").onclick = function () { turnPage(1); };
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "1") setView("progress");
+    if (e.key === "2") setView("results");
+    if ($("results").hidden) return;
+    if (e.key === "ArrowRight" && !$("next").disabled) turnPage(1);
+    if (e.key === "ArrowLeft" && !$("prev").disabled) turnPage(-1);
+  });
+  $("theme").onclick = function () { document.body.dataset.theme = document.body.dataset.theme === "dark" ? "light" : "dark"; };
+  window.addEventListener("resize", function () { if (!$("results").hidden) renderResults(); });
+
+  var tip = $("tip");
+  $("lap-grid").addEventListener("mousemove", function (e) {
+    var c = e.target.closest("[data-tip]");
+    if (!c) { tip.style.opacity = 0; return; }
+    tip.textContent = c.dataset.tip; tip.style.left = e.clientX + 12 + "px"; tip.style.top = e.clientY + 12 + "px"; tip.style.opacity = 1;
+  });
+  $("lap-grid").addEventListener("mouseleave", function () { tip.style.opacity = 0; });
+
+  var elapsed = 3 * 3600 + 42 * 60 + 17;
+  setInterval(function () { $("clock").textContent = fmt(++elapsed); }, 1000);
+  setInterval(addFinisher, 8000);
+
+  renderLapGrid(); renderBars(); renderRails();
+  for (var i = 0; i < 8; i++) addFinisher();
+})();
+</script>
+</body>
+</html>
