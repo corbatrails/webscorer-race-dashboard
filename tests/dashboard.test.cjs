@@ -7,6 +7,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 
+const HELPERS_SOURCE = fs.readFileSync(path.join(__dirname, "..", "static", "result_helpers.js"), "utf8");
 const SOURCE = fs.readFileSync(path.join(__dirname, "..", "static", "dashboard.js"), "utf8");
 
 function escapeText(text) {
@@ -106,6 +107,7 @@ function startDashboard() {
     },
   };
   vm.createContext(context);
+  vm.runInContext(HELPERS_SOURCE, context);
   vm.runInContext(SOURCE, context);
 
   async function settle() {
