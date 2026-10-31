@@ -67,7 +67,8 @@ function makeElement(tag) {
 function startDashboard() {
   const dashboard = makeElement("div");
   const toastContainer = makeElement("div");
-  const elements = { dashboard, "toast-container": toastContainer };
+  const pauseIndicator = makeElement("div");
+  const elements = { dashboard, "toast-container": toastContainer, "pause-indicator": pauseIndicator };
   const requests = [];
   const timers = [];
 
@@ -86,8 +87,9 @@ function startDashboard() {
   const context = {
     document,
     console: { error() {}, log() {}, warn() {} },
-    fetch(url) {
-      return new Promise((resolve, reject) => requests.push({ url, resolve, reject }));
+    fetch(url, init) {
+      return new Promise((resolve, reject) =>
+        requests.push({ url, method: (init && init.method) || "GET", resolve, reject }));
     },
     setTimeout(fn, ms) {
       timers.push({ fn, ms, done: false });
@@ -113,7 +115,10 @@ function startDashboard() {
   return {
     dashboard,
     toastContainer,
+    pauseIndicator,
     requests,
+    // Page timers (display time, scroll pauses) that have not been cleared.
+    pageTimers: () => timers.filter((t) => !t.done && t.ms >= 1000000),
     settle,
     async respond(index, payload) {
       requests[index].resolve({ ok: true, json: () => Promise.resolve(payload) });
@@ -123,7 +128,7 @@ function startDashboard() {
       requests[index].reject(new Error("network down"));
       await settle();
     },
-    // Press an arrow key, which re-fetches before changing page.
+    // Press a key; returns the index of the newest request.
     async press(key) {
       keydown({ key, preventDefault() {} });
       await settle();
@@ -240,4 +245,71 @@ test("a failed fetch while waiting shows an error and keeps polling", async () =
   assert.match(d.dashboard.innerHTML, /Can.t reach the dashboard server/);
   await d.respond(await d.poll(), payload({ finishers: [1] }));
   assert.match(d.dashboard.innerHTML, /Race A/);
+});
+
+test("P holds the page timer and resumes with the time left", async () => {
+  const d = startDashboard();
+  await d.respond(0, payload({ finishers: [1] }));
+  assert.equal(d.pageTimers().length, 1);
+
+  await d.press("p");
+  assert.equal(d.pageTimers().length, 0);
+  assert.match(d.pauseIndicator.className, /visible/);
+
+  await d.press("P"); // caps lock on
+  assert.doesNotMatch(d.pauseIndicator.className, /visible/);
+  const resumed = d.pageTimers();
+  assert.equal(resumed.length, 1);
+  assert.ok(resumed[0].ms <= 1998000 && resumed[0].ms > 1990000, `resumes with the time left, got ${resumed[0].ms}`);
+});
+
+test("arrow keys still change page while paused, and it stays paused", async () => {
+  const d = startDashboard();
+  await d.respond(0, payload({ finishers: [1] }));
+  await d.press("p");
+  await d.respond(await d.press("ArrowRight"), payload({ finishers: [1, 2] }));
+  assert.match(d.dashboard.innerHTML, /Rider 2/);
+  assert.equal(d.pageTimers().length, 0);
+  assert.match(d.pauseIndicator.className, /visible/);
+
+  await d.press("p");
+  assert.equal(d.pageTimers().length, 1);
+});
+
+test("R asks the server to poll now, then redraws with the new data", async () => {
+  const d = startDashboard();
+  await d.respond(0, payload({ finishers: [1] }));
+  const refresh = await d.press("r");
+  assert.equal(d.requests[refresh].url, "/api/refresh");
+  assert.equal(d.requests[refresh].method, "POST");
+  assert.equal(await d.press("r"), refresh, "a second press while refreshing is ignored");
+
+  await d.respond(refresh, { refreshed: true, error: null });
+  const data = d.requests.length - 1;
+  assert.equal(d.requests[data].url, "/api/data");
+  await d.respond(data, payload({ finishers: [1, 2] }));
+  assert.match(d.dashboard.innerHTML, /Rider 2/);
+  assert.ok(d.toastContainer.children.some((t) => /Results refreshed/.test(t.textContent)));
+  assert.ok(d.requests[await d.press("r")].url === "/api/refresh", "R works again once done");
+});
+
+test("R during the cooldown says when to retry and does not redraw", async () => {
+  const d = startDashboard();
+  await d.respond(0, payload({ finishers: [1] }));
+  const refresh = await d.press("r");
+  await d.respond(refresh, { refreshed: false, reason: "cooldown", retry_after: 3 });
+  assert.equal(d.requests.length, refresh + 1);
+  assert.ok(d.toastContainer.children.some((t) => /try again in 3s/.test(t.textContent)));
+});
+
+test("R while paused shows new data but stays paused", async () => {
+  const d = startDashboard();
+  await d.respond(0, payload({ finishers: [1] }));
+  await d.press("p");
+  const refresh = await d.press("r");
+  await d.respond(refresh, { refreshed: true, error: null });
+  await d.respond(d.requests.length - 1, payload({ finishers: [1, 2] }));
+  assert.match(d.dashboard.innerHTML, /Rider 2/);
+  assert.equal(d.pageTimers().length, 0);
+  assert.match(d.pauseIndicator.className, /visible/);
 });
