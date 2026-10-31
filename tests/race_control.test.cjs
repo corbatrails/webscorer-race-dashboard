@@ -225,8 +225,8 @@ test("multi-lap racers expand inline with split and ending elapsed; single-lap r
   const app = ui();
   app.page.applyData(payload([group("A", "50K", [
     racer(0, { LapSplits: [
-      { LapNumber: 1, SplitSeconds: 600.125, ElapsedSeconds: 600.125 },
-      { LapNumber: 3, SplitSeconds: null, ElapsedSeconds: 1800 },
+      { LapNumber: 1, SplitSeconds: 600.125, ElapsedSeconds: 600.125, WallClockSeconds: 29400.125 },
+      { LapNumber: 3, SplitSeconds: null, ElapsedSeconds: 1800, WallClockSeconds: 86400 + 3725 },
     ] }),
     racer(1, { LapCount: 1 }),
     racer(2, { LapSplits: [] }),
@@ -240,8 +240,8 @@ test("multi-lap racers expand inline with split and ending elapsed; single-lap r
   const detail = app.get("result-rows").children.find(row => row.className === "split-detail");
   assert.equal(detail.hidden, false);
   assert.equal(detail.id, buttons[0].getAttribute("aria-controls"));
-  assert.match(detail.textContent, /Lap.*Split.*Elapsed.*1.*0:10:00\.125.*0:10:00\.125/);
-  assert.match(detail.textContent, /3.*--:--:--.*0:30:00/);
+  assert.match(detail.textContent, /Lap.*Split.*Elapsed.*Wall clock.*1.*0:10:00\.125.*0:10:00\.125.*08:10:00/);
+  assert.match(detail.textContent, /3.*--:--:--.*0:30:00.*01:02:05 \+1 day/);
   buttons[1].dispatch("click");
   assert.match(app.rows().flat().join(" "), /No lap splits available/);
   assert.equal(buttons[0].getAttribute("aria-expanded"), "true");
