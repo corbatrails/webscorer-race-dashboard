@@ -106,6 +106,60 @@
   },
   {
    "data": {
+    "distances": [
+     {
+      "dnf": 0,
+      "dnf_by_lap": [0],
+      "dnf_without_crossing": 0,
+      "dns": 0,
+      "dsq": 0,
+      "finished": 6,
+      "lap_count": 1,
+      "name": "Long Course (88 miles)",
+      "not_started": 0,
+      "on_course": 0,
+      "on_course_by_lap": [0],
+      "registered": 6,
+      "started": 6
+     },
+     {
+      "dnf": 0,
+      "dnf_by_lap": [0],
+      "dnf_without_crossing": 0,
+      "dns": 0,
+      "dsq": 0,
+      "finished": 10,
+      "lap_count": 1,
+      "name": "Mid Course (45 miles)",
+      "not_started": 0,
+      "on_course": 0,
+      "on_course_by_lap": [0],
+      "registered": 10,
+      "started": 10
+     },
+     {
+      "dnf": 0,
+      "dnf_by_lap": [0],
+      "dnf_without_crossing": 0,
+      "dns": 0,
+      "dsq": 0,
+      "finished": 7,
+      "lap_count": 1,
+      "name": "Short Course (28 miles)",
+      "not_started": 0,
+      "on_course": 0,
+      "on_course_by_lap": [0],
+      "registered": 7,
+      "started": 7
+     }
+    ],
+    "totals": {"dnf": 0, "dns": 0, "dsq": 0, "finished": 23, "not_started": 0, "on_course": 0, "registered": 23, "started": 23}
+   },
+   "title": "Lap Overview",
+   "type": "lap_overview"
+  },
+  {
+   "data": {
     "age": {
      "average": 43.3,
      "counts": [4, 1, 4, 5, 1, 7, 1],

@@ -324,9 +324,91 @@ def build_demographics_data(snapshot):
     }
 
 
-def build_pages(dashboard_data, demographics=None, max_rows=18):
+def _crossed_laps(racer, elapsed_limit):
+    """Lap numbers crossed by `elapsed_limit` (all recorded crossings when it is None)."""
+    return [
+        c["lap_number"] for c in racer["lap_crossings"]
+        if elapsed_limit is None or c["elapsed_seconds"] <= elapsed_limit
+    ]
+
+
+_LAP_TOTAL_KEYS = ("registered", "dns", "not_started", "on_course", "finished", "dnf", "dsq", "started")
+
+
+def build_lap_overview_data(snapshot, observation_seconds):
+    """Per-distance lap state for the Lap Overview page.
+
+    `observation_seconds` is event-local time in seconds since midnight of the event
+    date, on the same basis as `Racer.start_seconds`. Every overall racer lands in
+    exactly one of DNS, Not Started, On Course (one lap cell), Finished, DNF or DSQ.
+    """
+    if snapshot["error"]:
+        return None
+    groups = [g for g in snapshot["groups"] if g["tier"] == "overall"]
+    if not groups:
+        return None
+
+    overall_racers = [r for r in snapshot["racers"] if r["in_overall"]]
+    distances = []
+    for group in groups:
+        lap_count = group["lap_count"]
+        entry = {
+            "name": group["distance"] or "Overall",
+            "lap_count": lap_count,
+            "registered": 0,
+            "dns": 0,
+            "not_started": 0,
+            "started": 0,
+            "on_course": 0,
+            "on_course_by_lap": [0] * lap_count,
+            "dnf_by_lap": [0] * lap_count,
+            "dnf_without_crossing": 0,
+            "finished": 0,
+            "dnf": 0,
+            "dsq": 0,
+        }
+        for racer in overall_racers:
+            if racer["distance"] != group["distance"]:
+                continue
+            entry["registered"] += 1
+            status = racer["status"]
+            start = racer["start_seconds"]
+            if status == "DNS":
+                entry["dns"] += 1
+                continue
+            if status == "IN_PROGRESS" and start is not None and start > observation_seconds:
+                entry["not_started"] += 1
+                continue
+            entry["started"] += 1
+            elapsed_limit = observation_seconds - start if start is not None else None
+            if status == "FINISHED":
+                entry["finished"] += 1
+            elif status == "DSQ":
+                entry["dsq"] += 1
+            elif status == "DNF":
+                entry["dnf"] += 1
+                crossed = _crossed_laps(racer, elapsed_limit)
+                if crossed:
+                    entry["dnf_by_lap"][max(crossed) - 1] += 1
+                else:
+                    entry["dnf_without_crossing"] += 1
+            else:
+                crossed = _crossed_laps(racer, elapsed_limit)
+                lap = min((max(crossed) if crossed else 0) + 1, lap_count)
+                entry["on_course_by_lap"][lap - 1] += 1
+                entry["on_course"] += 1
+        distances.append(entry)
+
+    totals = {key: sum(d[key] for d in distances) for key in _LAP_TOTAL_KEYS}
+    return {"totals": totals, "distances": distances}
+
+
+def build_pages(dashboard_data, demographics=None, max_rows=18, lap_overview=None):
     """Build page list. Categories are sent whole; the frontend splits by viewport size."""
     pages = [{"type": "summary", "title": "Summary", "data": dashboard_data}]
+
+    if lap_overview:
+        pages.append({"type": "lap_overview", "title": "Lap Overview", "data": lap_overview})
 
     if demographics:
         pages.append({"type": "demographics", "title": "Demographics", "data": demographics})
