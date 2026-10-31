@@ -121,6 +121,8 @@ td { height: 36px; padding: 0 10px; border-top: 1px solid var(--border-color); w
 .split-table th:first-child { width: 50px; }
 .split-table th:not(:first-child), .split-table td:not(:first-child) { text-align: right; }
 .split-table td { height: 30px; }
+.place-gained { color: var(--success-color); }
+.place-lost { color: var(--error-color); }
 .col-place { width: 52px; }
 .col-bib { width: 60px; }
 .col-laps { width: 58px; }

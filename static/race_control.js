@@ -62,6 +62,16 @@
       if (className) result.className = className;
       return result;
     }
+    function placeChangeCell(change) {
+      if (!Number.isFinite(change)) return node("td", "");
+      if (change === 0) return node("td", "=", "place-change");
+      var gained = change > 0;
+      var places = Math.abs(change) + (Math.abs(change) === 1 ? " place" : " places");
+      var cell = node("td", (gained ? "\u25B2" : "\u25BC") + Math.abs(change),
+        "place-change " + (gained ? "place-gained" : "place-lost"));
+      cell.title = (gained ? "Gained " : "Lost ") + places;
+      return cell;
+    }
     function clear(target) {
       while (target.firstChild) target.removeChild(target.firstChild);
     }
@@ -349,7 +359,7 @@
             table.setAttribute("aria-label", "Lap splits for " + r.Name);
             var head = node("thead");
             var headings = node("tr");
-            ["Lap", "Split", "Elapsed"].forEach(function (label) {
+            ["Lap", "Split", "Elapsed", "Place", "Change"].forEach(function (label) {
               var heading = node("th", label);
               heading.scope = "col";
               headings.appendChild(heading);
@@ -362,6 +372,8 @@
               splitRow.appendChild(node("td", split.LapNumber));
               splitRow.appendChild(node("td", formatSplit(split.SplitSeconds)));
               splitRow.appendChild(node("td", formatSplit(split.ElapsedSeconds)));
+              splitRow.appendChild(node("td", split.LapPlace || "-"));
+              splitRow.appendChild(placeChangeCell(split.PlaceChange));
               splitBody.appendChild(splitRow);
             });
             table.appendChild(splitBody);

@@ -67,9 +67,9 @@ def test_control_lap_splits_include_durations_and_ending_elapsed_without_mutatin
     snapshot = _snapshot([_group("50K", 3)], [racer])
     row = project(snapshot)["groups"][0]["racers"][0]
     assert row.get("LapSplits") == [
-        {"LapNumber": 1, "SplitSeconds": 600.125, "ElapsedSeconds": 600.125},
-        {"LapNumber": 2, "SplitSeconds": 650.375, "ElapsedSeconds": 1250.5},
-        {"LapNumber": 3, "SplitSeconds": 649.5, "ElapsedSeconds": 1900.0},
+        {"LapNumber": 1, "SplitSeconds": 600.125, "ElapsedSeconds": 600.125, "LapPlace": 1, "PlaceChange": None},
+        {"LapNumber": 2, "SplitSeconds": 650.375, "ElapsedSeconds": 1250.5, "LapPlace": 1, "PlaceChange": 0},
+        {"LapNumber": 3, "SplitSeconds": 649.5, "ElapsedSeconds": 1900.0, "LapPlace": 1, "PlaceChange": 0},
     ]
     assert "LapSplits" not in racer
 
@@ -78,9 +78,9 @@ def test_control_lap_splits_do_not_treat_missing_laps_as_one_split():
     racer = _racer("50K", crossings=[(2, 700), (4, 1500), (5, 1800)])
     row = project(_snapshot([_group("50K", 5)], [racer]))["groups"][0]["racers"][0]
     assert row.get("LapSplits") == [
-        {"LapNumber": 2, "SplitSeconds": None, "ElapsedSeconds": 700.0},
-        {"LapNumber": 4, "SplitSeconds": None, "ElapsedSeconds": 1500.0},
-        {"LapNumber": 5, "SplitSeconds": 300.0, "ElapsedSeconds": 1800.0},
+        {"LapNumber": 2, "SplitSeconds": None, "ElapsedSeconds": 700.0, "LapPlace": 1, "PlaceChange": None},
+        {"LapNumber": 4, "SplitSeconds": None, "ElapsedSeconds": 1500.0, "LapPlace": 1, "PlaceChange": None},
+        {"LapNumber": 5, "SplitSeconds": 300.0, "ElapsedSeconds": 1800.0, "LapPlace": 1, "PlaceChange": 0},
     ]
 
 
@@ -95,10 +95,44 @@ def test_control_lap_splits_exclude_future_and_out_of_group_crossings(status):
     ], [racer])
     rows = project(snapshot, START + 1000)["groups"][1]["racers"]
     assert rows[0].get("LapSplits") == [
-        {"LapNumber": 1, "SplitSeconds": 600.0, "ElapsedSeconds": 600.0},
+        {"LapNumber": 1, "SplitSeconds": 600.0, "ElapsedSeconds": 600.0, "LapPlace": 1, "PlaceChange": None},
     ]
     rows = project(snapshot, START + 3000)["groups"][1]["racers"]
     assert [s["LapNumber"] for s in rows[0]["LapSplits"]] == [1, 2]
+
+
+def test_control_lap_splits_rank_each_lap_within_group_with_change():
+    racers = [
+        _racer("50K", crossings=[(1, 600), (2, 1300), (3, 1900)], bib="A"),
+        _racer("50K", crossings=[(1, 500), (2, 1300), (3, 1950)], bib="B"),
+        _racer("50K", crossings=[(1, 550), (3, 1800)], bib="C"),
+        _racer("50K", crossings=[(1, 400), (2, 1000), (3, 2500)], bib="D"),
+    ]
+    rows = project(_snapshot([_group("50K", 3)], racers))["groups"][0]["racers"]
+    laps = {
+        r["Bib"]: [(s["LapNumber"], s["LapPlace"], s["PlaceChange"]) for s in r["LapSplits"]]
+        for r in rows
+    }
+    assert laps == {
+        "A": [(1, 4, None), (2, 2, 2), (3, 2, 0)],
+        "B": [(1, 2, None), (2, 2, 0), (3, 3, -1)],
+        "C": [(1, 3, None), (3, 1, None)],
+        "D": [(1, 1, None), (2, 1, 0)],
+    }
+
+
+def test_control_lap_places_use_each_group_and_observation_time():
+    member = {"distance": "50K", "category": "Open", "gender": "", "source_place": ""}
+    fast = _racer("50K", crossings=[(1, 400), (2, 900)], bib="A")
+    slow = _racer("50K", crossings=[(1, 500), (2, 1500)], bib="B")
+    slow["category_groups"] = [member]
+    snapshot = _snapshot([
+        _group("50K", 2), _group("50K", 2, tier="category", category="Open"),
+    ], [fast, slow])
+    control = project(snapshot, START + 1000)
+    overall, category = (g["racers"] for g in control["groups"])
+    assert [s["LapPlace"] for s in overall[1]["LapSplits"]] == [2]
+    assert [s["LapPlace"] for s in category[0]["LapSplits"]] == [1]
 
 
 @pytest.mark.parametrize("status,start", [
