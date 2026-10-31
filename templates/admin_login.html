@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard admin login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
 </head>
-<body>
+<body data-theme="{{ color_scheme }}">
     <main class="admin-card admin-login">
         <h1>Dashboard admin</h1>
         {% if error %}<p class="admin-error" role="alert">{{ error }}</p>{% endif %}

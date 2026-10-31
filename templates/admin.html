@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
     <script src="{{ url_for('static', filename='admin.js') }}" defer></script>
 </head>
-<body>
+<body data-theme="{{ color_scheme }}">
     <header class="admin-header">
         <h1>Dashboard admin</h1>
         <div class="header-actions">

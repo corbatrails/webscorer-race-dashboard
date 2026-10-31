@@ -267,6 +267,45 @@ def _settings_app(tmp_path, text="race_id: '100'\n", api=True):
     return app, c, path
 
 
+@pytest.mark.parametrize("theme", ["dark", "light"])
+def test_admin_pages_use_active_dashboard_theme(tmp_path, theme):
+    _, c, _ = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {theme}\n")
+    for url in ("/admin", "/admin/login"):
+        html = c.get(url).get_data(as_text=True)
+        assert f'data-theme="{theme}"' in html
+        assert re.search(r'<link [^>]*href="/static/theme.css"[^>]*>', html)
+    bad_login = _login(c, "wrong")
+    assert bad_login.status_code == 401
+    assert f'data-theme="{theme}"' in bad_login.get_data(as_text=True)
+
+
+def test_admin_defaults_to_dark_theme(client):
+    assert 'data-theme="dark"' in client.get("/admin/login").get_data(as_text=True)
+    _login(client)
+    assert 'data-theme="dark"' in client.get("/admin").get_data(as_text=True)
+
+
+def test_rejected_theme_change_keeps_active_theme(tmp_path):
+    _, c, _ = _settings_app(tmp_path, "race_id: '100'\ncolor_scheme: light\n")
+    response = _post_form(c, _form(c), color_scheme="dark", scroll_speed="0")
+    assert response.status_code == 400
+    html = response.get_data(as_text=True)
+    assert 'data-theme="light"' in html
+    parser = _FormParser()
+    parser.feed(html)
+    assert parser.fields["color_scheme"] == "dark"
+
+
+@pytest.mark.parametrize("theme", ["dark", "light"])
+def test_saved_theme_applies_to_admin_and_dashboard(tmp_path, theme):
+    previous = "light" if theme == "dark" else "dark"
+    _, c, _ = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {previous}\n")
+    response = _post_form(c, _form(c), color_scheme=theme)
+    assert response.status_code == 303
+    for url in (response.headers["Location"], "/admin/login", "/", "/results"):
+        assert f'data-theme="{theme}"' in c.get(url).get_data(as_text=True)
+
+
 def test_form_covers_option_registry(tmp_path):
     _, c, _ = _settings_app(tmp_path, "race_id: '100'\nshow_demographics: false\nscroll_speed: 140\n")
     fields = _form(c)

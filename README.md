@@ -140,6 +140,8 @@ Non-secret values in `.env` or the process environment (for example `REFRESH_INT
 
 Set `ADMIN_PASSWORD` in `.env` and restart to enable `http://<host>:5000/admin`. Leave it empty and the admin page is disabled (every `/admin` URL returns 404). Startup prints whether the admin page is enabled, never the password.
 
+The admin settings and login pages use the dashboard's configured `color_scheme`. Saving a color scheme change applies it to the admin page after the save.
+
 The page edits every option in `config.yaml`, grouped by purpose. Saving validates the values, writes `config.yaml` (keeping its comments), and applies them to the running dashboard within one poll; no restart is needed. Invalid values are listed next to their fields and nothing is written.
 
 - **Race picker:** with `source: webscorer` and API credentials in `.env`, the page lists your WebScorer races; choosing one fills in the race ID. You can also type an ID. Picking a race here while the terminal is still asking for one answers the terminal prompt too.
