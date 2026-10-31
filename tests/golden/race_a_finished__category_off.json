@@ -1,7 +1,7 @@
 {
+ "admin_enabled": false,
  "chart_bucket_minutes": 15,
  "color_scheme": "dark",
- "config_restart_required": [],
  "config_version": 1,
  "display_unfinished_in_category": false,
  "display_unfinished_in_overall": false,
@@ -186,7 +186,9 @@
  "pinned_leaders": 3,
  "pinned_leaders_on_overall_results": false,
  "race_date": "Aug 13, 2026",
+ "race_generation": 1,
  "race_name": "2026 Coon Fork 40 TEST",
+ "race_selection_required": false,
  "race_sport": "Cycling - gravel",
  "refresh_interval": 60,
  "scroll_pause_time": 2,

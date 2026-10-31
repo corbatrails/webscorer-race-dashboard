@@ -15,11 +15,23 @@
   var distanceChart = null;
   var hasRenderedPage = false;
   var configVersion = null;
+  var raceGeneration = null;
+  var fetchSeq = 0;
+  var appliedSeq = 0;
+  var fetchFailed = false;
 
   function fetchData(skipRender) {
+    var seq = ++fetchSeq;
     return fetch("/api/data")
       .then(function (r) { return r.json(); })
       .then(function (data) {
+        // A newer request already applied its data; never roll back to an older response
+        if (seq < appliedSeq) return;
+        appliedSeq = seq;
+        fetchFailed = false;
+        var raceChanged = raceGeneration !== null && data.race_generation !== raceGeneration;
+        raceGeneration = data.race_generation;
+        if (raceChanged) resetRaceState();
         lastData = data;
         config = {
           summaryDisplayTime: data.summary_display_time,
@@ -41,14 +53,32 @@
         }
         var configChanged = configVersion !== null && data.config_version !== configVersion;
         configVersion = data.config_version;
-        // Render on first data arrival or a settings change; ongoing animations pick up new data on next advance
-        if (!skipRender && (!hasRenderedPage || (previousTotalPages === 0 && getTotalPages() > 0) || configChanged)) {
+        // A new race renders at once (any in-flight advance was cancelled by the reset).
+        // Otherwise render on first data arrival or a settings change; ongoing animations pick up new data on next advance
+        if (raceChanged || (!skipRender && (!hasRenderedPage || (previousTotalPages === 0 && getTotalPages() > 0) || configChanged))) {
           renderCurrentPage();
         }
       })
       .catch(function (err) {
         console.error("Fetch error:", err);
+        if (seq < appliedSeq) return;
+        fetchFailed = true;
+        if (!skipRender && getTotalPages() === 0) renderCurrentPage();
       });
+  }
+
+  // Drop everything tied to the previous race so none of it shows on the new one
+  function resetRaceState() {
+    stopAnimations();
+    navToken++;
+    currentIndex = 0;
+    knownFinishedBibs = null;
+    var toastContainer = document.getElementById("toast-container");
+    if (toastContainer) toastContainer.textContent = "";
+    [finishChart, ageChart, genderChart, distanceChart].forEach(function (chart) {
+      if (chart) chart.destroy();
+    });
+    finishChart = ageChart = genderChart = distanceChart = null;
   }
 
   function buildPageList(data) {
@@ -215,10 +245,22 @@
       html += renderEventHeader(data);
     }
     html += '<div class="waiting-screen">';
-    html += "<h1>No results yet</h1>";
-    html += "<p>Waiting for race data\u2026 Dashboard will update automatically.</p>";
+    if (data && data.race_selection_required) {
+      html += "<h1>No race selected</h1>";
+      if (data.admin_enabled) {
+        html += '<p>Choose a race on the <a href="/admin">admin page</a> or in the terminal running the dashboard.</p>';
+      } else {
+        html += "<p>Choose a race in the terminal running the dashboard, or set race_id in config.yaml.</p>";
+      }
+    } else {
+      html += "<h1>No results yet</h1>";
+      html += "<p>Waiting for race data\u2026 Dashboard will update automatically.</p>";
+    }
     if (data && data.error) {
       html += '<p class="error-message">' + escapeHtml(data.error) + "</p>";
+    }
+    if (fetchFailed) {
+      html += '<p class="error-message">Can\u2019t reach the dashboard server. Retrying\u2026</p>';
     }
     html += "</div>";
     return html;
@@ -695,6 +737,8 @@
 
   function detectNewFinishers(data) {
     if (!data.show_toasts) return;
+    // Waiting payloads carry no results; seeding from them would make every finisher look new
+    if (data.waiting) return;
 
     var currentFinished = {};
     var pages = data.pages || [];

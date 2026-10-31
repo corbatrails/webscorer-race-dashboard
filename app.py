@@ -1,13 +1,26 @@
+import argparse
+import logging
+import os
 import sys
 import threading
 import time
 from datetime import datetime
 from flask import Flask, render_template, jsonify
+from werkzeug.serving import make_server
 from data_processing import process_race_data, build_pages, build_finish_chart_data, build_demographics_data
 from providers import get_provider
-from config import ConfigWatcher, load_config
+from admin import register_admin
+from race_prompt import prompt_for_race
+from config import (
+    DEFAULT_CONFIG_PATH,
+    OPTIONS,
+    ConfigWatcher,
+    load_config,
+    read_config_snapshot,
+    save_config,
+)
 
-_cache = {
+_EMPTY_RACE = {
     "pages": [],
     "last_refresh": None,
     "is_stale": False,
@@ -18,30 +31,91 @@ _cache = {
     "race_sport": "",
     "finish_chart": None,
 }
+_cache = dict(_EMPTY_RACE)
 _cache_lock = threading.Lock()
-# Set when refresh_interval changes so the poll loop re-reads it.
+# Set when refresh_interval changes (or a race switch needs a poll) so the poll loop re-reads it.
 _config_changed = threading.Event()
 
 
-def apply_config_reload(app, reload):
-    """Swap in a reloaded config and its state; neither dict is ever mutated in place."""
+def _race_identity(cfg):
+    return (cfg.get("source", "webscorer"), cfg.get("race_id"), cfg.get("data_file"))
+
+
+def race_selection_required(cfg):
+    """True when a live provider is configured but no race has been chosen yet."""
+    try:
+        provider = _provider_for(cfg)
+    except Exception:
+        return False
+    return bool(provider.list_races) and not cfg.get("data_file") and not cfg.get("race_id")
+
+
+def _apply_config(app, new_config, changed):
+    """Swap in a new config; the caller holds the settings lock. Dicts are never mutated in place."""
     with _cache_lock:
         old = app.config["dashboard"]
         state = app.config["dashboard_state"]
-        app.config["dashboard"] = reload.config
+        race_changed = _race_identity(old) != _race_identity(new_config)
+        generation = state["race_generation"] + (1 if race_changed else 0)
+        if race_changed:
+            _cache.update(_EMPTY_RACE)
+        app.config["dashboard"] = new_config
         app.config["dashboard_state"] = {
-            "config_version": state["config_version"] + (1 if reload.changed else 0),
-            "restart_required": list(reload.restart_required),
+            "config_version": state["config_version"] + (1 if changed else 0),
+            "race_generation": generation,
         }
-        if old.get("refresh_interval") != reload.config.get("refresh_interval"):
-            _config_changed.set()
+    if race_changed:
+        app.extensions["dashboard_poll_now"].set()
+        _config_changed.set()
+    elif old.get("refresh_interval") != new_config.get("refresh_interval"):
+        _config_changed.set()
+    if not race_selection_required(new_config):
+        app.extensions["startup_race_selected"].set()
 
 
-def create_app(config=None, start_polling=True):
+def apply_config_reload(app, reload):
+    with app.extensions["dashboard_settings_lock"]:
+        _apply_config(app, reload.config, reload.changed)
+
+
+def update_dashboard(app, updates, *, expected_revision=None, startup_only=False):
+    """Validate, save and apply settings in one serialized step.
+
+    Returns False when ``startup_only`` and a race is already selected (in memory or
+    in the file). Validation, conflict and write errors raise ConfigError subclasses.
+    """
+    with app.extensions["dashboard_settings_lock"]:
+        active = app.config["dashboard"]
+        secrets = {"api_id": active.get("api_id"), "api_token": active.get("api_token")}
+        path = app.config["dashboard_config_path"]
+        if startup_only:
+            if app.extensions["startup_race_selected"].is_set() or not race_selection_required(active):
+                return False
+            persisted, _ = read_config_snapshot(path, secrets)
+            if not race_selection_required(persisted):
+                return False
+        saved = save_config(path, updates, secrets, expected_revision=expected_revision)
+        changed = [opt.key for opt in OPTIONS if active.get(opt.key) != saved[opt.key]]
+        _apply_config(app, {**active, **saved}, changed)
+        return True
+
+
+def create_app(config=None, start_polling=True, *, config_path=None, admin_password=None):
     app = Flask(__name__)
     app.config["dashboard"] = config or {}
-    app.config["dashboard_state"] = {"config_version": 1, "restart_required": []}
+    app.config["dashboard_config_path"] = os.path.abspath(config_path or DEFAULT_CONFIG_PATH)
+    app.config["dashboard_state"] = {"config_version": 1, "race_generation": 1}
+    app.extensions["dashboard_settings_lock"] = threading.RLock()
+    app.extensions["dashboard_poll_now"] = threading.Event()
+    app.extensions["startup_race_selected"] = threading.Event()
+    if not race_selection_required(app.config["dashboard"]):
+        app.extensions["startup_race_selected"].set()
     _start_time = int(time.time())
+    register_admin(
+        app,
+        admin_password,
+        lambda updates, revision: update_dashboard(app, updates, expected_revision=revision),
+    )
 
     @app.route("/")
     def index():
@@ -78,7 +152,9 @@ def create_app(config=None, start_polling=True):
                 "color_scheme": cfg.get("color_scheme", "dark"),
                 "refresh_interval": cfg.get("refresh_interval", 60),
                 "config_version": state["config_version"],
-                "config_restart_required": state["restart_required"],
+                "race_generation": state["race_generation"],
+                "race_selection_required": race_selection_required(cfg),
+                "admin_enabled": app.config["admin_enabled"],
             })
 
     if start_polling:
@@ -101,7 +177,11 @@ def _secrets_for(provider, cfg):
 
 
 def poll_once(app):
-    cfg = app.config["dashboard"]
+    with _cache_lock:
+        cfg = app.config["dashboard"]
+        generation = app.config["dashboard_state"]["race_generation"]
+    if race_selection_required(cfg):
+        return
     try:
         provider = _provider_for(cfg)
         raw = provider.fetch(cfg, _secrets_for(provider, cfg))
@@ -115,6 +195,8 @@ def poll_once(app):
         pages = build_pages(data, demographics)
         finish_chart = build_finish_chart_data(snapshot, cfg.get("chart_bucket_minutes", 15))
         with _cache_lock:
+            if app.config["dashboard_state"]["race_generation"] != generation:
+                return
             _cache["pages"] = pages
             _cache["last_refresh"] = datetime.now().strftime("%H:%M:%S")
             _cache["is_stale"] = False
@@ -127,6 +209,8 @@ def poll_once(app):
             _cache["finish_chart"] = finish_chart
     except Exception as e:
         with _cache_lock:
+            if app.config["dashboard_state"]["race_generation"] != generation:
+                return
             _cache["is_stale"] = True
             error_msg = str(e)
             # Strip URL params to avoid leaking API credentials to the frontend
@@ -136,8 +220,15 @@ def poll_once(app):
 
 
 def _wait_for_next_poll(app, since):
-    """Block until refresh_interval seconds have passed since `since`, re-reading the interval if it changes."""
+    """Block until refresh_interval seconds have passed since `since`, re-reading the interval if it changes.
+
+    Returns early when a race switch requests an immediate poll.
+    """
+    poll_now = app.extensions["dashboard_poll_now"]
     while True:
+        if poll_now.is_set():
+            poll_now.clear()
+            return
         interval = app.config["dashboard"].get("refresh_interval", 60)
         remaining = since + interval - time.monotonic()
         if remaining <= 0:
@@ -157,9 +248,11 @@ def _poll_loop(app, sleep_first=False):
 
 def _watch_config_once(app, watcher):
     try:
-        reload = watcher.check(app.config["dashboard"])
+        with app.extensions["dashboard_settings_lock"]:
+            reload = watcher.check(app.config["dashboard"])
+            if reload is not None:
+                _apply_config(app, reload.config, reload.changed)
         if reload is not None:
-            apply_config_reload(app, reload)
             if reload.changed:
                 print(f"Config reloaded: {', '.join(reload.changed)}")
     except Exception as e:
@@ -173,37 +266,76 @@ def _watch_config(app, watcher):
 
 
 def _start_config_watcher(app):
-    watcher = ConfigWatcher()
+    watcher = ConfigWatcher(app.config["dashboard_config_path"])
     t = threading.Thread(target=_watch_config, args=(app, watcher), daemon=True)
     t.start()
 
 
-def select_race(provider, config):
-    try:
-        races = provider.list_races(config, _secrets_for(provider, config))
-    except Exception as e:
-        print(f"\nERROR: Failed to fetch race list: {e}")
-        print("Set WEBSCORER_RACE_ID in your .env file to skip race selection.")
-        raise SystemExit(1)
+class _AccessLogBuffer:
+    """Hold routine access-log lines while the terminal prompt is open.
 
-    if not races:
-        print("No posted races found.")
-        raise SystemExit(1)
+    Warnings and errors pass straight through; held lines are replayed on flush.
+    """
 
-    print("\nAvailable races:")
-    for i, race in enumerate(races, 1):
-        print(f"  {i}. [{race['id']}] {race['name']} ({race['date']}) - {race['sport']}")
+    def __init__(self, logger):
+        self._logger = logger
+        self._held = []
+        self._lock = threading.Lock()
+        self._active = False
 
-    while True:
+    def filter(self, record):
+        if record.levelno >= logging.WARNING:
+            return True
+        with self._lock:
+            if not self._active:
+                return True
+            self._held.append(record)
+        return False
+
+    def start(self):
+        with self._lock:
+            self._active = True
+        self._logger.addFilter(self)
+
+    def flush(self):
+        with self._lock:
+            held, self._held, self._active = self._held, [], False
+        self._logger.removeFilter(self)
+        for record in held:
+            self._logger.handle(record)
+
+
+def _start_race_prompt(app, stop):
+    """Run the terminal race prompt in a worker; returns ``(worker, stop)``.
+
+    ``stop`` is also set once any selector picks the startup race.
+    """
+    selected = app.extensions["startup_race_selected"]
+    cfg = app.config["dashboard"]
+    provider = _provider_for(cfg)
+    log_buffer = _AccessLogBuffer(logging.getLogger("werkzeug"))
+
+    def submit(race_id):
+        return update_dashboard(app, {"race_id": race_id}, startup_only=True)
+
+    def relay():
+        selected.wait()
+        stop.set()
+
+    def run():
         try:
-            choice = int(input(f"\nSelect race [1-{len(races)}]: "))
-            if 1 <= choice <= len(races):
-                selected = races[choice - 1]
-                print(f"Selected: {selected['name']}")
-                return selected["id"]
-        except (ValueError, EOFError):
-            pass
-        print(f"Please enter a number between 1 and {len(races)}")
+            prompt_for_race(provider, cfg, submit, stop, sys.stdin, sys.stdout)
+        except Exception as e:
+            print(f"WARNING: terminal race prompt stopped: {e}", file=sys.stderr)
+        finally:
+            stop.set()
+            log_buffer.flush()
+
+    log_buffer.start()
+    threading.Thread(target=relay, daemon=True).start()
+    worker = threading.Thread(target=run, daemon=True)
+    worker.start()
+    return worker, stop
 
 
 def _mask_token(token):
@@ -242,30 +374,61 @@ def _format_config_lines(config, race_name, race_date):
     ]
 
 
-def main():
-    config = load_config()
-    provider = _provider_for(config)
+def _parse_args(argv):
+    parser = argparse.ArgumentParser(description="Webscorer race results dashboard")
+    parser.add_argument(
+        "--config",
+        default=DEFAULT_CONFIG_PATH,
+        help="path to the YAML configuration file (default: config.yaml next to app.py)",
+    )
+    return parser.parse_args(argv)
 
-    if provider.list_races and not config.get("data_file") and not config["race_id"]:
-        config["race_id"] = select_race(provider, config)
-        print("Waiting 5s to prevent API rate limit...")
-        time.sleep(5)
 
-    # Fetch initial data before starting the server to avoid rate-limit conflicts
-    app = create_app(config, start_polling=False)
-    poll_once(app)
-    with _cache_lock:
-        race_name = _cache["race_name"]
-        race_date = _cache["race_date"]
+def main(argv=None):
+    args = _parse_args(argv)
+    config_path = os.path.abspath(args.config)
+    config = load_config(config_path=config_path)
+    admin_password = os.environ.get("ADMIN_PASSWORD") or None
+    app = create_app(config, start_polling=False, config_path=config_path, admin_password=admin_password)
+    needs_race = race_selection_required(config)
 
-    # Priming poll already fetched, so the loop waits one interval before its first poll
-    _start_polling(app, sleep_first=True)
+    if needs_race:
+        race_name = race_date = "-"
+        _start_polling(app)
+    else:
+        # Fetch initial data before serving; the loop then waits one interval
+        poll_once(app)
+        with _cache_lock:
+            race_name = _cache["race_name"]
+            race_date = _cache["race_date"]
+        _start_polling(app, sleep_first=True)
     _start_config_watcher(app)
     for line in _format_config_lines(config, race_name, race_date):
         print(line)
-    print("\nConfig: live options reload from config.yaml; changes to source/race_id/data_file need a restart.")
+    print(f"\nConfig: edits to {os.path.basename(config_path)} apply while running, including source, race_id and data_file.")
+
+    server = make_server("0.0.0.0", 5000, app, threaded=True)
     print(f"\nDashboard running at http://localhost:5000")
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    if admin_password:
+        print("Admin page: http://localhost:5000/admin")
+    else:
+        print("Admin page: disabled (set ADMIN_PASSWORD in .env to enable)")
+    prompt = None
+    if needs_race:
+        if sys.stdin is not None and sys.stdin.isatty():
+            prompt = _start_race_prompt(app, threading.Event())
+        else:
+            print("No interactive terminal: choose a race in the admin page or set race_id in config.yaml.")
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nShutting down.")
+    finally:
+        if prompt is not None:
+            worker, stop = prompt
+            stop.set()
+            worker.join(timeout=2)
+        server.server_close()
 
 
 if __name__ == "__main__":

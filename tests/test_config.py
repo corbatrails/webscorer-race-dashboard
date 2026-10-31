@@ -1,239 +1,27 @@
 import os
+
 import pytest
-from unittest.mock import patch
-from config import load_config
-
-
-def test_load_config_with_all_values(monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.setenv("WEBSCORER_RACE_ID", "99999")
-    monkeypatch.setenv("REFRESH_INTERVAL", "30")
-    monkeypatch.setenv("SUMMARY_DISPLAY_TIME", "15")
-    monkeypatch.setenv("SCROLL_SPEED", "150")
-    monkeypatch.setenv("SCROLL_PAUSE_TIME", "5")
-    monkeypatch.setenv("PINNED_LEADERS", "5")
-    cfg = load_config()
-    assert cfg["api_id"] == "12345"
-    assert cfg["api_token"] == "abc123de"
-    assert cfg["race_id"] == "99999"
-    assert cfg["refresh_interval"] == 30
-    assert cfg["summary_display_time"] == 15
-    assert cfg["scroll_speed"] == 150
-    assert cfg["scroll_pause_time"] == 5
-    assert cfg["pinned_leaders"] == 5
-
-
-@patch("config.load_dotenv")
-def test_load_config_defaults(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.delenv("WEBSCORER_RACE_ID", raising=False)
-    monkeypatch.delenv("REFRESH_INTERVAL", raising=False)
-    monkeypatch.delenv("SUMMARY_DISPLAY_TIME", raising=False)
-    monkeypatch.delenv("SCROLL_SPEED", raising=False)
-    monkeypatch.delenv("SCROLL_PAUSE_TIME", raising=False)
-    monkeypatch.delenv("PINNED_LEADERS", raising=False)
-    monkeypatch.delenv("SHOW_OVERALL_RESULTS", raising=False)
-    monkeypatch.delenv("SHOW_CATEGORY_RESULTS", raising=False)
-    cfg = load_config()
-    assert cfg["race_id"] is None
-    assert cfg["refresh_interval"] == 60
-    assert cfg["summary_display_time"] == 20
-    assert cfg["scroll_speed"] == 100
-    assert cfg["scroll_pause_time"] == 2
-    assert cfg["pinned_leaders"] == 3
-    assert cfg["show_overall_results"] is True
-    assert cfg["show_category_results"] is True
-
-
-@patch("config.load_dotenv")
-def test_load_config_missing_api_id(mock_dotenv, monkeypatch):
-    monkeypatch.delenv("DATA_FILE", raising=False)
-    monkeypatch.delenv("WEBSCORER_API_ID", raising=False)
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    with pytest.raises(SystemExit):
-        load_config()
-
-
-@patch("config.load_dotenv")
-def test_load_config_missing_api_token(mock_dotenv, monkeypatch):
-    monkeypatch.delenv("DATA_FILE", raising=False)
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.delenv("WEBSCORER_API_TOKEN", raising=False)
-    with pytest.raises(SystemExit):
-        load_config()
-
-
-@patch("config.load_dotenv")
-def test_load_config_missing_data_file(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("DATA_FILE", "nonexistent_file_that_does_not_exist.json")
-    monkeypatch.delenv("WEBSCORER_API_ID", raising=False)
-    monkeypatch.delenv("WEBSCORER_API_TOKEN", raising=False)
-    with pytest.raises(SystemExit):
-        load_config()
-
-
-def test_chart_bucket_minutes_default(monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "123")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
-    monkeypatch.delenv("CHART_BUCKET_MINUTES", raising=False)
-    from config import load_config
-    cfg = load_config()
-    assert cfg["chart_bucket_minutes"] == 15
-
-
-def test_chart_bucket_minutes_custom(monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "123")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
-    monkeypatch.setenv("CHART_BUCKET_MINUTES", "30")
-    from config import load_config
-    cfg = load_config()
-    assert cfg["chart_bucket_minutes"] == 30
-
-
-@patch("config.load_dotenv")
-def test_color_scheme_default(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "123")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
-    monkeypatch.delenv("COLOR_SCHEME", raising=False)
-    cfg = load_config()
-    assert cfg["color_scheme"] == "dark"
-
-
-@patch("config.load_dotenv")
-def test_color_scheme_light(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "123")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
-    monkeypatch.setenv("COLOR_SCHEME", "light")
-    cfg = load_config()
-    assert cfg["color_scheme"] == "light"
-
-
-@patch("config.load_dotenv")
-def test_load_config_show_toasts_default(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.delenv("SHOW_TOASTS", raising=False)
-    cfg = load_config()
-    assert cfg["show_toasts"] is True
-
-
-@patch("config.load_dotenv")
-def test_load_config_show_toasts_disabled(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.setenv("SHOW_TOASTS", "false")
-    cfg = load_config()
-    assert cfg["show_toasts"] is False
-
-
-@patch("config.load_dotenv")
-def test_color_scheme_invalid_falls_back_to_dark(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "123")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc")
-    monkeypatch.setenv("COLOR_SCHEME", "neon")
-    cfg = load_config()
-    assert cfg["color_scheme"] == "dark"
-
-
-@patch("config.load_dotenv")
-def test_load_config_pinned_leaders_on_overall_results_default(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.delenv("PINNED_LEADERS_ON_OVERALL_RESULTS", raising=False)
-    cfg = load_config()
-    assert cfg["pinned_leaders_on_overall_results"] is False
-
-
-@patch("config.load_dotenv")
-def test_load_config_pinned_leaders_on_overall_results_enabled(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.setenv("PINNED_LEADERS_ON_OVERALL_RESULTS", "true")
-    cfg = load_config()
-    assert cfg["pinned_leaders_on_overall_results"] is True
-
-
-@patch("config.load_dotenv")
-def test_load_config_overall_results_layout_default(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.delenv("OVERALL_RESULTS_LAYOUT", raising=False)
-    cfg = load_config()
-    assert cfg["overall_results_layout"] == "standard"
-
-
-@patch("config.load_dotenv")
-def test_load_config_overall_results_layout_detailed(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.setenv("OVERALL_RESULTS_LAYOUT", "detailed")
-    cfg = load_config()
-    assert cfg["overall_results_layout"] == "detailed"
-
-
-@patch("config.load_dotenv")
-def test_load_config_overall_results_layout_invalid_falls_back_to_standard(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.setenv("OVERALL_RESULTS_LAYOUT", "wide")
-    cfg = load_config()
-    assert cfg["overall_results_layout"] == "standard"
-
-
-@patch("config.load_dotenv")
-def test_load_config_display_unfinished_result_pages_defaults(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.delenv("DISPLAY_UNFINISHED_IN_CATEGORY", raising=False)
-    monkeypatch.delenv("DISPLAY_UNFINISHED_IN_OVERALL", raising=False)
-    cfg = load_config()
-    assert cfg["display_unfinished_in_category"] is False
-    assert cfg["display_unfinished_in_overall"] is False
-
-
-@patch("config.load_dotenv")
-def test_load_config_display_unfinished_result_pages_enabled(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.setenv("DISPLAY_UNFINISHED_IN_CATEGORY", "true")
-    monkeypatch.setenv("DISPLAY_UNFINISHED_IN_OVERALL", "true")
-    cfg = load_config()
-    assert cfg["display_unfinished_in_category"] is True
-    assert cfg["display_unfinished_in_overall"] is True
-
-
-@patch("config.load_dotenv")
-def test_load_config_show_demographics_default_false(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.delenv("SHOW_DEMOGRAPHICS", raising=False)
-    cfg = load_config()
-    assert cfg["show_demographics"] is False
-
-
-@patch("config.load_dotenv")
-def test_load_config_show_demographics_true(mock_dotenv, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
-    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
-    monkeypatch.setenv("SHOW_DEMOGRAPHICS", "true")
-    cfg = load_config()
-    assert cfg["show_demographics"] is True
-
-
-# --- config.yaml layering (Phase 2) ---------------------------------------
-
 import yaml
-from config import OPTIONS, SECRET_ENV_VARS
+
+from config import OPTIONS, SECRET_ENV_VARS, load_config
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Former environment-override names; non-secret options must now ignore them.
+LEGACY_ENV_NAMES = (
+    "RACE_SOURCE", "WEBSCORER_RACE_ID", "DATA_FILE", "REFRESH_INTERVAL",
+    "SUMMARY_DISPLAY_TIME", "SCROLL_SPEED", "SCROLL_PAUSE_TIME", "PINNED_LEADERS",
+    "SHOW_SUMMARY", "SHOW_OVERALL_RESULTS", "SHOW_CATEGORY_RESULTS", "SHOW_DEMOGRAPHICS",
+    "PINNED_LEADERS_ON_OVERALL_RESULTS", "OVERALL_RESULTS_LAYOUT",
+    "DISPLAY_UNFINISHED_IN_CATEGORY", "DISPLAY_UNFINISHED_IN_OVERALL",
+    "CHART_BUCKET_MINUTES", "COLOR_SCHEME", "SHOW_TOASTS",
+)
 
 
 @pytest.fixture
 def clean_env(monkeypatch):
-    for opt in OPTIONS:
-        monkeypatch.delenv(opt.env, raising=False)
+    for name in LEGACY_ENV_NAMES:
+        monkeypatch.delenv(name, raising=False)
     for name in SECRET_ENV_VARS:
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("WEBSCORER_API_ID", "12345")
@@ -252,6 +40,93 @@ def _load(tmp_path, data=None, env_text=None, **kwargs):
     if env_text is not None:
         env_path.write_text(env_text, encoding="utf-8")
     return load_config(config_path=config_path, env_path=str(env_path), **kwargs)
+
+
+def test_load_config_with_all_values(clean_env, tmp_path):
+    cfg = _load(tmp_path, {
+        "race_id": 99999, "refresh_interval": 30, "summary_display_time": 15,
+        "scroll_speed": 150, "scroll_pause_time": 5, "pinned_leaders": 5,
+    })
+    assert cfg["api_id"] == "12345"
+    assert cfg["api_token"] == "abc123de"
+    assert cfg["race_id"] == "99999"
+    assert cfg["refresh_interval"] == 30
+    assert cfg["summary_display_time"] == 15
+    assert cfg["scroll_speed"] == 150
+    assert cfg["scroll_pause_time"] == 5
+    assert cfg["pinned_leaders"] == 5
+
+
+def test_load_config_defaults(clean_env, tmp_path):
+    cfg = _load(tmp_path, {})
+    assert cfg["race_id"] is None
+    assert cfg["refresh_interval"] == 60
+    assert cfg["summary_display_time"] == 20
+    assert cfg["scroll_speed"] == 100
+    assert cfg["scroll_pause_time"] == 2
+    assert cfg["pinned_leaders"] == 3
+    assert cfg["show_overall_results"] is True
+    assert cfg["show_category_results"] is True
+    assert cfg["chart_bucket_minutes"] == 15
+    assert cfg["color_scheme"] == "dark"
+    assert cfg["show_toasts"] is True
+    assert cfg["pinned_leaders_on_overall_results"] is False
+    assert cfg["overall_results_layout"] == "standard"
+    assert cfg["display_unfinished_in_category"] is False
+    assert cfg["display_unfinished_in_overall"] is False
+    assert cfg["show_demographics"] is False
+
+
+@pytest.mark.parametrize("missing", ["WEBSCORER_API_ID", "WEBSCORER_API_TOKEN"])
+def test_load_config_missing_credential_exits(clean_env, tmp_path, monkeypatch, missing):
+    monkeypatch.delenv(missing)
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {})
+
+
+def test_load_config_missing_data_file(clean_env, tmp_path, monkeypatch):
+    monkeypatch.delenv("WEBSCORER_API_ID")
+    monkeypatch.delenv("WEBSCORER_API_TOKEN")
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"data_file": "nonexistent_file_that_does_not_exist.json"})
+
+
+@pytest.mark.parametrize("data,key,expected", [
+    ({"chart_bucket_minutes": 30}, "chart_bucket_minutes", 30),
+    ({"color_scheme": "light"}, "color_scheme", "light"),
+    ({"show_toasts": False}, "show_toasts", False),
+    ({"pinned_leaders_on_overall_results": True}, "pinned_leaders_on_overall_results", True),
+    ({"overall_results_layout": "detailed"}, "overall_results_layout", "detailed"),
+    ({"display_unfinished_in_category": True}, "display_unfinished_in_category", True),
+    ({"display_unfinished_in_overall": True}, "display_unfinished_in_overall", True),
+    ({"show_demographics": True}, "show_demographics", True),
+])
+def test_config_yaml_option_values(clean_env, tmp_path, data, key, expected):
+    assert _load(tmp_path, data)[key] == expected
+
+
+def test_nonsecret_environment_is_ignored(clean_env, tmp_path, monkeypatch):
+    monkeypatch.setenv("REFRESH_INTERVAL", "10")
+    cfg = _load(tmp_path, {"refresh_interval": 15, "scroll_speed": 200}, env_text="SCROLL_SPEED=300\n")
+    assert cfg["refresh_interval"] == 15
+    assert cfg["scroll_speed"] == 200
+
+
+def test_yaml_defaults_ignore_legacy_environment(clean_env, tmp_path, monkeypatch):
+    monkeypatch.setenv("REFRESH_INTERVAL", "10")
+    monkeypatch.setenv("RACE_SOURCE", "csv")
+    monkeypatch.setenv("WEBSCORER_RACE_ID", "555")
+    cfg = _load(tmp_path, {}, env_text="COLOR_SCHEME=light\n")
+    assert cfg["refresh_interval"] == 60
+    assert cfg["source"] == "webscorer"
+    assert cfg["race_id"] is None
+    assert cfg["color_scheme"] == "dark"
+
+
+def test_process_secret_overrides_dotenv_secret(clean_env, tmp_path, monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "process-token")
+    cfg = _load(tmp_path, {}, env_text="WEBSCORER_API_TOKEN=dotenv-token\n")
+    assert cfg["api_token"] == "process-token"
 
 
 def test_missing_config_yaml_uses_defaults(clean_env, tmp_path):
@@ -295,33 +170,6 @@ def test_empty_config_yaml_uses_defaults(clean_env, tmp_path):
     assert cfg["refresh_interval"] == 60
 
 
-def test_env_overrides_config_yaml(clean_env, tmp_path, monkeypatch):
-    monkeypatch.setenv("REFRESH_INTERVAL", "10")
-    monkeypatch.setenv("SHOW_SUMMARY", "false")
-    cfg = _load(tmp_path, {"refresh_interval": 15, "show_summary": True})
-    assert cfg["refresh_interval"] == 10
-    assert cfg["show_summary"] is False
-
-
-def test_dotenv_file_overrides_config_yaml(clean_env, tmp_path):
-    cfg = _load(tmp_path, {"scroll_speed": 200}, env_text="SCROLL_SPEED=300\n")
-    assert cfg["scroll_speed"] == 300
-
-
-def test_process_env_overrides_dotenv_file(clean_env, tmp_path, monkeypatch):
-    monkeypatch.setenv("SCROLL_SPEED", "400")
-    cfg = _load(tmp_path, {"scroll_speed": 200}, env_text="SCROLL_SPEED=300\n")
-    assert cfg["scroll_speed"] == 400
-
-
-def test_blank_env_value_does_not_override_config_yaml(clean_env, tmp_path, monkeypatch):
-    monkeypatch.setenv("WEBSCORER_RACE_ID", "")
-    monkeypatch.setenv("REFRESH_INTERVAL", "")
-    cfg = _load(tmp_path, {"race_id": 777, "refresh_interval": 15})
-    assert cfg["race_id"] == "777"
-    assert cfg["refresh_interval"] == 15
-
-
 def test_secrets_come_from_dotenv_file(clean_env, tmp_path, monkeypatch):
     monkeypatch.delenv("WEBSCORER_API_ID")
     monkeypatch.delenv("WEBSCORER_API_TOKEN")
@@ -361,11 +209,10 @@ def test_committed_config_yaml_lists_every_option_with_defaults(clean_env):
     assert cfg == defaults
 
 
-def test_every_option_declares_reload_mode():
-    assert {opt.reload for opt in OPTIONS} <= {"live", "restart"}
-    assert {opt.key for opt in OPTIONS if opt.reload == "restart"} == {
-        "source", "race_id", "data_file",
-    }
+def test_reload_carries_config_and_changed_keys_only():
+    from config import Reload
+
+    assert Reload._fields == ("config", "changed")
 
 
 # --- source option and per-provider credentials ------------------------------
@@ -385,17 +232,10 @@ def test_source_defaults_to_webscorer(clean_env, tmp_path):
     assert _load(tmp_path)["source"] == "webscorer"
 
 
-def test_source_from_config_yaml(clean_env, tmp_path, monkeypatch):
+def test_source_from_config_yaml_is_case_insensitive(clean_env, tmp_path, monkeypatch):
     import providers
     monkeypatch.setitem(providers._REGISTRY, "stub", _stub_provider())
-    assert _load(tmp_path, {"source": "stub"})["source"] == "stub"
-
-
-def test_source_env_overrides_config_yaml_and_is_case_insensitive(clean_env, tmp_path, monkeypatch):
-    import providers
-    monkeypatch.setitem(providers._REGISTRY, "stub", _stub_provider())
-    monkeypatch.setenv("RACE_SOURCE", " STUB ")
-    assert _load(tmp_path, {"source": "webscorer"})["source"] == "stub"
+    assert _load(tmp_path, {"source": " STUB "})["source"] == "stub"
 
 
 def test_unknown_source_exits_naming_option_and_valid_names(clean_env, tmp_path, capsys):
@@ -475,49 +315,39 @@ def test_invalid_integer_in_config_yaml_names_option(clean_env, tmp_path, capsys
     assert "config.yaml" in out
 
 
-def test_invalid_integer_in_env_names_variable(clean_env, tmp_path, monkeypatch, capsys):
-    monkeypatch.setenv("SCROLL_SPEED", "fast")
-    with pytest.raises(SystemExit):
-        _load(tmp_path, {})
-    assert "SCROLL_SPEED" in capsys.readouterr().out
-
-
 def test_non_boolean_yaml_value_exits(clean_env, tmp_path, capsys):
     with pytest.raises(SystemExit):
         _load(tmp_path, {"show_summary": 5})
     assert "show_summary" in capsys.readouterr().out
 
 
-def test_invalid_enum_values_fall_back_to_defaults(clean_env, tmp_path):
-    cfg = _load(tmp_path, {"overall_results_layout": "wide", "color_scheme": "neon"})
-    assert cfg["overall_results_layout"] == "standard"
-    assert cfg["color_scheme"] == "dark"
+def test_invalid_enum_values_exit_naming_options(clean_env, tmp_path, capsys):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"overall_results_layout": "wide", "color_scheme": "neon"})
+    out = capsys.readouterr().out
+    assert "overall_results_layout" in out
+    assert "color_scheme" in out
 
 
-def test_legacy_env_only_setup_still_works_and_warns(clean_env, tmp_path, monkeypatch, capsys):
-    monkeypatch.delenv("WEBSCORER_API_ID")
-    monkeypatch.delenv("WEBSCORER_API_TOKEN")
-    cfg = _load(
-        tmp_path,
-        env_text=(
-            "WEBSCORER_API_ID=111\nWEBSCORER_API_TOKEN=tok11111\n"
-            "REFRESH_INTERVAL=45\nSHOW_DEMOGRAPHICS=true\nCOLOR_SCHEME=light\n"
-        ),
-    )
-    assert cfg["api_id"] == "111"
-    assert cfg["refresh_interval"] == 45
-    assert cfg["show_demographics"] is True
-    assert cfg["color_scheme"] == "light"
-    err = capsys.readouterr().err
-    assert "deprecated" in err.lower()
-    for name in ("REFRESH_INTERVAL", "SHOW_DEMOGRAPHICS", "COLOR_SCHEME"):
-        assert name in err
-    assert "WEBSCORER_API_ID" not in err.split("(", 1)[1].split(")", 1)[0]
+@pytest.mark.parametrize("key", ["summary_display_time", "scroll_speed", "chart_bucket_minutes"])
+def test_positive_integer_options_reject_zero(clean_env, tmp_path, capsys, key):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {key: 0})
+    assert key in capsys.readouterr().out
 
 
-def test_legacy_env_values_override_committed_config_yaml(clean_env, tmp_path):
-    cfg = _load(tmp_path, {"refresh_interval": 15}, env_text="REFRESH_INTERVAL=45\n")
-    assert cfg["refresh_interval"] == 45
+@pytest.mark.parametrize("key", ["scroll_pause_time", "pinned_leaders"])
+def test_non_negative_integer_options_accept_zero_reject_negative(clean_env, tmp_path, capsys, key):
+    assert _load(tmp_path, {key: 0})[key] == 0
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {key: -1})
+    assert key in capsys.readouterr().out
+
+
+def test_text_boolean_other_than_true_false_exits(clean_env, tmp_path, capsys):
+    with pytest.raises(SystemExit):
+        _load(tmp_path, {"show_toasts": "yes"})
+    assert "show_toasts" in capsys.readouterr().out
 
 
 def test_secrets_only_dotenv_does_not_warn(clean_env, tmp_path, capsys):
@@ -525,9 +355,10 @@ def test_secrets_only_dotenv_does_not_warn(clean_env, tmp_path, capsys):
     assert capsys.readouterr().err == ""
 
 
-def test_blank_legacy_dotenv_keys_do_not_warn(clean_env, tmp_path, capsys):
-    _load(tmp_path, {}, env_text="WEBSCORER_API_ID=111\nWEBSCORER_RACE_ID=\nREFRESH_INTERVAL=\n")
+def test_legacy_dotenv_keys_do_not_warn_or_apply(clean_env, tmp_path, capsys):
+    cfg = _load(tmp_path, {}, env_text="WEBSCORER_API_ID=111\nWEBSCORER_RACE_ID=7\nREFRESH_INTERVAL=9\n")
     assert capsys.readouterr().err == ""
+    assert cfg["race_id"] is None and cfg["refresh_interval"] == 60
 
 
 def test_process_env_overrides_do_not_warn(clean_env, tmp_path, monkeypatch, capsys):
@@ -666,14 +497,6 @@ def test_watcher_ignores_edit_with_no_live_change(clean_env, tmp_path):
     assert _settle(watcher, running) is None
 
 
-def test_watcher_env_override_keeps_winning(clean_env, tmp_path, monkeypatch):
-    monkeypatch.setenv("SCROLL_SPEED", "300")
-    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
-    _edit_config(path, {"scroll_speed": 200})
-    assert _settle(watcher, running) is None
-    assert running["scroll_speed"] == 300
-
-
 def test_watcher_ignores_missing_file(clean_env, tmp_path):
     path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
     os.remove(path)
@@ -750,53 +573,42 @@ def test_watcher_warns_again_if_same_error_returns_after_recovery(clean_env, tmp
     assert capsys.readouterr().err.count("WARNING") == 1
 
 
-def test_watcher_reports_restart_only_change_without_applying_it(clean_env, tmp_path, capsys):
+def test_watcher_applies_source_race_and_file_changes(clean_env, tmp_path):
     path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
-    _edit_config(path, {"race_id": 222, "data_file": "other.json"})
+    _edit_config(path, {"race_id": 222})
 
     result = _settle(watcher, running)
 
-    assert result.restart_required == ["data_file", "race_id"]
-    assert result.changed == []
-    assert result.config == running
-    err = capsys.readouterr().err
-    assert "requires restart" in err
-    assert "other.json" not in err
+    assert result.changed == ["race_id"]
+    assert result.config["race_id"] == "222"
     assert _settle(watcher, result.config) is None
 
+    data_file = tmp_path / "results.csv"
+    data_file.write_text("bib,name,time\n1,A,1:00:00\n", encoding="utf-8")
+    _edit_config(path, {"source": "csv", "data_file": str(data_file)})
 
-def test_watcher_warns_once_per_restart_change(clean_env, tmp_path, capsys):
+    switched = _settle(watcher, result.config)
+
+    assert set(switched.changed) == {"source", "race_id", "data_file"}
+    assert switched.config["source"] == "csv"
+    assert switched.config["data_file"] == str(data_file)
+    assert switched.config["race_id"] is None
+
+
+def test_watcher_rejects_switch_to_missing_data_file(clean_env, tmp_path, capsys):
     path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
-    _edit_config(path, {"race_id": 222})
-    _settle(watcher, running)
-    capsys.readouterr()
+    _edit_config(path, {"data_file": str(tmp_path / "missing.json")})
 
-    _edit_config(path, {"race_id": 222, "scroll_speed": 150})
-    result = _settle(watcher, running)
+    assert _settle(watcher, running) is None
 
-    assert result.restart_required == ["race_id"]
-    assert result.changed == ["scroll_speed"]
-    assert "requires restart" not in capsys.readouterr().err
+    err = capsys.readouterr().err
+    assert "data_file" in err
+    assert "keeping" in err
 
 
-def test_watcher_clears_restart_required_when_file_reverts(clean_env, tmp_path):
+def test_watcher_keeps_startup_secrets(clean_env, tmp_path, monkeypatch):
     path, running, watcher = _start_watcher(tmp_path, {"race_id": 111})
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "changed-later")
     _edit_config(path, {"race_id": 222})
-    assert _settle(watcher, running).restart_required == ["race_id"]
 
-    _edit_config(path, {"race_id": 111})
-    result = _settle(watcher, running)
-
-    assert result.restart_required == []
-    assert result.changed == []
-
-
-def test_watcher_ignores_interactively_chosen_race_id(clean_env, tmp_path):
-    path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
-    running = {**running, "race_id": "999"}
-    _edit_config(path, {"scroll_speed": 200})
-
-    result = _settle(watcher, running)
-
-    assert result.restart_required == []
-    assert result.config["race_id"] == "999"
+    assert _settle(watcher, running).config["api_token"] == "abc123de"

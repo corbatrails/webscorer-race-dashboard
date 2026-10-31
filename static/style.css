@@ -379,6 +379,10 @@ body {
   color: var(--text-muted);
 }
 
+.waiting-screen a {
+  color: var(--accent-primary);
+}
+
 .error-message {
   color: var(--error-color);
   font-size: 2.5vh;

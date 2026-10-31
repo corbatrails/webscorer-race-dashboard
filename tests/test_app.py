@@ -105,19 +105,6 @@ def test_api_data_before_first_poll(mock_fetch, client):
     assert data["waiting"] is True
 
 
-@patch("providers.webscorer.fetch_race_list")
-def test_select_race_interactive(mock_fetch_list):
-    mock_fetch_list.return_value = [
-        {"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"},
-        {"RaceId": 200, "Name": "Trail 10K", "Date": "2026-08-07", "Sport": "Running"},
-    ]
-    from app import select_race
-    from providers import get_provider
-    with patch("builtins.input", return_value="1"):
-        race_id = select_race(get_provider("webscorer"), {"api_id": "12345", "api_token": "abc123de"})
-    assert race_id == "100"
-
-
 def _main_config(**overrides):
     from config import OPTIONS
     cfg = {"api_id": None, "api_token": None, **{opt.key: opt.default for opt in OPTIONS}}
@@ -164,36 +151,104 @@ def test_poll_once_defaults_source_to_webscorer(mock_fetch, app):
     mock_fetch.assert_called_once_with("100", "12345", "abc123de")
 
 
-@patch("app.select_race")
+@patch("app._start_race_prompt")
 @patch("app.threading.Thread")
-@patch("app.Flask.run")
+@patch("app.make_server")
 @patch("app.load_config")
 def test_main_skips_race_prompt_without_list_races(
-    mock_load_config, mock_run, mock_thread, mock_select, monkeypatch
+    mock_load_config, mock_run, mock_thread, mock_prompt, monkeypatch
 ):
     import app as app_module
     import providers
     stub = _stub_provider(list_races=None)
     monkeypatch.setitem(providers._REGISTRY, "stub", stub)
     mock_load_config.return_value = _main_config(source="stub", api_token="t")
-    app_module.main()
-    mock_select.assert_not_called()
+    app_module.main([])
+    mock_prompt.assert_not_called()
 
 
-@patch("app.time.sleep")
-@patch("app.select_race", return_value="100")
+class _Tty:
+    def isatty(self):
+        return True
+
+
+@patch("app._start_race_prompt")
 @patch("app.threading.Thread")
-@patch("app.Flask.run")
+@patch("app.make_server")
 @patch("providers.webscorer.fetch_race_results")
 @patch("app.load_config")
 def test_main_prompts_for_webscorer_without_race_id_or_data_file(
-    mock_load_config, mock_fetch, mock_run, mock_thread, mock_select, mock_sleep
+    mock_load_config, mock_fetch, mock_server, mock_thread, mock_prompt, monkeypatch, capsys
 ):
     import app as app_module
-    mock_fetch.return_value = MOCK_RACE_RESULTS
+    monkeypatch.setattr(app_module.sys, "stdin", _Tty())
+    mock_prompt.return_value = (MagicMock(), _threading_mod().Event())
     mock_load_config.return_value = _main_config(api_id="1", api_token="t")
-    app_module.main()
-    mock_select.assert_called_once()
+    app_module.main([])
+    mock_prompt.assert_called_once()
+    mock_fetch.assert_not_called()  # no results request until a race is chosen
+    mock_server.return_value.serve_forever.assert_called_once()
+    out = capsys.readouterr().out
+    assert "Dashboard running at" in out
+
+
+@patch("app._start_race_prompt")
+@patch("app.threading.Thread")
+@patch("app.make_server")
+@patch("providers.webscorer.fetch_race_results")
+@patch("app.load_config")
+def test_main_with_saved_race_skips_prompt(
+    mock_load_config, mock_fetch, mock_server, mock_thread, mock_prompt, monkeypatch
+):
+    import app as app_module
+    monkeypatch.setattr(app_module.sys, "stdin", _Tty())
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    mock_load_config.return_value = _main_config(api_id="1", api_token="t", race_id="100")
+    app_module.main([])
+    mock_prompt.assert_not_called()
+    mock_fetch.assert_called_once()
+
+
+@patch("app._start_race_prompt")
+@patch("app.threading.Thread")
+@patch("app.make_server")
+@patch("app.load_config")
+def test_main_noninteractive_stdin_leaves_server_waiting(
+    mock_load_config, mock_server, mock_thread, mock_prompt, monkeypatch, capsys
+):
+    import io
+    import app as app_module
+    monkeypatch.setattr(app_module.sys, "stdin", io.StringIO(""))
+    mock_load_config.return_value = _main_config(api_id="1", api_token="t")
+    app_module.main([])
+    mock_prompt.assert_not_called()
+    mock_server.return_value.serve_forever.assert_called_once()
+    assert "No interactive terminal" in capsys.readouterr().out
+
+
+@patch("app._start_race_prompt")
+@patch("app.threading.Thread")
+@patch("app.make_server")
+@patch("app.load_config")
+def test_main_ctrl_c_stops_prompt_and_closes_server(
+    mock_load_config, mock_server, mock_thread, mock_prompt, monkeypatch
+):
+    import app as app_module
+    monkeypatch.setattr(app_module.sys, "stdin", _Tty())
+    worker = MagicMock()
+    mock_prompt.return_value = (worker, _threading_mod().Event())
+    mock_server.return_value.serve_forever.side_effect = KeyboardInterrupt
+    mock_load_config.return_value = _main_config(api_id="1", api_token="t")
+    app_module.main([])
+    stop = mock_prompt.return_value[1]
+    assert stop.is_set()
+    worker.join.assert_called_once()
+    mock_server.return_value.server_close.assert_called_once()
+
+
+def _threading_mod():
+    import threading
+    return threading
 
 
 # --- source: csv end to end (no WebScorer credentials, no network) ----------
@@ -252,18 +307,19 @@ def test_bad_csv_marks_stale_and_keeps_previous_pages(no_credentials, tmp_path):
     assert app_module._cache["is_stale"] is False and app_module._cache["error"] is None
 
 
-@patch("app.select_race")
+@patch("app._start_race_prompt")
 @patch("app.threading.Thread")
-@patch("app.Flask.run")
+@patch("app.make_server")
 @patch("providers.webscorer.fetch_race_results")
 @patch("providers.webscorer.fetch_race_list")
 @patch("app.load_config")
 def test_main_with_csv_source_never_prompts_or_calls_webscorer(
-    mock_load_config, mock_list, mock_fetch, mock_run, mock_thread, mock_select
+    mock_load_config, mock_list, mock_fetch, mock_run, mock_thread, mock_select, monkeypatch
 ):
     import app as app_module
+    monkeypatch.setattr(app_module.sys, "stdin", _Tty())
     mock_load_config.return_value = _main_config(source="csv", data_file=SAMPLE_CSV)
-    app_module.main()
+    app_module.main([])
     mock_select.assert_not_called()
     mock_list.assert_not_called()
     mock_fetch.assert_not_called()
@@ -456,7 +512,7 @@ def test_format_config_lines_covers_every_registry_option():
 
 
 @patch("app.threading.Thread")
-@patch("app.Flask.run")
+@patch("app.make_server")
 @patch("providers.webscorer.fetch_race_results")
 @patch("app.load_config")
 def test_main_initial_load_populates_demographics_and_finish_chart(
@@ -470,7 +526,7 @@ def test_main_initial_load_populates_demographics_and_finish_chart(
     config.update({"api_id": "12345", "api_token": "abc123de", "data_file": fixture})
     mock_load_config.return_value = config
 
-    app_module.main()
+    app_module.main([])
 
     with app_module._cache_lock:
         types = [p["type"] for p in app_module._cache["pages"]]
@@ -481,8 +537,25 @@ def test_main_initial_load_populates_demographics_and_finish_chart(
     out = capsys.readouterr().out
     assert "Race Name:                      -" not in out
     assert mock_thread.return_value.start.call_count == 2
-    assert "live options reload from config.yaml" in out
-    mock_run.assert_called_once()
+    assert "config.yaml apply while running" in out
+    mock_run.return_value.serve_forever.assert_called_once()
+
+
+@patch("app.threading.Thread")
+@patch("app.make_server")
+@patch("app.ConfigWatcher")
+@patch("app.load_config")
+def test_main_uses_selected_config_path(mock_load_config, mock_watcher, mock_run, mock_thread, tmp_path):
+    import app as app_module
+
+    path = tmp_path / "dir with spaces" / "demo.yaml"
+    fixture = os.path.join(os.path.dirname(__file__), "fixtures", "race_a_finished.json")
+    mock_load_config.return_value = _main_config(data_file=fixture)
+
+    app_module.main(["--config", str(path)])
+
+    assert mock_load_config.call_args.kwargs["config_path"] == os.path.abspath(str(path))
+    mock_watcher.assert_called_once_with(os.path.abspath(str(path)))
 
 
 @patch("app._wait_for_next_poll")
@@ -572,17 +645,19 @@ def test_wait_for_next_poll_keeps_waiting_if_new_interval_has_not_elapsed():
 # --- Live config swap (Phase 4) ----------------------------------------------
 
 
-def _reload(app, changed=None, restart_required=(), **values):
+def _reload(app, changed=None, **values):
     from config import Reload
 
     new_config = {**app.config["dashboard"], **values}
-    return Reload(new_config, list(changed if changed is not None else values), list(restart_required))
+    return Reload(new_config, list(changed if changed is not None else values))
 
 
 def test_api_data_includes_config_fields(client):
     data = client.get("/api/data").get_json()
     assert data["config_version"] == 1
-    assert data["config_restart_required"] == []
+    assert "config_restart_required" not in data
+    assert data["race_selection_required"] is False
+    assert isinstance(data["race_generation"], int)
     assert data["color_scheme"] == "dark"
     assert data["refresh_interval"] == 60
 
@@ -608,16 +683,6 @@ def test_apply_config_reload_does_not_mutate_old_config(app):
 
     assert old["scroll_speed"] == 100
     assert app.config["dashboard"] is not old
-
-
-def test_restart_only_reload_keeps_version_and_reports_keys(app, client):
-    from app import apply_config_reload
-
-    apply_config_reload(app, _reload(app, changed=[], restart_required=["race_id"]))
-
-    data = client.get("/api/data").get_json()
-    assert data["config_version"] == 1
-    assert data["config_restart_required"] == ["race_id"]
 
 
 def test_apply_config_reload_wakes_poll_loop_only_when_interval_changes(app):
@@ -683,3 +748,337 @@ def test_watch_config_loop_ticks_every_second(mock_once, mock_sleep):
     assert mock_once.call_count == 2
     mock_once.assert_called_with("app", "watcher")
     assert mock_sleep.call_args_list[0].args == (1,)
+
+
+# --- Live race switching (Phase 5) -------------------------------------------
+
+
+import threading as _threading
+
+
+def _poll(app):
+    from app import poll_once
+
+    with app.app_context():
+        poll_once(app)
+
+
+def _yaml_app(tmp_path, **values):
+    import yaml
+    from config import load_config
+
+    path = tmp_path / "dashboard config.yaml"
+    path.write_text(yaml.safe_dump(values), encoding="utf-8")
+    config = load_config(config_path=str(path), env_path=str(tmp_path / ".env"))
+    return create_app(config, start_polling=False, config_path=str(path)), path
+
+
+@pytest.fixture
+def creds(monkeypatch):
+    monkeypatch.setenv("WEBSCORER_API_ID", "12345")
+    monkeypatch.setenv("WEBSCORER_API_TOKEN", "abc123de")
+
+
+@patch("providers.webscorer.fetch_race_list")
+@patch("providers.webscorer.fetch_race_results")
+def test_poll_skips_results_without_selected_live_race(mock_fetch, mock_list):
+    app = create_app({"api_id": "1", "api_token": "t", "race_id": None}, start_polling=False)
+    _poll(app)
+
+    data = app.test_client().get("/api/data").get_json()
+    assert data["race_selection_required"] is True
+    assert data["pages"] == []
+    assert data["waiting"] is True
+    assert data["error"] is None
+    mock_fetch.assert_not_called()
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_race_switch_clears_cache_and_wakes_poll(mock_fetch, app, client):
+    from app import apply_config_reload
+
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    _poll(app)
+    before = client.get("/api/data").get_json()
+    assert before["pages"] and before["race_name"] == "Morning 5K"
+    poll_now = app.extensions["dashboard_poll_now"]
+    poll_now.clear()
+
+    apply_config_reload(app, _reload(app, race_id="200"))
+
+    data = client.get("/api/data").get_json()
+    assert data["pages"] == []
+    assert data["race_name"] == ""
+    assert data["finish_chart"] is None
+    assert data["waiting"] is True
+    assert data["error"] is None
+    assert data["race_generation"] != before["race_generation"]
+    assert poll_now.is_set()
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_display_setting_change_keeps_race_generation_and_results(mock_fetch, app, client):
+    from app import apply_config_reload
+
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    _poll(app)
+    before = client.get("/api/data").get_json()
+    app.extensions["dashboard_poll_now"].clear()
+
+    apply_config_reload(app, _reload(app, scroll_speed=250))
+
+    data = client.get("/api/data").get_json()
+    assert data["race_generation"] == before["race_generation"]
+    assert data["pages"] == before["pages"]
+    assert not app.extensions["dashboard_poll_now"].is_set()
+
+
+@pytest.mark.parametrize("outcome", ["results", "error"])
+@patch("providers.webscorer.fetch_race_results")
+def test_old_poll_cannot_publish_after_switch(mock_fetch, app, client, outcome):
+    from app import apply_config_reload
+
+    started, release = _threading.Event(), _threading.Event()
+
+    def slow_fetch(*args, **kwargs):
+        started.set()
+        assert release.wait(5)
+        if outcome == "error":
+            raise RuntimeError("old race failed")
+        return MOCK_RACE_RESULTS
+
+    mock_fetch.side_effect = slow_fetch
+    worker = _threading.Thread(target=_poll, args=(app,))
+    worker.start()
+    assert started.wait(5)
+
+    apply_config_reload(app, _reload(app, race_id="200"))
+    release.set()
+    worker.join(5)
+
+    data = client.get("/api/data").get_json()
+    assert data["pages"] == []
+    assert data["race_name"] == ""
+    assert data["error"] is None
+    assert data["is_stale"] is False
+    assert data["waiting"] is True
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_new_race_failure_stays_waiting_and_retries(mock_fetch, tmp_path, creds):
+    import yaml
+    from app import update_dashboard
+
+    app, path = _yaml_app(tmp_path, race_id="100")
+    client = app.test_client()
+
+    assert update_dashboard(app, {"race_id": "200"}) is True
+    mock_fetch.assert_not_called()
+    assert yaml.safe_load(path.read_text(encoding="utf-8"))["race_id"] == "200"
+
+    mock_fetch.side_effect = [RuntimeError("not posted yet"), MOCK_RACE_RESULTS]
+    _poll(app)
+    data = client.get("/api/data").get_json()
+    assert data["waiting"] is True
+    assert data["error"] == "not posted yet"
+    assert app.config["dashboard"]["race_id"] == "200"
+
+    _poll(app)
+    data = client.get("/api/data").get_json()
+    assert data["waiting"] is False
+    assert data["error"] is None
+    assert data["pages"]
+
+
+def test_update_dashboard_rejects_invalid_values_without_changes(tmp_path, creds):
+    from app import update_dashboard
+    from config import ConfigValidationError
+
+    app, path = _yaml_app(tmp_path, race_id="100")
+    before_file, before_cfg = path.read_bytes(), app.config["dashboard"]
+
+    with pytest.raises(ConfigValidationError):
+        update_dashboard(app, {"scroll_speed": 0})
+
+    assert path.read_bytes() == before_file
+    assert app.config["dashboard"] is before_cfg
+
+
+def test_startup_selection_has_one_winner(tmp_path, creds):
+    import yaml
+    from app import update_dashboard
+
+    app, path = _yaml_app(tmp_path)
+    assert app.config["dashboard"]["race_id"] is None
+    assert not app.extensions["startup_race_selected"].is_set()
+
+    barrier = _threading.Barrier(2)
+    results = {}
+
+    def submit(race_id):
+        barrier.wait(5)
+        results[race_id] = update_dashboard(app, {"race_id": race_id}, startup_only=True)
+
+    threads = [_threading.Thread(target=submit, args=(rid,)) for rid in ("100", "200")]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(5)
+
+    winners = [rid for rid, ok in results.items() if ok]
+    assert len(winners) == 1
+    assert app.config["dashboard"]["race_id"] == winners[0]
+    assert yaml.safe_load(path.read_text(encoding="utf-8"))["race_id"] == winners[0]
+    assert app.extensions["startup_race_selected"].is_set()
+
+
+def test_startup_selection_loses_to_race_saved_in_file(tmp_path, creds):
+    import yaml
+    from app import update_dashboard
+
+    app, path = _yaml_app(tmp_path)
+    path.write_text(yaml.safe_dump({"race_id": "300"}), encoding="utf-8")
+
+    assert update_dashboard(app, {"race_id": "100"}, startup_only=True) is False
+    assert yaml.safe_load(path.read_text(encoding="utf-8"))["race_id"] == "300"
+
+
+def test_watcher_tick_after_internal_save_is_noop(tmp_path, creds):
+    from app import _watch_config_once, update_dashboard
+    from config import ConfigWatcher
+
+    app, path = _yaml_app(tmp_path, race_id="100")
+    watcher = ConfigWatcher(str(path))
+    assert update_dashboard(app, {"scroll_speed": 250}) is True
+    version = app.config["dashboard_state"]["config_version"]
+
+    for _ in range(3):
+        _watch_config_once(app, watcher)
+
+    assert app.config["dashboard_state"]["config_version"] == version
+    assert app.config["dashboard"]["scroll_speed"] == 250
+
+
+# --- Terminal and web startup selection (Phase 5) ------------------------------
+
+
+def _blocking_reader(started):
+    def reader(stop, stdin, stdout):
+        started.set()
+        stop.wait(5)
+        return None
+    return reader
+
+
+@patch("providers.webscorer.fetch_race_list")
+def test_cli_selection_saves_race_and_ends_prompt(mock_list, tmp_path, creds, monkeypatch):
+    import yaml
+    import race_prompt
+    from app import _start_race_prompt
+
+    mock_list.return_value = [{"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"}]
+    monkeypatch.setattr(race_prompt, "read_line_until", lambda stop, i, o: "1")
+    app, path = _yaml_app(tmp_path)
+
+    worker, stop = _start_race_prompt(app, _threading.Event())
+    worker.join(5)
+
+    assert not worker.is_alive()
+    assert stop.is_set()
+    assert app.config["dashboard"]["race_id"] == "100"
+    assert yaml.safe_load(path.read_text(encoding="utf-8"))["race_id"] == "100"
+    assert app.extensions["dashboard_poll_now"].is_set()
+
+
+@patch("providers.webscorer.fetch_race_list")
+def test_ui_selection_cancels_terminal_prompt(mock_list, tmp_path, creds, monkeypatch):
+    import yaml
+    import race_prompt
+    from app import _start_race_prompt, update_dashboard
+
+    mock_list.return_value = [{"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"}]
+    started = _threading.Event()
+    monkeypatch.setattr(race_prompt, "read_line_until", _blocking_reader(started))
+    app, path = _yaml_app(tmp_path)
+
+    worker, stop = _start_race_prompt(app, _threading.Event())
+    assert started.wait(5)
+    assert update_dashboard(app, {"race_id": "200"}, startup_only=True) is True
+    worker.join(5)
+
+    assert not worker.is_alive()
+    assert yaml.safe_load(path.read_text(encoding="utf-8"))["race_id"] == "200"
+
+
+@patch("providers.webscorer.fetch_race_list")
+def test_late_cli_choice_loses_to_ui_selection(mock_list, tmp_path, creds, monkeypatch, capsys):
+    import yaml
+    import race_prompt
+    from app import _start_race_prompt, update_dashboard
+
+    mock_list.return_value = [{"RaceId": 100, "Name": "Morning 5K", "Date": "2026-08-07", "Sport": "Running"}]
+    app, path = _yaml_app(tmp_path)
+
+    def reader(stop, stdin, stdout):
+        update_dashboard(app, {"race_id": "200"}, startup_only=True)  # UI wins first
+        return "1"  # typed just before cancellation
+
+    monkeypatch.setattr(race_prompt, "read_line_until", reader)
+    worker, stop = _start_race_prompt(app, _threading.Event())
+    worker.join(5)
+
+    assert yaml.safe_load(path.read_text(encoding="utf-8"))["race_id"] == "200"
+    assert app.config["dashboard"]["race_id"] == "200"
+
+
+def test_access_log_buffer_holds_info_until_flush():
+    import logging
+    from app import _AccessLogBuffer
+
+    logger = logging.getLogger("werkzeug")
+    seen = []
+
+    class Collect(logging.Handler):
+        def emit(self, record):
+            seen.append(record.getMessage())
+
+    handler = Collect(level=logging.DEBUG)
+    old_level = logger.level
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+    try:
+        buffer = _AccessLogBuffer(logger)
+        buffer.start()
+        logger.info("GET /api/data 200")
+        logger.warning("port busy")
+        assert seen == ["port busy"]
+        buffer.flush()
+        assert seen == ["port busy", "GET /api/data 200"]
+        logger.info("GET / 200")
+        assert seen[-1] == "GET / 200"
+        buffer.flush()  # idempotent
+        assert len(seen) == 3
+    finally:
+        logger.removeHandler(handler)
+        logger.setLevel(old_level)
+
+
+@patch("app.threading.Thread")
+@patch("app.make_server")
+@patch("app.load_config")
+def test_main_reports_admin_status_without_password(mock_load_config, mock_server, mock_thread, monkeypatch, capsys):
+    import app as app_module
+    fixture = os.path.join(os.path.dirname(__file__), "fixtures", "race_a_finished.json")
+    mock_load_config.return_value = _main_config(data_file=fixture)
+
+    monkeypatch.delenv("ADMIN_PASSWORD", raising=False)
+    app_module.main([])
+    assert "Admin page: disabled" in capsys.readouterr().out
+
+    monkeypatch.setenv("ADMIN_PASSWORD", "SENTINEL-pw-123")
+    app_module.main([])
+    out = capsys.readouterr().out
+    assert "Admin page: http://localhost:5000/admin" in out
+    assert "SENTINEL-pw-123" not in out
+    application = mock_server.call_args.args[2]
+    assert application.config["admin_enabled"] is True
