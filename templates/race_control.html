@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Race control</title>
+    <link rel="stylesheet" href="/static/theme.css?v={{ cache_bust }}">
+    <link rel="stylesheet" href="/static/race_control.css?v={{ cache_bust }}">
+</head>
+<body data-theme="{{ color_scheme }}">
+    <header class="control-header">
+        <div class="race-identity">
+            <h1 id="race-name">Race control</h1>
+            <p id="race-date">Director &amp; timing desk</p>
+        </div>
+        <nav class="view-tabs" aria-label="Race control views">
+            <button type="button" id="progress-tab" aria-pressed="true">Race progress <kbd>1</kbd></button>
+            <button type="button" id="results-tab" aria-pressed="false">Results <kbd>2</kbd></button>
+        </nav>
+        <div class="header-status">
+            <p id="last-updated" aria-live="polite"></p>
+            <div class="race-clock"><strong id="race-clock">--:--:--</strong><span>Race clock</span></div>
+            <button type="button" id="refresh-button" title="Refresh from source (R)">Refresh</button>
+            {% if admin_enabled %}<a href="/admin">Admin</a>{% endif %}
+        </div>
+    </header>
+    <p class="control-warning" id="control-status" role="alert" hidden></p>
+    <p class="control-notice" id="page-notice" role="status">Loading race data&hellip;</p>
+    <main id="control-main" hidden>
+        <section class="control-view" id="progress-view" aria-label="Race progress">
+            <div class="control-stats" id="progress-stats" aria-label="Event totals"></div>
+            <div class="progress-layout">
+                <section class="control-panel lap-panel">
+                    <div class="panel-heading"><h2>On course by lap</h2><span>Read-only overview</span></div>
+                    <div class="lap-grid" id="lap-grid"></div>
+                    <div class="panel-footer">
+                        <div class="pager"><button id="distance-prev" type="button" aria-label="Previous distances">&larr;</button><span id="distance-page"></span><button id="distance-next" type="button" aria-label="Next distances">&rarr;</button></div>
+                        <div class="pager"><button id="lap-prev" type="button" aria-label="Previous laps">&larr;</button><span id="lap-page"></span><button id="lap-next" type="button" aria-label="Next laps">&rarr;</button></div>
+                    </div>
+                </section>
+                <div class="progress-side">
+                    <section class="control-panel">
+                        <div class="panel-heading"><h2>Distance completion</h2><span>Resolved / total</span></div>
+                        <div class="completion-bars" id="completion-bars"></div>
+                    </section>
+                    <section class="control-panel finishers-panel">
+                        <div class="panel-heading"><h2>Latest finishers</h2><span>Newest first</span></div>
+                        <ul id="latest-finishers"></ul>
+                    </section>
+                </div>
+            </div>
+        </section>
+        <section class="control-view" id="results-view" aria-label="Race results" hidden>
+            <div class="compact-selectors">
+                <label>Distance <select id="distance-select"></select></label>
+                <label>Grouping <select id="group-select"></select></label>
+            </div>
+            <nav class="control-panel result-rail" aria-label="Distances">
+                <div class="panel-heading"><h2>Distance</h2></div>
+                <div class="rail-list" id="distance-list"></div>
+                <div class="pager rail-pager"><button type="button" id="dist-rail-prev" aria-label="Previous distance choices">&larr;</button><span id="dist-rail-page"></span><button type="button" id="dist-rail-next" aria-label="Next distance choices">&rarr;</button></div>
+            </nav>
+            <nav class="control-panel result-rail" aria-label="Result groupings">
+                <div class="panel-heading"><h2>Grouping</h2></div>
+                <div class="rail-list" id="group-list"></div>
+                <div class="pager rail-pager"><button type="button" id="group-rail-prev" aria-label="Previous grouping choices">&larr;</button><span id="group-rail-page"></span><button type="button" id="group-rail-next" aria-label="Next grouping choices">&rarr;</button></div>
+            </nav>
+            <section class="control-panel result-panel">
+                <div class="results-heading">
+                    <h2 id="group-title"></h2>
+                    <div class="result-filters"><button id="all-filter" type="button" aria-pressed="true">All racers</button><button id="finished-filter" type="button" aria-pressed="false">Finished only</button></div>
+                </div>
+                <div class="result-table-wrap" id="table-wrap">
+                    <table id="control-table" aria-label="Selected race results">
+                        <thead id="result-head"><tr><th class="col-place" scope="col">Place</th><th class="col-bib" scope="col">Bib</th><th scope="col">Name</th><th class="col-laps" scope="col">Laps</th><th class="col-time" scope="col">Time / status</th><th class="col-gap" scope="col">Gap</th></tr></thead>
+                        <tbody id="result-rows"></tbody>
+                    </table>
+                    <p id="results-empty" class="empty-message" hidden></p>
+                </div>
+                <div class="panel-footer pager"><button id="result-prev" type="button">&larr; Prev</button><span id="result-page"></span><button id="result-next" type="button">Next &rarr;</button></div>
+            </section>
+        </section>
+    </main>
+    <footer class="control-footer">Read-only race control <span>1 / 2: switch views &middot; Arrow keys: results pages &middot; R: refresh</span></footer>
+    <script src="/static/result_helpers.js?v={{ cache_bust }}"></script>
+    <script src="/static/race_control.js?v={{ cache_bust }}"></script>
+</body>
+</html>

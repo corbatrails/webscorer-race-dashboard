@@ -69,6 +69,11 @@ def test_admin_page_links_to_results_page(client):
     html = client.get("/admin").get_data(as_text=True)
     assert re.search(r'<a [^>]*href="/results"[^>]*>Race results</a>', html)
 
+def test_admin_page_links_to_race_control(client):
+    _login(client)
+    html = client.get("/admin").get_data(as_text=True)
+    assert re.search(r'<a [^>]*href="/race-control"[^>]*>Race control</a>', html)
+
 
 def test_login_uses_constant_time_bytes_comparison(client, monkeypatch):
     calls = []

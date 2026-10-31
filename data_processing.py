@@ -1,3 +1,6 @@
+import json
+
+
 _NO_PLACE = "-"
 
 
@@ -404,6 +407,80 @@ def build_lap_overview_data(snapshot, observation_seconds):
 
     totals = {key: sum(d[key] for d in distances) for key in _LAP_TOTAL_KEYS}
     return {"totals": totals, "distances": distances}
+
+
+def build_race_control_data(snapshot, observation_seconds):
+    """Read-only operational view, independent of TV page visibility settings."""
+    if snapshot["error"]:
+        return None
+
+    members = _category_members(snapshot["racers"])
+    groups = []
+    latest = []
+    seen = {}
+    for group in snapshot["groups"]:
+        distance = group["distance"]
+        tier = group["tier"]
+        in_group = (
+            [r for r in snapshot["racers"] if r["in_overall"] and r["distance"] == distance]
+            if tier == "overall" else members.get(_membership_key(group), [])
+        )
+        ranked = _rank_racers(in_group)
+        leader = next((r["elapsed_seconds"] for r, place in ranked if place is not None), None)
+        rows = []
+        lap_count = group["lap_count"]
+        for racer, place in ranked:
+            start = racer["start_seconds"]
+            elapsed_limit = observation_seconds - start if start is not None else None
+            status = racer["status"]
+            not_started = status == "IN_PROGRESS" and start is not None and start > observation_seconds
+            crossed = _crossed_laps(racer, elapsed_limit)
+            completed = min(max(crossed, default=0), lap_count)
+            if status == "FINISHED":
+                completed = lap_count
+            elif status == "DNS" or not_started:
+                completed = 0
+            label = (
+                "Not started" if not_started else "On course" if status == "IN_PROGRESS"
+                else "Finished" if status == "FINISHED" else status
+            )
+            row = {
+                **_racer_row(racer, place),
+                "Status": label,
+                "Laps": completed,
+                "LapCount": lap_count,
+                "GapSeconds": racer["elapsed_seconds"] - leader if place is not None else None,
+            }
+            rows.append(row)
+            if tier == "overall" and status == "FINISHED" and racer["finish_tod_seconds"] is not None:
+                latest.append({
+                    **row, "Distance": distance or "Overall",
+                    "FinishSeconds": racer["finish_tod_seconds"],
+                })
+        identity = (tier, distance, group["category"], group["gender"])
+        seen[identity] = seen.get(identity, 0) + 1
+        groups.append({
+            "key": json.dumps((*identity, seen[identity])),
+            "distance": distance,
+            "title": "Overall" if tier == "overall" else _group_name({**group, "distance": ""}, tier),
+            "tier": tier,
+            "racers": rows,
+        })
+
+    progress = build_lap_overview_data(snapshot, observation_seconds)
+    if progress:
+        overall_groups = [g for g in snapshot["groups"] if g["tier"] == "overall"]
+        for entry, group in zip(progress["distances"], overall_groups):
+            entry["distance"] = group["distance"]
+    latest.sort(key=lambda r: r["FinishSeconds"], reverse=True)
+    return {
+        "race_name": snapshot["race"]["name"],
+        "race_date": snapshot["race"]["date"],
+        "progress": progress,
+        "groups": groups,
+        "latest_finishers": latest[:12],
+        "clock_seconds": observation_seconds - snapshot["race"]["start_seconds"],
+    }
 
 
 def build_pages(dashboard_data, demographics=None, max_rows=18, lap_overview=None):

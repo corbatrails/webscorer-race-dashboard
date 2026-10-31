@@ -14,6 +14,7 @@ from data_processing import (
     build_finish_chart_data,
     build_demographics_data,
     build_lap_overview_data,
+    build_race_control_data,
 )
 from providers import get_provider
 from admin import register_admin
@@ -37,6 +38,7 @@ _EMPTY_RACE = {
     "race_date": "",
     "race_sport": "",
     "finish_chart": None,
+    "race_control": None,
 }
 _cache = dict(_EMPTY_RACE)
 _cache_lock = threading.Lock()
@@ -138,6 +140,14 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
         color_scheme = app.config["dashboard"].get("color_scheme", "dark")
         return render_template("results.html", cache_bust=_start_time, color_scheme=color_scheme)
 
+    @app.route("/race-control")
+    def race_control():
+        color_scheme = app.config["dashboard"].get("color_scheme", "dark")
+        return render_template(
+            "race_control.html", cache_bust=_start_time, color_scheme=color_scheme,
+            admin_enabled=app.config["admin_enabled"],
+        )
+
     @app.route("/api/data")
     def api_data():
         with _cache_lock:
@@ -153,6 +163,7 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
                 "race_date": _cache["race_date"],
                 "race_sport": _cache["race_sport"],
                 "finish_chart": _cache["finish_chart"],
+                "race_control": _cache["race_control"],
                 "summary_display_time": cfg.get("summary_display_time", 20),
                 "scroll_speed": cfg.get("scroll_speed", 100),
                 "scroll_pause_time": cfg.get("scroll_pause_time", 2),
@@ -255,8 +266,11 @@ def _poll_once(app):
         )
         demographics = build_demographics_data(snapshot)
         lap_overview = None
+        control = None
         if not snapshot["error"]:
-            lap_overview = build_lap_overview_data(snapshot, _observation_seconds(snapshot["race"]))
+            observed = _observation_seconds(snapshot["race"])
+            lap_overview = build_lap_overview_data(snapshot, observed)
+            control = build_race_control_data(snapshot, observed)
         pages = build_pages(data, demographics, lap_overview=lap_overview)
         finish_chart = build_finish_chart_data(snapshot, cfg.get("chart_bucket_minutes", 15))
         with _cache_lock:
@@ -272,6 +286,8 @@ def _poll_once(app):
             _cache["race_date"] = data.get("race_date", "")
             _cache["race_sport"] = data.get("race_sport", "")
             _cache["finish_chart"] = finish_chart
+            if control is not None:
+                _cache["race_control"] = {**control, "sampled_at": time.time()}
     except Exception as e:
         with _cache_lock:
             if app.config["dashboard_state"]["race_generation"] != generation:
