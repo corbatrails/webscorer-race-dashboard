@@ -282,18 +282,25 @@ test("arrow keys no longer intercept native navigation in results", () => {
   assert.equal(prevented, false);
 });
 
-test("split details span visible columns without adding a phantom column on narrow screens", () => {
+test("split details start at the name column and span only remaining visible columns", () => {
   const app = ui();
   app.page.applyData(payload([group("A")]));
   app.page.setView("results");
+  let detail = app.get("result-rows").children.find(row => row.className === "split-detail");
+  assert.equal(detail.children[0].colSpan, 2);
+  assert.equal(detail.children[0].textContent, "");
+  assert.equal(detail.children[1].colSpan, 4);
+  assert.match(detail.children[1].textContent, /No lap splits available/);
   app.get("result-head").children[3].hidden = true;
   app.page.render();
-  let detail = app.get("result-rows").children.find(row => row.className === "split-detail");
-  assert.equal(detail.children[0].colSpan, 5);
+  detail = app.get("result-rows").children.find(row => row.className === "split-detail");
+  assert.equal(detail.children[0].colSpan, 2);
+  assert.equal(detail.children[1].colSpan, 3);
   app.get("result-head").children[5].hidden = true;
   app.page.render();
   detail = app.get("result-rows").children.find(row => row.className === "split-detail");
-  assert.equal(detail.children[0].colSpan, 4);
+  assert.equal(detail.children[0].colSpan, 2);
+  assert.equal(detail.children[1].colSpan, 2);
 });
 
 test("race changes reset state and waiting clears previous rows and event identity", () => {

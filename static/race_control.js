@@ -348,8 +348,12 @@
           var detail = node("tr", null, "split-detail");
           detail.id = "lap-splits-" + index;
           detail.hidden = !state.expandedRacers.has(key);
+          var spacer = node("td");
+          spacer.colSpan = 2;
+          spacer.setAttribute("aria-hidden", "true");
+          detail.appendChild(spacer);
           var cell = node("td");
-          cell.colSpan = columnCount;
+          cell.colSpan = columnCount - 2;
           var toggle = node("button", detail.hidden ? "+" : "-", "split-toggle");
           toggle.type = "button";
           toggle.dataset.racerKey = key;
@@ -383,7 +387,9 @@
               splitBody.appendChild(splitRow);
             });
             table.appendChild(splitBody);
-            cell.appendChild(table);
+            var content = node("div", null, "split-content");
+            content.appendChild(table);
+            cell.appendChild(content);
           } else cell.appendChild(node("p", "No lap splits available.", "empty-message"));
           detail.appendChild(cell);
           body.appendChild(detail);
