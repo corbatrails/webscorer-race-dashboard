@@ -21,6 +21,11 @@
   var fetchSeq = 0;
   var appliedSeq = 0;
   var fetchFailed = false;
+  var advanceFn = null;
+  var advanceDue = 0;
+  var paused = false;
+  var pausedAction = null;
+  var refreshing = false;
 
   function fetchData(skipRender) {
     var seq = ++fetchSeq;
@@ -163,18 +168,18 @@
       if (lastData.finish_chart) {
         renderFinishChart(lastData.finish_chart);
       }
-      advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
+      schedule(advance, config.summaryDisplayTime * 1000);
     } else if (pageType === "lap_overview") {
       html = renderLapOverview(lapOverviewPage, lastData);
       html += renderProgressDots(totalPages, currentIndex);
       container.innerHTML = html;
-      advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
+      schedule(advance, config.summaryDisplayTime * 1000);
     } else if (pageType === "demographics") {
       html = renderDemographics(demographicsPage);
       html += renderProgressDots(totalPages, currentIndex);
       container.innerHTML = html;
       renderDemographicsCharts(demographicsPage.data);
-      advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
+      schedule(advance, config.summaryDisplayTime * 1000);
     } else {
       var catIndex = currentIndex - fixedPageCount();
       var category = categories[catIndex];
@@ -207,17 +212,90 @@
 
   document.addEventListener("keydown", function (e) {
     if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-    if (e.key === "ArrowRight") {
+    var key = e.key && e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (key === "ArrowRight") {
       e.preventDefault();
       advance(1);
-    } else if (e.key === "ArrowLeft") {
+    } else if (key === "ArrowLeft") {
       e.preventDefault();
       advance(-1);
+    } else if (key === "r") {
+      e.preventDefault();
+      if (!e.repeat) refreshNow();
+    } else if (key === "p") {
+      e.preventDefault();
+      if (!e.repeat) setPaused(!paused);
     }
   });
 
+  // All page timers go through here so pausing can hold them and resume with the time left
+  function schedule(fn, ms) {
+    if (paused) {
+      pausedAction = { fn: fn, ms: ms };
+      return;
+    }
+    advanceFn = fn;
+    advanceDue = Date.now() + ms;
+    advanceTimer = setTimeout(function () {
+      advanceTimer = null;
+      advanceFn = null;
+      fn();
+    }, ms);
+  }
+
+  function setPaused(value) {
+    paused = value;
+    if (paused) {
+      if (advanceTimer) {
+        clearTimeout(advanceTimer);
+        advanceTimer = null;
+        pausedAction = { fn: advanceFn, ms: Math.max(0, advanceDue - Date.now()) };
+        advanceFn = null;
+      } else if (scrollAnimationId !== null) {
+        cancelAnimationFrame(scrollAnimationId);
+        scrollAnimationId = null;
+        pausedAction = { fn: continueScroll, ms: 0 };
+      }
+    } else {
+      var action = pausedAction;
+      pausedAction = null;
+      if (action) schedule(action.fn, action.ms);
+    }
+    var indicator = document.getElementById("pause-indicator");
+    if (indicator) indicator.className = "pause-indicator" + (paused ? " visible" : "");
+  }
+
+  function refreshNow() {
+    if (refreshing) return;
+    refreshing = true;
+    showNotice("Refreshing results\u2026");
+    fetch("/api/refresh", { method: "POST" })
+      .then(function (r) { return r.json(); })
+      .then(function (body) {
+        if (body.reason === "cooldown") {
+          showNotice("Just refreshed \u2014 try again in " + body.retry_after + "s");
+          return;
+        }
+        if (body.reason === "no_race") {
+          showNotice("No race selected");
+          return;
+        }
+        showNotice(body.error ? "Refresh failed: " + body.error : "Results refreshed");
+        // Redraw the current page with the new data; supersedes any page change still loading
+        var token = ++navToken;
+        return fetchData(true).then(function () {
+          if (token === navToken) renderCurrentPage();
+        });
+      })
+      .catch(function (err) {
+        console.error("Refresh error:", err);
+        showNotice("Refresh failed");
+      })
+      .then(function () { refreshing = false; });
+  }
+
   function stopAnimations() {
-    if (scrollAnimationId) {
+    if (scrollAnimationId !== null) {
       cancelAnimationFrame(scrollAnimationId);
       scrollAnimationId = null;
     }
@@ -225,47 +303,48 @@
       clearTimeout(advanceTimer);
       advanceTimer = null;
     }
+    advanceFn = null;
+    pausedAction = null;
   }
 
   function startScroll() {
     var page = document.querySelector(".page.active");
-    if (page && page.getAttribute("data-empty") === "true") {
-      advanceTimer = setTimeout(advance, config.scrollPauseTime * 2 * 1000);
+    var scrollContainer = document.getElementById("scroll-container");
+    var scrollDistance = scrollContainer ? scrollContainer.scrollHeight - scrollContainer.clientHeight : 0;
+    if ((page && page.getAttribute("data-empty") === "true") || scrollDistance <= 0) {
+      schedule(advance, config.scrollPauseTime * 2 * 1000);
       return;
     }
+    // Pause before starting scroll so first rows are visible
+    schedule(continueScroll, config.scrollPauseTime * 1000);
+  }
 
+  // Scrolls from the current position, so a resumed page carries on where it stopped
+  function continueScroll() {
     var scrollContainer = document.getElementById("scroll-container");
     if (!scrollContainer) {
-      advanceTimer = setTimeout(advance, config.scrollPauseTime * 2 * 1000);
+      schedule(advance, config.scrollPauseTime * 1000);
       return;
     }
-
-    var scrollDistance = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-    if (scrollDistance <= 0) {
-      advanceTimer = setTimeout(advance, config.scrollPauseTime * 2 * 1000);
-      return;
-    }
-
+    var startTop = scrollContainer.scrollTop;
+    var remaining = scrollContainer.scrollHeight - scrollContainer.clientHeight - startTop;
+    var duration = (Math.max(remaining, 0) / config.scrollSpeed) * 1000;
     var startTime = null;
-    var duration = (scrollDistance / config.scrollSpeed) * 1000;
 
     function step(timestamp) {
-      if (!startTime) startTime = timestamp;
-      var elapsed = timestamp - startTime;
-      var progress = Math.min(elapsed / duration, 1);
-      scrollContainer.scrollTop = progress * scrollDistance;
+      if (startTime === null) startTime = timestamp;
+      var progress = duration > 0 ? Math.min((timestamp - startTime) / duration, 1) : 1;
+      scrollContainer.scrollTop = startTop + progress * remaining;
 
       if (progress < 1) {
         scrollAnimationId = requestAnimationFrame(step);
       } else {
-        advanceTimer = setTimeout(advance, config.scrollPauseTime * 1000);
+        scrollAnimationId = null;
+        schedule(advance, config.scrollPauseTime * 1000);
       }
     }
 
-    // Pause before starting scroll so first rows are visible
-    advanceTimer = setTimeout(function () {
-      scrollAnimationId = requestAnimationFrame(step);
-    }, config.scrollPauseTime * 1000);
+    scrollAnimationId = requestAnimationFrame(step);
   }
 
   function renderWaiting(data) {
@@ -805,6 +884,12 @@
 
   var TOAST_DURATION = 5000;
   var TOAST_FADE = 300;
+
+  // Operator feedback for key presses; shown even when finisher toasts are turned off
+  function showNotice(text) {
+    var container = document.getElementById("toast-container");
+    if (container) createToast(container, { text: text, placeClass: "" });
+  }
 
   function showToasts(toasts) {
     var container = document.getElementById("toast-container");

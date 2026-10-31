@@ -42,6 +42,18 @@ A TV-mounted dashboard that displays live race results from WebScorer. Designed 
 
 6. Open http://localhost:5000 (or view the TV in kiosk mode).
 
+## Keyboard shortcuts
+
+Press these on a keyboard attached to the dashboard browser:
+
+| Key | Action |
+|---|---|
+| Right arrow / Left arrow | Next / previous page |
+| `R` | Refresh results from the source now instead of waiting for the next `refresh_interval` poll, then redraw the current page. Manual refreshes are limited to one every 5 seconds. |
+| `P` | Pause on the current page (stops rotation and scrolling, shows a "Paused" badge). Press again to resume where it stopped. Arrow keys and `R` still work while paused. |
+
+`R` calls `POST /api/refresh`, which needs no login (like `/api/data`), so anyone on the network can trigger it; the cooldown keeps it from flooding the WebScorer API.
+
 ## Configuration
 
 Options are split by sensitivity:

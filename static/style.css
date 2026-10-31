@@ -642,3 +642,32 @@ body {
   border-left: 0.4vh solid #cd7f32;
   padding-left: 1.5vw;
 }
+
+/* Pause indicator (P key) */
+.pause-indicator {
+  display: none;
+  position: fixed;
+  bottom: 2vh;
+  right: 2vw;
+  z-index: 1001;
+  align-items: baseline;
+  gap: 1vw;
+  background: var(--bg-card);
+  color: var(--accent-secondary);
+  border: 0.3vh solid var(--accent-secondary);
+  border-radius: 0.8vh;
+  padding: 1vh 1.5vw;
+  font-size: 3vh;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.pause-indicator.visible {
+  display: flex;
+}
+
+.pause-hint {
+  font-size: 1.8vh;
+  font-weight: normal;
+  color: var(--text-muted);
+}

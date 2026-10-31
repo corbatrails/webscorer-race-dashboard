@@ -1,5 +1,6 @@
 import argparse
 import logging
+import math
 import os
 import sys
 import threading
@@ -39,6 +40,10 @@ _EMPTY_RACE = {
 }
 _cache = dict(_EMPTY_RACE)
 _cache_lock = threading.Lock()
+# Serializes polls so a manual refresh never races the background loop and lands older data last.
+_poll_lock = threading.Lock()
+# Minimum seconds between manual refreshes, so a held key or a curious spectator can't flood the API.
+MANUAL_REFRESH_COOLDOWN = 5
 # Set when refresh_interval changes (or a race switch needs a poll) so the poll loop re-reads it.
 _config_changed = threading.Event()
 
@@ -164,6 +169,27 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
                 "admin_enabled": app.config["admin_enabled"],
             })
 
+    refresh_state = {"last": None}
+    refresh_state_lock = threading.Lock()
+
+    @app.route("/api/refresh", methods=["POST"])
+    def api_refresh():
+        """Poll the source now instead of waiting for the next refresh_interval."""
+        if race_selection_required(app.config["dashboard"]):
+            return jsonify({"refreshed": False, "reason": "no_race"}), 409
+        with refresh_state_lock:
+            now = time.monotonic()
+            last = refresh_state["last"]
+            if last is not None and now - last < MANUAL_REFRESH_COOLDOWN:
+                retry_after = math.ceil(MANUAL_REFRESH_COOLDOWN - (now - last))
+                response = jsonify({"refreshed": False, "reason": "cooldown", "retry_after": retry_after})
+                response.headers["Retry-After"] = str(retry_after)
+                return response, 429
+            refresh_state["last"] = now
+        poll_once(app)
+        with _cache_lock:
+            return jsonify({"refreshed": True, "error": _cache["error"]})
+
     if start_polling:
         _start_polling(app)
 
@@ -203,6 +229,11 @@ def _observation_seconds(race, now=None):
 
 
 def poll_once(app):
+    with _poll_lock:
+        _poll_once(app)
+
+
+def _poll_once(app):
     with _cache_lock:
         cfg = app.config["dashboard"]
         generation = app.config["dashboard_state"]["race_generation"]

@@ -1218,3 +1218,57 @@ def test_race_switch_drops_lap_overview_until_new_race_polls(mock_fetch, app, cl
     worker.join(5)
 
     assert client.get("/api/data").get_json()["pages"] == []
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_api_refresh_polls_immediately(mock_fetch, client):
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    response = client.post("/api/refresh")
+    assert response.status_code == 200
+    assert response.get_json() == {"refreshed": True, "error": None}
+    assert mock_fetch.call_count == 1
+    data = client.get("/api/data").get_json()
+    assert data["waiting"] is False
+    assert data["race_name"] == "Morning 5K"
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_api_refresh_reports_fetch_errors(mock_fetch, client):
+    mock_fetch.side_effect = RuntimeError("upstream down")
+    response = client.post("/api/refresh")
+    assert response.status_code == 200
+    assert response.get_json() == {"refreshed": True, "error": "upstream down"}
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_api_refresh_enforces_cooldown(mock_fetch, client, monkeypatch):
+    import app as app_module
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    clock = [1000.0]
+    monkeypatch.setattr(app_module.time, "monotonic", lambda: clock[0])
+
+    assert client.post("/api/refresh").status_code == 200
+    clock[0] += 1
+    blocked = client.post("/api/refresh")
+    assert blocked.status_code == 429
+    assert blocked.get_json() == {"refreshed": False, "reason": "cooldown", "retry_after": 4}
+    assert blocked.headers["Retry-After"] == "4"
+    assert mock_fetch.call_count == 1
+
+    clock[0] += app_module.MANUAL_REFRESH_COOLDOWN
+    assert client.post("/api/refresh").status_code == 200
+    assert mock_fetch.call_count == 2
+
+
+def test_api_refresh_requires_post(client):
+    assert client.get("/api/refresh").status_code == 405
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_api_refresh_without_race_does_not_poll(mock_fetch):
+    cfg = {"api_id": "1", "api_token": "t", "race_id": None, "refresh_interval": 60}
+    application = create_app(cfg, start_polling=False)
+    response = application.test_client().post("/api/refresh")
+    assert response.status_code == 409
+    assert response.get_json() == {"refreshed": False, "reason": "no_race"}
+    mock_fetch.assert_not_called()
