@@ -114,7 +114,7 @@ def test_category_page_contains_members_and_ranks_within_the_group():
     ], groups)
     result = process_race_data(snap)
     overall, category = result["categories"]
-    assert category["name"] == "Open Male"
+    assert category["name"] == "10K Open Male"
     assert [(r["Bib"], r["Place"]) for r in category["racers"]] == [("2", "1"), ("3", "2")]
     overall_by_bib = {r["Bib"]: r for r in overall["racers"]}
     assert overall_by_bib["2"]["Place"] == "3"
@@ -200,10 +200,10 @@ def test_group_order_and_filters_follow_snapshot_groups():
     ]
     snap = _snapshot([], groups)
     names = [(c["tier"], c["name"]) for c in process_race_data(snap)["categories"]]
-    assert names == [("overall", "B"), ("category", "Open"), ("overall", "A"), ("category", "Open")]
+    assert names == [("overall", "B"), ("category", "B Open"), ("overall", "A"), ("category", "A Open")]
     only_cat = process_race_data(snap, show_overall_results=False)["categories"]
     assert [c["tier"] for c in only_cat] == ["category", "category"]
-    assert [c["name"] for c in only_cat] == ["Open", "Open"]
+    assert [c["name"] for c in only_cat] == ["A Open", "B Open"]
 
 
 def test_views_do_not_read_raw_results():

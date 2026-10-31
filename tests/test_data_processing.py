@@ -40,11 +40,19 @@ def test_group_name_overall():
 
 def test_group_name_category_with_gender():
     g = {"distance": "Long", "category": "Adult Long Course (age 18-44)", "gender": "Male"}
-    assert _group_name(g, "category") == "Adult Long Course (age 18-44) Male"
+    assert _group_name(g, "category") == "Long Adult Long Course (age 18-44) Male"
 
 
 def test_group_name_category_without_gender():
     assert _group_name({"category": "Male 20-29"}, "category") == "Male 20-29"
+
+
+def test_group_name_category_with_distance_without_gender():
+    assert _group_name({"distance": "5k", "category": "Open - Female"}, "category") == "5k Open - Female"
+
+
+def test_group_name_category_with_blank_distance():
+    assert _group_name({"distance": "", "category": "Open", "gender": "Female"}, "category") == "Open Female"
 
 
 MOCK_API_RESPONSE = {
@@ -331,6 +339,20 @@ def test_build_pages_prefixes_overall_distance_title():
     assert pages[1]["title"] == "Overall - Mid Course (45 miles)"
 
 
+def test_build_pages_distinguishes_category_distances():
+    data = process_race_data({
+        "RaceInfo": {},
+        "Results": [
+            {"Grouping": {"Distance": "5k", "Category": "Open - Female"}, "Racers": []},
+            {"Grouping": {"Distance": "10k", "Category": "Open - Female"}, "Racers": []},
+        ],
+    })
+
+    pages = build_pages(data)
+
+    assert [page["title"] for page in pages[1:]] == ["5k Open - Female", "10k Open - Female"]
+
+
 def test_build_pages_keeps_overall_fallback_title():
     data = process_race_data({
         "RaceInfo": {},
@@ -480,9 +502,9 @@ def test_process_race_data_multi_distance_with_categories():
     # Ordered: Long Overall, Long categories, Short Overall, Short categories
     assert len(result["categories"]) == 4
     assert result["categories"][0]["name"] == "Long"
-    assert result["categories"][1]["name"] == "Masters Male"
+    assert result["categories"][1]["name"] == "Long Masters Male"
     assert result["categories"][2]["name"] == "Short"
-    assert result["categories"][3]["name"] == "Adult Female"
+    assert result["categories"][3]["name"] == "Short Adult Female"
 
 
 def test_process_race_data_filter_overall_off():
@@ -501,7 +523,7 @@ def test_process_race_data_filter_overall_off():
     }
     result = process_race_data(response, show_overall_results=False)
     assert len(result["categories"]) == 1
-    assert result["categories"][0]["name"] == "Masters Male"
+    assert result["categories"][0]["name"] == "Long Masters Male"
     # Totals still counted from Overall groups
     assert result["total_racers"] == 1
 

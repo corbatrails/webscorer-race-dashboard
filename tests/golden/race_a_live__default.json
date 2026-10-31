@@ -48,7 +48,7 @@
       "leaders": [
        {"Place": "-", "Bib": "8014", "Name": "Drew Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Female"}
       ],
-      "name": "Adult Long Course (age 18-44) Female",
+      "name": "Long Course (88 miles) Adult Long Course (age 18-44) Female",
       "racers": [
        {"Place": "-", "Bib": "8014", "Name": "Drew Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Female"}
       ],
@@ -58,7 +58,7 @@
       "leaders": [
        {"Place": "-", "Bib": "8002", "Name": "Casey Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Male"}
       ],
-      "name": "Adult Long Course (age 18-44) Male",
+      "name": "Long Course (88 miles) Adult Long Course (age 18-44) Male",
       "racers": [
        {"Place": "-", "Bib": "8002", "Name": "Casey Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Male"}
       ],
@@ -68,7 +68,7 @@
       "leaders": [
        {"Place": "-", "Bib": "8017", "Name": "Emery Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Female"}
       ],
-      "name": "Masters Long Course (age 45+) Female",
+      "name": "Long Course (88 miles) Masters Long Course (age 45+) Female",
       "racers": [
        {"Place": "-", "Bib": "8017", "Name": "Emery Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Female"}
       ],
@@ -78,7 +78,7 @@
       "leaders": [
        {"Place": "-", "Bib": "8001", "Name": "Blake Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Male"}
       ],
-      "name": "Masters Long Course (age 45+) Male",
+      "name": "Long Course (88 miles) Masters Long Course (age 45+) Male",
       "racers": [
        {"Place": "-", "Bib": "8001", "Name": "Blake Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Male"}
       ],
@@ -109,7 +109,7 @@
       "leaders": [
        {"Place": "-", "Bib": "4011", "Name": "Indigo Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Female"}
       ],
-      "name": "Adult Mid Course (age 18-44) Female",
+      "name": "Mid Course (45 miles) Adult Mid Course (age 18-44) Female",
       "racers": [
        {"Place": "-", "Bib": "4011", "Name": "Indigo Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Female"}
       ],
@@ -119,7 +119,7 @@
       "leaders": [
        {"Place": "-", "Bib": "4002", "Name": "Gray Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Male"}
       ],
-      "name": "Adult Mid Course (age 18-44) Male",
+      "name": "Mid Course (45 miles) Adult Mid Course (age 18-44) Male",
       "racers": [
        {"Place": "-", "Bib": "4002", "Name": "Gray Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Male"}
       ],
@@ -129,7 +129,7 @@
       "leaders": [
        {"Place": "-", "Bib": "4040", "Name": "Jordan Alder", "Time": "-", "TeamName": "", "Category": "E-bike Mid Course Open", "Gender": "Male"}
       ],
-      "name": "E-bike Mid Course Open Male",
+      "name": "Mid Course (45 miles) E-bike Mid Course Open Male",
       "racers": [
        {"Place": "-", "Bib": "4040", "Name": "Jordan Alder", "Time": "-", "TeamName": "", "Category": "E-bike Mid Course Open", "Gender": "Male"}
       ],
@@ -139,7 +139,7 @@
       "leaders": [
        {"Place": "-", "Bib": "4004", "Name": "Harper Alder", "Time": "-", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Female"}
       ],
-      "name": "Masters Mid Course (age 45+) Female",
+      "name": "Mid Course (45 miles) Masters Mid Course (age 45+) Female",
       "racers": [
        {"Place": "-", "Bib": "4004", "Name": "Harper Alder", "Time": "-", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Female"}
       ],
@@ -151,7 +151,7 @@
        {"Place": "-", "Bib": "4037", "Name": "Noel Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"},
        {"Place": "-", "Bib": "4173", "Name": "Oakley Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"}
       ],
-      "name": "Masters Mid Course (age 45+) Male",
+      "name": "Mid Course (45 miles) Masters Mid Course (age 45+) Male",
       "racers": [
        {"Place": "-", "Bib": "4001", "Name": "Finley Alder", "Time": "-", "TeamName": "Team A", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"},
        {"Place": "-", "Bib": "4037", "Name": "Noel Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"},
@@ -163,7 +163,7 @@
       "leaders": [
        {"Place": "-", "Bib": "4243", "Name": "Morgan Alder", "Time": "-", "TeamName": "Team C", "Category": "Masters Mid Course (age 45+)", "Gender": "Female/Male"}
       ],
-      "name": "Masters Mid Course (age 45+) Female/Male",
+      "name": "Mid Course (45 miles) Masters Mid Course (age 45+) Female/Male",
       "racers": [
        {"Place": "-", "Bib": "4243", "Name": "Morgan Alder", "Time": "-", "TeamName": "Team C", "Category": "Masters Mid Course (age 45+)", "Gender": "Female/Male"}
       ],
@@ -173,7 +173,7 @@
       "leaders": [
        {"Place": "-", "Bib": "4186", "Name": "Logan Alder", "Time": "-", "TeamName": "", "Category": "Youth Mid Course (under 18)", "Gender": "Female"}
       ],
-      "name": "Youth Mid Course (under 18) Female",
+      "name": "Mid Course (45 miles) Youth Mid Course (under 18) Female",
       "racers": [
        {"Place": "-", "Bib": "4186", "Name": "Logan Alder", "Time": "-", "TeamName": "", "Category": "Youth Mid Course (under 18)", "Gender": "Female"}
       ],
@@ -183,7 +183,7 @@
       "leaders": [
        {"Place": "-", "Bib": "4093", "Name": "Kai Alder", "Time": "-", "TeamName": "Team B", "Category": "Youth Mid Course (under 18)", "Gender": "Male"}
       ],
-      "name": "Youth Mid Course (under 18) Male",
+      "name": "Mid Course (45 miles) Youth Mid Course (under 18) Male",
       "racers": [
        {"Place": "-", "Bib": "4093", "Name": "Kai Alder", "Time": "-", "TeamName": "Team B", "Category": "Youth Mid Course (under 18)", "Gender": "Male"}
       ],
@@ -217,7 +217,7 @@
        {"Place": "1", "Bib": "2043", "Name": "Sage Alder", "Time": "10:06:18.3", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"},
        {"Place": "-", "Bib": "2020", "Name": "Finley Birch", "Time": "DNS", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"}
       ],
-      "name": "Adult Short Course (age 18-44) Female",
+      "name": "Short Course (28 miles) Adult Short Course (age 18-44) Female",
       "racers": [
        {"Place": "1", "Bib": "2043", "Name": "Sage Alder", "Time": "10:06:18.3", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"},
        {"Place": "-", "Bib": "2020", "Name": "Finley Birch", "Time": "DNS", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"}
@@ -230,7 +230,7 @@
        {"Place": "-", "Bib": "2001", "Name": "Tatum Alder", "Time": "-", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"},
        {"Place": "-", "Bib": "2003", "Name": "Emery Birch", "Time": "DSQ", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"}
       ],
-      "name": "Adult Short Course (age 18-44) Male",
+      "name": "Short Course (28 miles) Adult Short Course (age 18-44) Male",
       "racers": [
        {"Place": "1", "Bib": "2029", "Name": "Parker Alder", "Time": "0:22.4", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"},
        {"Place": "-", "Bib": "2001", "Name": "Tatum Alder", "Time": "-", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"},
@@ -242,7 +242,7 @@
       "leaders": [
        {"Place": "-", "Bib": "2042", "Name": "Gray Birch", "Time": "DNS", "TeamName": "", "Category": "E-bike Short Course Open", "Gender": "Female"}
       ],
-      "name": "E-bike Short Course Open Female",
+      "name": "Short Course (28 miles) E-bike Short Course Open Female",
       "racers": [
        {"Place": "-", "Bib": "2042", "Name": "Gray Birch", "Time": "DNS", "TeamName": "", "Category": "E-bike Short Course Open", "Gender": "Female"}
       ],
@@ -253,7 +253,7 @@
        {"Place": "-", "Bib": "2026", "Name": "Casey Birch", "Time": "DNF", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Female"},
        {"Place": "-", "Bib": "2065", "Name": "Drew Birch", "Time": "DNF", "TeamName": "Team E", "Category": "Masters Short Course (age 45+)", "Gender": "Female"}
       ],
-      "name": "Masters Short Course (age 45+) Female",
+      "name": "Short Course (28 miles) Masters Short Course (age 45+) Female",
       "racers": [
        {"Place": "-", "Bib": "2026", "Name": "Casey Birch", "Time": "DNF", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Female"},
        {"Place": "-", "Bib": "2065", "Name": "Drew Birch", "Time": "DNF", "TeamName": "Team E", "Category": "Masters Short Course (age 45+)", "Gender": "Female"}
@@ -265,7 +265,7 @@
        {"Place": "1", "Bib": "2023", "Name": "Reese Alder", "Time": "10:06:16.5", "TeamName": "Team D", "Category": "Masters Short Course (age 45+)", "Gender": "Male"},
        {"Place": "-", "Bib": "2002", "Name": "Avery Birch", "Time": "-", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Male"}
       ],
-      "name": "Masters Short Course (age 45+) Male",
+      "name": "Short Course (28 miles) Masters Short Course (age 45+) Male",
       "racers": [
        {"Place": "1", "Bib": "2023", "Name": "Reese Alder", "Time": "10:06:16.5", "TeamName": "Team D", "Category": "Masters Short Course (age 45+)", "Gender": "Male"},
        {"Place": "-", "Bib": "2002", "Name": "Avery Birch", "Time": "-", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Male"}
@@ -276,7 +276,7 @@
       "leaders": [
        {"Place": "1", "Bib": "2055", "Name": "Quinn Alder", "Time": "0:22.4", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Female"}
       ],
-      "name": "Youth Short Course (under 18) Female",
+      "name": "Short Course (28 miles) Youth Short Course (under 18) Female",
       "racers": [
        {"Place": "1", "Bib": "2055", "Name": "Quinn Alder", "Time": "0:22.4", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Female"}
       ],
@@ -286,7 +286,7 @@
       "leaders": [
        {"Place": "-", "Bib": "2004", "Name": "Blake Birch", "Time": "-", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Male"}
       ],
-      "name": "Youth Short Course (under 18) Male",
+      "name": "Short Course (28 miles) Youth Short Course (under 18) Male",
       "racers": [
        {"Place": "-", "Bib": "2004", "Name": "Blake Birch", "Time": "-", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Male"}
       ],
@@ -415,7 +415,7 @@
     {"Place": "-", "Bib": "8014", "Name": "Drew Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Female"}
    ],
    "tier": "category",
-   "title": "Adult Long Course (age 18-44) Female",
+   "title": "Long Course (88 miles) Adult Long Course (age 18-44) Female",
    "type": "category"
   },
   {
@@ -423,7 +423,7 @@
     {"Place": "-", "Bib": "8002", "Name": "Casey Alder", "Time": "-", "TeamName": "", "Category": "Adult Long Course (age 18-44)", "Gender": "Male"}
    ],
    "tier": "category",
-   "title": "Adult Long Course (age 18-44) Male",
+   "title": "Long Course (88 miles) Adult Long Course (age 18-44) Male",
    "type": "category"
   },
   {
@@ -431,7 +431,7 @@
     {"Place": "-", "Bib": "8017", "Name": "Emery Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Female"}
    ],
    "tier": "category",
-   "title": "Masters Long Course (age 45+) Female",
+   "title": "Long Course (88 miles) Masters Long Course (age 45+) Female",
    "type": "category"
   },
   {
@@ -439,7 +439,7 @@
     {"Place": "-", "Bib": "8001", "Name": "Blake Alder", "Time": "-", "TeamName": "", "Category": "Masters Long Course (age 45+)", "Gender": "Male"}
    ],
    "tier": "category",
-   "title": "Masters Long Course (age 45+) Male",
+   "title": "Long Course (88 miles) Masters Long Course (age 45+) Male",
    "type": "category"
   },
   {
@@ -464,7 +464,7 @@
     {"Place": "-", "Bib": "4011", "Name": "Indigo Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Female"}
    ],
    "tier": "category",
-   "title": "Adult Mid Course (age 18-44) Female",
+   "title": "Mid Course (45 miles) Adult Mid Course (age 18-44) Female",
    "type": "category"
   },
   {
@@ -472,7 +472,7 @@
     {"Place": "-", "Bib": "4002", "Name": "Gray Alder", "Time": "-", "TeamName": "", "Category": "Adult Mid Course (age 18-44)", "Gender": "Male"}
    ],
    "tier": "category",
-   "title": "Adult Mid Course (age 18-44) Male",
+   "title": "Mid Course (45 miles) Adult Mid Course (age 18-44) Male",
    "type": "category"
   },
   {
@@ -480,7 +480,7 @@
     {"Place": "-", "Bib": "4040", "Name": "Jordan Alder", "Time": "-", "TeamName": "", "Category": "E-bike Mid Course Open", "Gender": "Male"}
    ],
    "tier": "category",
-   "title": "E-bike Mid Course Open Male",
+   "title": "Mid Course (45 miles) E-bike Mid Course Open Male",
    "type": "category"
   },
   {
@@ -488,7 +488,7 @@
     {"Place": "-", "Bib": "4004", "Name": "Harper Alder", "Time": "-", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Female"}
    ],
    "tier": "category",
-   "title": "Masters Mid Course (age 45+) Female",
+   "title": "Mid Course (45 miles) Masters Mid Course (age 45+) Female",
    "type": "category"
   },
   {
@@ -498,7 +498,7 @@
     {"Place": "-", "Bib": "4173", "Name": "Oakley Alder", "Time": "DSQ", "TeamName": "", "Category": "Masters Mid Course (age 45+)", "Gender": "Male"}
    ],
    "tier": "category",
-   "title": "Masters Mid Course (age 45+) Male",
+   "title": "Mid Course (45 miles) Masters Mid Course (age 45+) Male",
    "type": "category"
   },
   {
@@ -506,7 +506,7 @@
     {"Place": "-", "Bib": "4243", "Name": "Morgan Alder", "Time": "-", "TeamName": "Team C", "Category": "Masters Mid Course (age 45+)", "Gender": "Female/Male"}
    ],
    "tier": "category",
-   "title": "Masters Mid Course (age 45+) Female/Male",
+   "title": "Mid Course (45 miles) Masters Mid Course (age 45+) Female/Male",
    "type": "category"
   },
   {
@@ -514,7 +514,7 @@
     {"Place": "-", "Bib": "4186", "Name": "Logan Alder", "Time": "-", "TeamName": "", "Category": "Youth Mid Course (under 18)", "Gender": "Female"}
    ],
    "tier": "category",
-   "title": "Youth Mid Course (under 18) Female",
+   "title": "Mid Course (45 miles) Youth Mid Course (under 18) Female",
    "type": "category"
   },
   {
@@ -522,7 +522,7 @@
     {"Place": "-", "Bib": "4093", "Name": "Kai Alder", "Time": "-", "TeamName": "Team B", "Category": "Youth Mid Course (under 18)", "Gender": "Male"}
    ],
    "tier": "category",
-   "title": "Youth Mid Course (under 18) Male",
+   "title": "Mid Course (45 miles) Youth Mid Course (under 18) Male",
    "type": "category"
   },
   {
@@ -550,7 +550,7 @@
     {"Place": "-", "Bib": "2020", "Name": "Finley Birch", "Time": "DNS", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Female"}
    ],
    "tier": "category",
-   "title": "Adult Short Course (age 18-44) Female",
+   "title": "Short Course (28 miles) Adult Short Course (age 18-44) Female",
    "type": "category"
   },
   {
@@ -560,7 +560,7 @@
     {"Place": "-", "Bib": "2003", "Name": "Emery Birch", "Time": "DSQ", "TeamName": "", "Category": "Adult Short Course (age 18-44)", "Gender": "Male"}
    ],
    "tier": "category",
-   "title": "Adult Short Course (age 18-44) Male",
+   "title": "Short Course (28 miles) Adult Short Course (age 18-44) Male",
    "type": "category"
   },
   {
@@ -568,7 +568,7 @@
     {"Place": "-", "Bib": "2042", "Name": "Gray Birch", "Time": "DNS", "TeamName": "", "Category": "E-bike Short Course Open", "Gender": "Female"}
    ],
    "tier": "category",
-   "title": "E-bike Short Course Open Female",
+   "title": "Short Course (28 miles) E-bike Short Course Open Female",
    "type": "category"
   },
   {
@@ -577,7 +577,7 @@
     {"Place": "-", "Bib": "2065", "Name": "Drew Birch", "Time": "DNF", "TeamName": "Team E", "Category": "Masters Short Course (age 45+)", "Gender": "Female"}
    ],
    "tier": "category",
-   "title": "Masters Short Course (age 45+) Female",
+   "title": "Short Course (28 miles) Masters Short Course (age 45+) Female",
    "type": "category"
   },
   {
@@ -586,7 +586,7 @@
     {"Place": "-", "Bib": "2002", "Name": "Avery Birch", "Time": "-", "TeamName": "", "Category": "Masters Short Course (age 45+)", "Gender": "Male"}
    ],
    "tier": "category",
-   "title": "Masters Short Course (age 45+) Male",
+   "title": "Short Course (28 miles) Masters Short Course (age 45+) Male",
    "type": "category"
   },
   {
@@ -594,7 +594,7 @@
     {"Place": "1", "Bib": "2055", "Name": "Quinn Alder", "Time": "0:22.4", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Female"}
    ],
    "tier": "category",
-   "title": "Youth Short Course (under 18) Female",
+   "title": "Short Course (28 miles) Youth Short Course (under 18) Female",
    "type": "category"
   },
   {
@@ -602,7 +602,7 @@
     {"Place": "-", "Bib": "2004", "Name": "Blake Birch", "Time": "-", "TeamName": "", "Category": "Youth Short Course (under 18)", "Gender": "Male"}
    ],
    "tier": "category",
-   "title": "Youth Short Course (under 18) Male",
+   "title": "Short Course (28 miles) Youth Short Course (under 18) Male",
    "type": "category"
   }
  ],
