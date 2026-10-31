@@ -444,11 +444,26 @@ def build_race_control_data(snapshot, observation_seconds):
                 "Not started" if not_started else "On course" if status == "IN_PROGRESS"
                 else "Finished" if status == "FINISHED" else status
             )
+            crossings = {
+                c["lap_number"]: c["elapsed_seconds"] for c in racer["lap_crossings"]
+                if c["lap_number"] in crossed and c["lap_number"] <= lap_count
+                and status != "DNS" and not not_started
+            }
+            splits = [
+                {
+                    "LapNumber": number,
+                    "SplitSeconds": round(elapsed - crossings.get(number - 1, 0), 3)
+                    if number == 1 or number - 1 in crossings else None,
+                    "ElapsedSeconds": elapsed,
+                }
+                for number, elapsed in sorted(crossings.items())
+            ]
             row = {
                 **_racer_row(racer, place),
                 "Status": label,
                 "Laps": completed,
                 "LapCount": lap_count,
+                "LapSplits": splits,
                 "GapSeconds": racer["elapsed_seconds"] - leader if place is not None else None,
             }
             rows.append(row)
