@@ -67,6 +67,7 @@ def _contract_rows(racers):
 def _contract(payload):
     payload = json.loads(json.dumps(payload))
     payload.pop("last_refresh", None)
+    payload.pop("server_time", None)
     payload.pop("race_control", None)
     for page in payload["pages"]:
         if "racers" in page:

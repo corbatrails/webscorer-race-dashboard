@@ -116,6 +116,50 @@ def test_api_data_returns_json(mock_fetch, app, client):
 
 
 @patch("providers.webscorer.fetch_race_results")
+def test_api_data_returns_current_server_time_without_changing_cached_clock(mock_fetch, app, client, monkeypatch):
+    import app as app_module
+    clock = [1000.0]
+    monkeypatch.setattr(app_module.time, "time", lambda: clock[0])
+    mock_fetch.return_value = MOCK_RACE_RESULTS
+    app_module.poll_once(app)
+    first = client.get("/api/data").get_json()
+    clock[0] += 65
+    second = client.get("/api/data").get_json()
+    assert first["server_time"] == 1000
+    assert second["server_time"] == 1065
+    assert second["race_control"] == first["race_control"]
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_race_clock_sample_timestamp_precedes_projection_processing(mock_fetch, app, client, monkeypatch):
+    import app as app_module
+    clock = [1000.0]
+    monkeypatch.setattr(app_module.time, "time", lambda: clock[0])
+    monkeypatch.setattr(app_module, "_observation_seconds", lambda race, now=None: 32400)
+    original = app_module.build_race_control_data
+
+    def slow_projection(snapshot, observed):
+        control = original(snapshot, observed)
+        clock[0] += 5
+        return control
+
+    monkeypatch.setattr(app_module, "build_race_control_data", slow_projection)
+    mock_fetch.return_value = {
+        "RaceInfo": {"StartTime": "Saturday, October 31, 2026 8:01 AM (GMT-5)"},
+        "Results": [{
+            "Grouping": {"Distance": "5K", "Overall": True},
+            "Racers": [{"Bib": "1", "Time": "-", "StartTime": "08:01:57.8"}],
+        }],
+    }
+    app_module.poll_once(app)
+    data = client.get("/api/data").get_json()
+    control = data["race_control"]
+    assert control["clock_seconds"] == pytest.approx(3482.2)
+    assert control["sampled_at"] == 1000
+    assert data["server_time"] - control["sampled_at"] == 5
+
+
+@patch("providers.webscorer.fetch_race_results")
 def test_api_data_before_first_poll(mock_fetch, client):
     response = client.get("/api/data")
     assert response.status_code == 200

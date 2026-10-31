@@ -39,7 +39,7 @@ const group = (key, distance = "50K", racers = [racer(0)]) => ({
 function payload(groups, extra = {}) {
   return {
     race_name: "Race", race_date: "Today", color_scheme: "dark", race_generation: 1,
-    last_refresh: "10:00:00", refresh_interval: 30, waiting: false,
+    last_refresh: "10:00:00", refresh_interval: 30, waiting: false, server_time: 1000,
     race_control: {
       race_name: "Race", race_date: "Today",
       groups, progress: { totals: { registered: 1, on_course: 0, finished: 1 }, distances: [] },
@@ -51,17 +51,18 @@ function payload(groups, extra = {}) {
 function ui(responses = []) {
   const nodes = {};
   const get = id => nodes[id] ||= element("div");
-  const listeners = {}, timers = [], requests = [];
+  const listeners = {}, timers = [], intervals = [], requests = [];
+  let now = 1000000;
   const document = {
     body: element("body"), getElementById: get, createElement: element,
     addEventListener(name, fn) { listeners[name] = fn; },
   };
   const env = {
-    document, now: () => 1000000,
+    document, now: () => now,
     getComputedStyle(node) { return { display: node.hidden ? "none" : "table-cell" }; },
     setTimeout(fn, ms) { timers.push({ fn, ms }); return timers.length; },
     clearTimeout(id) { if (timers[id - 1]) timers[id - 1].cleared = true; },
-    setInterval() {}, addEventListener() {},
+    setInterval(fn) { intervals.push(fn); }, addEventListener() {},
     fetch(url, options) {
       requests.push({ url, options });
       const next = responses.shift();
@@ -73,6 +74,8 @@ function ui(responses = []) {
   const page = Control.start(env);
   return {
     page, get, timers, requests, document,
+    advance(ms) { now += ms; },
+    tick() { intervals.forEach(fn => fn()); },
     press(key, extra = {}) {
       listeners.keydown({ key, target: document.body, preventDefault() {}, ...extra });
     },
@@ -101,6 +104,99 @@ test("duration supports multi-day races and time until the start", () => {
   assert.equal(Control.formatDuration(3661), "1:01:01");
   assert.equal(Control.formatDuration(90061), "1d 1:01:01");
   assert.equal(Control.formatDuration(-60), "-0:01:00");
+});
+
+test("clock includes cached sample age using server timestamps", () => {
+  const app = ui();
+  app.page.applyData(payload([group("A")], { server_time: 1037.8 }));
+  assert.equal(app.get("race-clock").textContent, "1:00:37");
+});
+
+test("clock initialization is independent of the browser clock's starting value", () => {
+  const app = ui();
+  app.advance(17000000);
+  app.page.applyData(payload([group("A")]));
+  assert.equal(app.get("race-clock").textContent, "1:00:00");
+});
+
+test("clock ticks by elapsed time and catches up after delayed callbacks", () => {
+  const app = ui();
+  app.page.applyData(payload([group("A")]));
+  app.advance(2500);
+  app.tick();
+  assert.equal(app.get("race-clock").textContent, "1:00:02");
+  app.advance(110000);
+  app.tick();
+  assert.equal(app.get("race-clock").textContent, "1:01:52");
+});
+
+test("results refreshes and distance changes do not reinitialize the clock", () => {
+  const app = ui();
+  app.page.applyData(payload([group("A"), group("B", "25K")]));
+  app.advance(5000);
+  const updated = payload([group("A"), group("B", "25K")], { server_time: 1005 });
+  updated.race_control.clock_seconds = 7200;
+  app.page.applyData(updated);
+  app.page.selectDistance("25K");
+  assert.equal(app.get("race-clock").textContent, "1:00:05");
+});
+
+test("clock keeps ticking through stale provider data while showing its warning", () => {
+  const app = ui();
+  app.page.applyData(payload([group("A")]));
+  app.advance(5000);
+  app.page.applyData(payload([group("A")], { is_stale: true, error: "Provider unavailable" }));
+  assert.equal(app.get("race-clock").textContent, "1:00:05");
+  assert.match(app.get("control-status").textContent, /out of date.*Provider unavailable/);
+  app.advance(2000);
+  app.tick();
+  assert.equal(app.get("race-clock").textContent, "1:00:07");
+});
+
+test("clock keeps ticking when the dashboard server cannot be reached", async () => {
+  const app = ui([payload([group("A")]), new Error("offline")]);
+  await app.page.poll();
+  app.advance(5000);
+  await app.page.poll();
+  app.tick();
+  assert.equal(app.get("race-clock").textContent, "1:00:05");
+  assert.match(app.get("control-status").textContent, /Can't reach the dashboard server/);
+});
+
+test("clock resets on a race switch and clears when no race is selected", () => {
+  const app = ui();
+  app.page.applyData(payload([group("A")]));
+  app.advance(5000);
+  const next = payload([group("B")], { race_generation: 2, server_time: 1005 });
+  next.race_control.clock_seconds = 120;
+  next.race_control.sampled_at = 1005;
+  app.page.applyData(next);
+  assert.equal(app.get("race-clock").textContent, "0:02:00");
+  app.advance(2000);
+  app.tick();
+  assert.equal(app.get("race-clock").textContent, "0:02:02");
+  app.page.applyData(payload([], { race_generation: 3, waiting: true, race_control: null }));
+  app.tick();
+  assert.equal(app.get("race-clock").textContent, "--:--:--");
+});
+
+test("clock waits for a valid sample and supports countdowns and multi-day elapsed time", () => {
+  const app = ui();
+  const data = payload([group("A")]);
+  data.race_control.clock_seconds = null;
+  app.page.applyData(data);
+  assert.equal(app.get("race-clock").textContent, "--:--:--");
+  data.race_control.clock_seconds = -1.5;
+  app.page.applyData(data);
+  assert.equal(app.get("race-clock").textContent, "-0:00:01");
+  app.advance(2000);
+  app.tick();
+  assert.equal(app.get("race-clock").textContent, "0:00:00");
+  const next = payload([group("B")], { race_generation: 2, server_time: 1002 });
+  next.race_control.clock_seconds = 90000;
+  next.race_control.sampled_at = 1002;
+  app.page.applyData(next);
+  assert.equal(app.get("race-clock").textContent, "1d 1:00:00");
 });
 
 test("all result rows render without paging and selections and scroll survive refresh", () => {

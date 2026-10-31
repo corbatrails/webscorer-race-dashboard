@@ -46,14 +46,14 @@
   function start(env) {
     var document = env.document;
     var el = function (id) { return document.getElementById(id); };
-    var now = env.now || Date.now;
+    var now = env.now || root.performance.now.bind(root.performance);
     var pollTimer = null;
     var pendingPoll = null;
     var state = {
       data: null, view: "progress", distance: null, groupKey: null, filter: "all",
       distancePage: 0, lapPage: 0, distRailPage: 0, groupRailPage: 0,
       expandedRacers: new Set(),
-      raceGeneration: null, fetchFailed: false, refreshing: false, notice: "",
+      raceGeneration: null, clock: null, fetchFailed: false, refreshing: false, notice: "",
     };
 
     function node(tag, text, className) {
@@ -122,12 +122,8 @@
     }
 
     function renderClock() {
-      var c = control();
-      var seconds = c && c.clock_seconds;
-      if (Number.isFinite(seconds) && Number.isFinite(c.sampled_at) &&
-          !state.fetchFailed && !state.data.is_stale && !state.data.error) {
-        seconds += Math.max(0, now() / 1000 - c.sampled_at);
-      }
+      var clock = state.clock;
+      var seconds = clock ? clock.seconds + Math.max(0, now() - clock.received_at) / 1000 : null;
       el("race-clock").textContent = formatDuration(seconds);
     }
 
@@ -419,9 +415,19 @@
 
     function setView(view) { state.view = view; render(); }
     function applyData(data) {
-      if (state.raceGeneration !== null && state.raceGeneration !== data.race_generation) resetSelection();
+      var raceChanged = state.raceGeneration !== data.race_generation;
+      if (state.raceGeneration !== null && raceChanged) resetSelection();
+      if (raceChanged || !data.race_control || data.waiting || data.race_selection_required) state.clock = null;
       state.raceGeneration = data.race_generation;
       state.data = data;
+      var c = control();
+      if (!state.clock && c && !data.waiting && !data.race_selection_required &&
+          Number.isFinite(c.clock_seconds) && Number.isFinite(c.sampled_at) && Number.isFinite(data.server_time)) {
+        state.clock = {
+          seconds: c.clock_seconds + Math.max(0, data.server_time - c.sampled_at),
+          received_at: now(),
+        };
+      }
       state.fetchFailed = false;
       state.notice = "";
       if (data.color_scheme) document.body.dataset.theme = data.color_scheme;

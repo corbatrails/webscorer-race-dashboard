@@ -164,6 +164,7 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
                 "race_sport": _cache["race_sport"],
                 "finish_chart": _cache["finish_chart"],
                 "race_control": _cache["race_control"],
+                "server_time": time.time(),
                 "summary_display_time": cfg.get("summary_display_time", 20),
                 "scroll_speed": cfg.get("scroll_speed", 100),
                 "scroll_pause_time": cfg.get("scroll_pause_time", 2),
@@ -268,7 +269,10 @@ def _poll_once(app):
         lap_overview = None
         control = None
         if not snapshot["error"]:
-            observed = _observation_seconds(snapshot["race"])
+            sampled_at = time.time()
+            observed = _observation_seconds(
+                snapshot["race"], datetime.fromtimestamp(sampled_at, timezone.utc).astimezone(),
+            )
             lap_overview = build_lap_overview_data(snapshot, observed)
             control = build_race_control_data(snapshot, observed)
         pages = build_pages(data, demographics, lap_overview=lap_overview)
@@ -287,7 +291,7 @@ def _poll_once(app):
             _cache["race_sport"] = data.get("race_sport", "")
             _cache["finish_chart"] = finish_chart
             if control is not None:
-                _cache["race_control"] = {**control, "sampled_at": time.time()}
+                _cache["race_control"] = {**control, "sampled_at": sampled_at}
     except Exception as e:
         with _cache_lock:
             if app.config["dashboard_state"]["race_generation"] != generation:
