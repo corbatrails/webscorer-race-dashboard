@@ -133,6 +133,11 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
         color_scheme = app.config["dashboard"].get("color_scheme", "dark")
         return render_template("dashboard.html", cache_bust=_start_time, color_scheme=color_scheme)
 
+    @app.route("/results")
+    def results():
+        color_scheme = app.config["dashboard"].get("color_scheme", "dark")
+        return render_template("results.html", cache_bust=_start_time, color_scheme=color_scheme)
+
     @app.route("/api/data")
     def api_data():
         with _cache_lock:

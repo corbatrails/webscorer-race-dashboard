@@ -10,10 +10,13 @@
 <body>
     <header class="admin-header">
         <h1>Dashboard admin</h1>
-        <form method="post" action="{{ url_for('admin.logout') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <button type="submit" class="secondary">Log out</button>
-        </form>
+        <div class="header-actions">
+            <a class="header-link" href="{{ url_for('results') }}" target="_blank" rel="noopener">Race results</a>
+            <form method="post" action="{{ url_for('admin.logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <button type="submit" class="secondary">Log out</button>
+            </form>
+        </div>
     </header>
     <main class="admin-main">
         {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}

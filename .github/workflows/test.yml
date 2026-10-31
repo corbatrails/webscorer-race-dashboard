@@ -31,4 +31,4 @@ jobs:
           node-version: '22'
 
       - name: Run dashboard script tests
-        run: node --test tests/dashboard.test.cjs
+        run: node --test tests/dashboard.test.cjs tests/results.test.cjs
