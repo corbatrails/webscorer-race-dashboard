@@ -10,7 +10,7 @@ A TV-mounted dashboard that displays live race results from WebScorer. Designed 
 - Configurable refresh and rotation intervals
 - Interactive race selection or pre-configured race ID
 - [Race results page](#race-results-page) for announcing winners: pick a distance/category, show its top finishers
-- [Race control](#race-control) for directors and timers: fixed progress overview and paginated results
+- [Race control](#race-control) for directors and timers: fixed progress overview and scrollable results with lap splits
 
 ## Quick Start
 
@@ -70,10 +70,10 @@ Press these on a keyboard attached to the dashboard browser:
 `http://<host>:5000/race-control` is a read-only workspace for race directors and timers. The admin header links to **Race control** in a new tab; the TV dashboard stays unchanged.
 
 - **Race progress:** registered/on-course/finished/DNS/not-started/DNF/DSQ totals, on-course racers by distance and lap, DNFs by lap, distance completion (finished + DNS + DNF + DSQ), and the latest finishers ordered by their actual finish time. Progress cells do not drill into results yet.
-- **Results:** choose a distance and grouping, then view all racers or finishers only. Ranking and ties match the dashboard. Completed laps, time/status and gap to the grouping leader are shown; narrow screens omit secondary columns.
-- Nothing rotates or scrolls. Results, distance/grouping navigation and large lap grids use explicit pagination to fit the available viewport. Compact screens use dropdowns for distance and grouping.
-- The page follows `color_scheme`, including configuration changes while it is open. There is no independent theme toggle. It refreshes on `refresh_interval`, preserves your view, filters, selection and page, and marks stale data or errors explicitly. A race switch resets selections.
-- Press **1** for progress, **2** for results, **Left/Right arrows** for result pages, or **R** / **Refresh** to poll the source immediately (shared 5-second cooldown).
+- **Results:** choose a distance and grouping, then view all racers or finishers only. Ranking and ties match the dashboard. Completed laps, time/status and gap to the grouping leader are shown; narrow screens omit secondary columns. Multi-lap racers have a **+ / -** button beside their name to expand or collapse lap splits inline. Each recorded crossing shows its lap number, that lap's split duration, and the ending elapsed race time. A missing preceding crossing leaves the split unavailable; no crossings shows "No lap splits available." CSV imports do not supply lap crossings.
+- Nothing rotates or scrolls automatically. Results show all matching racers in a scrollable table with sticky column headings; expanding a racer pushes later rows down. Distance/grouping navigation and large lap grids retain explicit pagination. Compact screens use dropdowns for distance and grouping.
+- The page follows `color_scheme`, including configuration changes while it is open. There is no independent theme toggle. It refreshes on `refresh_interval`, preserves your view, filters, selection, navigation pages, expanded racers and results scroll position, and marks stale data or errors explicitly. A race switch resets selections and expanded racers. Lap splits are derived from the normalized snapshot's cumulative `lap_crossings` in the Race Control payload; replay only includes crossings reached at the observation time.
+- Press **1** for progress, **2** for results, or **R** / **Refresh** to poll the source immediately (shared 5-second cooldown). Tab to the results table to scroll with the keyboard, or to a racer's split button and press Enter or Space to toggle it.
 - Operational data includes all groupings and unfinished racers regardless of TV `show_*` and `display_unfinished_*` settings. Those settings still govern the TV and announcer pages.
 - The race clock is elapsed time since the event-local start, including days for multi-day/historical events and a negative countdown before the start. Like `/results`, this page and its data need no login; admin settings still require one.
 
