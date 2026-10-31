@@ -93,25 +93,34 @@ function fakeElement(tag) {
   return el;
 }
 
-function startResults(responses) {
+function startResults(responses, refreshResponses = []) {
   const ids = ["race-name", "last-updated", "page-notice", "results-status", "group-list", "results-panel",
     "group-title", "top-count", "count-error", "results-table", "results-rows", "results-empty", "results-summary"];
   const elements = Object.fromEntries(ids.map((id) => [id, fakeElement("div")]));
   elements["top-count"].value = "3";
+  const docListeners = {};
   const document = {
     body: fakeElement("body"),
     getElementById: (id) => elements[id],
     createElement: fakeElement,
+    addEventListener(type, fn) { (docListeners[type] ||= []).push(fn); },
   };
   const timers = [];
+  const requests = [];
   const queue = [...responses];
+  const refreshQueue = [...refreshResponses];
+  const respond = (next) => {
+    if (next instanceof Error) return Promise.reject(next);
+    return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(next) });
+  };
   const page = ResultsPage.start({
     document,
-    setTimeout: (fn, ms) => timers.push({ fn, ms }),
-    fetch: () => {
-      const next = queue.shift();
-      if (next instanceof Error) return Promise.reject(next);
-      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(next) });
+    setTimeout: (fn, ms) => { timers.push({ fn, ms, cleared: false }); return timers.length; },
+    clearTimeout: (id) => { if (timers[id - 1]) timers[id - 1].cleared = true; },
+    fetch: (url, options = {}) => {
+      requests.push({ url, method: options.method || "GET" });
+      if (url === "/api/refresh") return respond(refreshQueue.length ? refreshQueue.shift() : { refreshed: true, error: null });
+      return respond(queue.shift());
     },
   });
   const el = (id) => elements[id];
@@ -120,8 +129,17 @@ function startResults(responses) {
     document,
     el,
     timers,
+    requests,
     queue,
     poll: () => page.poll(),
+    // Fire a keydown and wait for any refresh it started to settle.
+    async press(key, extra = {}) {
+      const event = { key, target: document.body, prevented: false, preventDefault() { this.prevented = true; }, ...extra };
+      (docListeners.keydown || []).forEach((fn) => fn(event));
+      for (let i = 0; i < 10; i++) await Promise.resolve();
+      return event;
+    },
+    pendingPolls: () => timers.filter((t) => !t.cleared && t.fn === page.poll),
     buttons: () => el("group-list").children,
     titles: () => el("group-list").children.map((b) => b.textContent),
     selected: () => el("group-list").children.filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.textContent),
@@ -291,4 +309,55 @@ test("theme follows config and names render as text", async () => {
   assert.equal(ui.document.body.dataset.theme, "light");
   assert.equal(ui.titles()[0], "<i>A</i>");
   assert.equal(ui.rows()[0][2], "<img src=x onerror=alert(1)>");
+});
+
+test("R refreshes the source, then redraws immediately and restarts the poll timer", async () => {
+  const ui = startResults([payload([category("A", [racer("1", "A1", "1:00")])]),
+    payload([category("A", [racer("1", "A1", "1:00"), racer("2", "A2", "1:01")])], { last_refresh: "09:42:00" })]);
+  await ui.poll();
+  ui.setCount("5");
+  const event = await ui.press("r");
+  assert.equal(event.prevented, true);
+  assert.deepEqual(ui.requests.slice(1).map((r) => `${r.method} ${r.url}`), ["POST /api/refresh", "GET /api/data"]);
+  assert.deepEqual(ui.rows().map((r) => r[2]), ["A1", "A2"]);
+  assert.equal(ui.el("last-updated").textContent, "Updated 09:42:00");
+  assert.equal(ui.pendingPolls().length, 1, "the old poll timer is replaced, not doubled");
+  assert.equal(ui.el("top-count").value, "5");
+});
+
+test("R is ignored with modifiers, on key repeat, and while typing in a text field", async () => {
+  const ui = startResults([payload([category("A", [racer("1", "A1", "1:00")])])]);
+  await ui.poll();
+  await ui.press("r", { ctrlKey: true });
+  await ui.press("r", { repeat: true });
+  await ui.press("r", { target: { tagName: "TEXTAREA" } });
+  await ui.press("r", { target: { tagName: "INPUT", type: "text" } });
+  await ui.press("x");
+  assert.equal(ui.requests.length, 1);
+  await ui.press("R", { target: { tagName: "INPUT", type: "number" } });
+  assert.equal(ui.requests[1].url, "/api/refresh", "R still works from the Show top field");
+});
+
+test("R during the cooldown says so without re-polling", async () => {
+  const ui = startResults([payload([category("A", [racer("1", "A1", "1:00")])])],
+    [{ refreshed: false, reason: "cooldown", retry_after: 4 }]);
+  await ui.poll();
+  await ui.press("r");
+  assert.equal(ui.requests.length, 2);
+  assert.equal(ui.el("last-updated").textContent, "Just refreshed \u2014 try again in 4s");
+  const clearNotice = ui.timers.at(-1);
+  clearNotice.fn();
+  assert.equal(ui.el("last-updated").textContent, "Updated 09:41:00");
+});
+
+test("a failed refresh request is reported and R works again afterwards", async () => {
+  const ui = startResults([payload([category("A", [racer("1", "A1", "1:00")])]), payload([category("A", [racer("1", "A1", "1:00")])])],
+    [new Error("offline")]);
+  await ui.poll();
+  const originalError = console.error;
+  console.error = () => {};
+  try { await ui.press("r"); } finally { console.error = originalError; }
+  assert.equal(ui.el("last-updated").textContent, "Refresh failed");
+  await ui.press("r");
+  assert.deepEqual(ui.requests.slice(2).map((r) => r.url), ["/api/refresh", "/api/data"]);
 });
