@@ -117,7 +117,8 @@ td { height: 36px; padding: 0 10px; border-top: 1px solid var(--border-color); w
 .col-name { position: relative; padding-right: 42px; }
 .split-toggle { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; padding: 0; }
 .split-detail > td { padding: 8px 14px; height: auto; white-space: normal; background: var(--bg-primary); }
-.split-table { max-width: 480px; }
+.split-table { width: auto; max-width: 100%; margin-left: auto; table-layout: auto; font-variant-numeric: tabular-nums; }
+.split-table th, .split-table td { padding-left: 18px; white-space: nowrap; }
 .split-table th:first-child { width: 50px; }
 .split-table th:not(:first-child), .split-table td:not(:first-child) { text-align: right; }
 .split-table td { height: 30px; }
