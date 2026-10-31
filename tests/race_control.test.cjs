@@ -70,7 +70,14 @@ function ui(responses = []) {
       return Promise.resolve(next && "ok" in next ? next : { ok: true, json: async () => next });
     },
   };
-  for (let i = 0; i < 6; i++) get("result-head").appendChild(element("th"));
+  for (let i = 0; i < 7; i++) {
+    const heading = element("th");
+    if (i === 3) {
+      heading.hidden = true;
+      nodes["distance-column"] = heading;
+    }
+    get("result-head").appendChild(heading);
+  }
   const page = Control.start(env);
   return {
     page, get, timers, requests, document,
@@ -98,6 +105,141 @@ test("all racers includes statuses; finished-only excludes every non-finisher", 
     racer(2, { Time: "DNF", Status: "DNF" }), racer(3, { Time: "DNS", Status: "DNS" })];
   assert.equal(Control.filteredRows(racers, "all").length, 4);
   assert.deepEqual(Control.filteredRows(racers, "finished"), [racers[0]]);
+});
+
+test("unfinished includes only racers on course or not started", () => {
+  const racers = [
+    racer(0),
+    racer(1, { Time: "", Status: "On course" }),
+    racer(2, { Time: "", Status: "Not started" }),
+    racer(3, { Time: "DNF", Status: "DNF" }),
+    racer(4, { Time: "DNS", Status: "DNS" }),
+    racer(5, { Time: "DSQ", Status: "DSQ" }),
+  ];
+  assert.deepEqual(Control.filteredRows(racers, "unfinished"), [racers[1], racers[2]]);
+});
+
+test("unfinished button filters rendered rows and reports its pressed state", () => {
+  const app = ui();
+  app.page.applyData(payload([group("A", "50K", [
+    racer(0),
+    racer(1, { Time: "", Status: "On course" }),
+    racer(2, { Time: "", Status: "Not started" }),
+    racer(3, { Time: "DNF", Status: "DNF" }),
+  ])]));
+  app.page.setView("results");
+  app.get("unfinished-filter").dispatch("click");
+
+  assert.deepEqual(app.rows().map(row => row[1]), ["1", "2"]);
+  assert.equal(app.get("unfinished-filter").getAttribute("aria-pressed"), "true");
+  assert.equal(app.get("all-filter").getAttribute("aria-pressed"), "false");
+});
+
+test("All combines Overall racers once and shows their distance-specific places", () => {
+  const app = ui();
+  const data = payload([
+    group("50K Overall", "50K", [racer(0, { Place: "1", LapCount: 2 })]),
+    { ...group("10K Category", "10K", [racer(8)]), tier: "gender", title: "F 30-39" },
+    group("10K Overall", "10K", [racer(1, { Place: "1", LapCount: 2 })]),
+  ]);
+  app.page.applyData(data);
+  app.page.setView("results");
+
+  assert.equal(app.page.state.distance, "50K");
+  assert.equal(app.get("distance-list").children[0].textContent, "All");
+  assert.equal(app.get("distance-select").children[0].textContent, "All");
+  app.get("distance-list").children[0].dispatch("click");
+
+  assert.equal(app.get("group-list").children.length, 1);
+  assert.equal(app.get("group-list").children[0].textContent, "Overall");
+  assert.deepEqual(app.rows().map(row => [row[0], row[1], row[3]]), [
+    ["1", "0", "50K"],
+    ["1", "1", "10K"],
+  ]);
+  assert.equal(app.get("result-head").children[3].hidden, false);
+
+  app.page.applyData(data);
+  assert.equal(app.page.state.allDistances, true);
+  assert.equal(app.rows().length, 2);
+});
+
+test("All stays distinct from a null distance and excludes category-only distances", () => {
+  const app = ui();
+  app.page.applyData(payload([
+    group("50K Overall", "50K"),
+    { ...group("10K Category", "10K", [racer(1)]), tier: "gender" },
+    group("Overall", null, [racer(2)]),
+  ]));
+  app.page.setView("results");
+
+  assert.equal(app.page.state.distance, "50K");
+  app.get("distance-list").children[0].dispatch("click");
+  assert.equal(app.page.state.allDistances, true);
+  assert.deepEqual(app.rows().map(row => row[3]), ["50K", "Overall"]);
+
+  const select = app.get("distance-select");
+  select.value = select.children[0].value;
+  select.dispatch("change");
+  assert.equal(app.page.state.allDistances, true);
+
+  app.page.selectDistance(null);
+  assert.equal(app.page.state.allDistances, false);
+  assert.equal(app.page.state.distance, null);
+  assert.equal(app.rows().length, 1);
+  assert.equal(app.rows()[0][1], "2");
+});
+
+test("All with no Overall groups stays empty instead of including categories", () => {
+  const app = ui();
+  app.page.applyData(payload([
+    { ...group("10K Category", "10K", [racer(1)]), tier: "gender" },
+  ]));
+  app.page.setView("results");
+  app.get("distance-list").children[0].dispatch("click");
+  assert.equal(app.rows().length, 0);
+});
+
+test("All keeps lap expansion independent for matching racers on different distances", () => {
+  const app = ui();
+  const data = payload([
+    group("50K Overall", "50K", [racer(0, {
+      Bib: "101", Name: "Same Racer", LapCount: 2,
+      LapSplits: [{ LapNumber: 1, SplitSeconds: 600, ElapsedSeconds: 600 }],
+    })]),
+    group("25K Overall", "25K", [racer(1, {
+      Bib: "101", Name: "Same Racer", LapCount: 2,
+      LapSplits: [{ LapNumber: 1, SplitSeconds: 700, ElapsedSeconds: 700 }],
+    })]),
+  ]);
+  app.page.applyData(data);
+  app.page.setView("results");
+  app.get("distance-list").children[0].dispatch("click");
+
+  const buttons = splitButtons(app);
+  buttons[0].dispatch("click");
+  let details = app.get("result-rows").children.filter(row => row.className === "split-detail");
+  assert.deepEqual(details.map(detail => detail.hidden), [false, true]);
+
+  app.page.applyData(data);
+  details = app.get("result-rows").children.filter(row => row.className === "split-detail");
+  assert.deepEqual(details.map(detail => detail.hidden), [false, true]);
+});
+
+test("Distance column is hidden per distance and split details span visible columns", () => {
+  const app = ui();
+  const data = payload([group("A", "50K", [racer(0, {
+    LapSplits: [{ LapNumber: 1, SplitSeconds: 600, ElapsedSeconds: 600 }],
+  })])]);
+  app.page.applyData(data);
+  app.page.setView("results");
+  let detail = app.get("result-rows").children.find(row => row.className === "split-detail");
+  assert.equal(app.get("result-head").children[3].hidden, true);
+  assert.equal(detail.children[1].colSpan, 4);
+
+  app.get("distance-list").children[0].dispatch("click");
+  detail = app.get("result-rows").children.find(row => row.className === "split-detail");
+  assert.equal(app.get("result-head").children[3].hidden, false);
+  assert.equal(detail.children[1].colSpan, 5);
 });
 
 test("duration supports multi-day races and time until the start", () => {
@@ -291,12 +433,12 @@ test("split details start at the name column and span only remaining visible col
   assert.equal(detail.children[0].textContent, "");
   assert.equal(detail.children[1].colSpan, 4);
   assert.match(detail.children[1].textContent, /No lap splits available/);
-  app.get("result-head").children[3].hidden = true;
+  app.get("result-head").children[4].hidden = true;
   app.page.render();
   detail = app.get("result-rows").children.find(row => row.className === "split-detail");
   assert.equal(detail.children[0].colSpan, 2);
   assert.equal(detail.children[1].colSpan, 3);
-  app.get("result-head").children[5].hidden = true;
+  app.get("result-head").children[6].hidden = true;
   app.page.render();
   detail = app.get("result-rows").children.find(row => row.className === "split-detail");
   assert.equal(detail.children[0].colSpan, 2);

@@ -17,7 +17,9 @@
 
   function filteredRows(racers, filter) {
     return (racers || []).filter(function (r) {
-      return filter === "all" || (r.Status === "Finished" && root.ResultHelpers.isFinished(r));
+      return filter === "all" ||
+        (filter === "finished" && r.Status === "Finished" && root.ResultHelpers.isFinished(r)) ||
+        (filter === "unfinished" && (r.Status === "On course" || r.Status === "Not started"));
     });
   }
 
@@ -59,7 +61,8 @@
     var pollTimer = null;
     var pendingPoll = null;
     var state = {
-      data: null, view: "progress", distance: null, groupKey: null, filter: "all",
+      data: null, view: "progress", distance: null, allDistances: false, distanceInitialized: false,
+      groupKey: null, filter: "all",
       distancePage: 0, lapPage: 0, distRailPage: 0, groupRailPage: 0,
       expandedRacers: new Set(),
       raceGeneration: null, clock: null, fetchFailed: false, refreshing: false, notice: "",
@@ -92,13 +95,29 @@
     function groups() { return control() ? control().groups || [] : []; }
     function distanceChoices() {
       var seen = new Set();
-      return groups().filter(function (g) {
+      var distances = groups().filter(function (g) {
         if (seen.has(g.distance)) return false;
         seen.add(g.distance);
         return true;
       }).map(function (g) { return { key: g.distance, title: g.distance || "Overall" }; });
+      return distances.length ? [{ key: null, title: "All", all: true }].concat(distances) : [];
     }
-    function currentGroups() { return groups().filter(function (g) { return g.distance === state.distance; }); }
+    function currentGroups() {
+      if (!state.allDistances) {
+        return groups().filter(function (g) { return g.distance === state.distance; });
+      }
+      var racers = [];
+      groups().forEach(function (group) {
+        if (group.tier !== "overall") return;
+        (group.racers || []).forEach(function (racer) {
+          racers.push(Object.assign({}, racer, {
+            Distance: group.distance || "Overall",
+            RaceControlSourceGroupKey: group.key,
+          }));
+        });
+      });
+      return [{ key: "all-distances-overall", distance: null, title: "Overall", tier: "overall", racers: racers }];
+    }
     function selectedGroup() {
       return currentGroups().find(function (g) { return g.key === state.groupKey; }) || null;
     }
@@ -109,6 +128,8 @@
     }
     function resetSelection() {
       state.distance = null;
+      state.allDistances = false;
+      state.distanceInitialized = false;
       state.groupKey = null;
       state.distancePage = state.lapPage = state.distRailPage = state.groupRailPage = 0;
       state.expandedRacers.clear();
@@ -117,8 +138,15 @@
     }
     function ensureSelection() {
       var choices = distanceChoices();
-      if (!choices.some(function (d) { return d.key === state.distance; })) {
-        state.distance = choices.length ? choices[0].key : null;
+      if (state.allDistances && !choices.some(function (d) { return d.all; })) {
+        state.allDistances = false;
+      }
+      var selectedDistanceExists = choices.some(function (d) { return !d.all && d.key === state.distance; });
+      if (!state.allDistances && (!state.distanceInitialized || !selectedDistanceExists)) {
+        var firstDistance = choices.find(function (d) { return !d.all; });
+        state.distance = firstDistance ? firstDistance.key : null;
+        state.allDistances = false;
+        state.distanceInitialized = Boolean(firstDistance);
         state.groupKey = null;
         state.groupRailPage = 0;
         el("table-wrap").scrollTop = 0;
@@ -261,7 +289,15 @@
     }
 
     function selectDistance(distance) {
-      state.distance = distance;
+      if (distance && typeof distance === "object") {
+        state.allDistances = Boolean(distance.all);
+        state.distance = state.allDistances ? null : distance.key;
+        state.distanceInitialized = !state.allDistances;
+      } else {
+        state.allDistances = false;
+        state.distance = distance;
+        state.distanceInitialized = true;
+      }
       state.groupKey = null;
       state.groupRailPage = 0;
       el("table-wrap").scrollTop = 0;
@@ -277,16 +313,22 @@
       var list = el(prefix === "dist-rail" ? "distance-list" : "group-list");
       var result = paginate(choices, capacity(list.clientHeight, 0, CHOICE_HEIGHT), state[pageField]);
       state[pageField] = result.page;
-      var signature = JSON.stringify(result.items.map(function (item) { return [item.key, item.title]; }));
+      function choiceValue(item) {
+        return prefix === "dist-rail" ?
+          (item.all ? "all" : JSON.stringify(["distance", item.key])) : item.key;
+      }
+      var signature = JSON.stringify(result.items.map(function (item) { return [choiceValue(item), item.title]; }));
       if (list.dataset.signature !== signature) {
         list.dataset.signature = signature;
         clear(list);
         result.items.forEach(function (item) {
           var button = node("button", item.title);
           button.type = "button";
-          button.dataset.key = item.key;
+          button.dataset.key = choiceValue(item);
           button.title = item.title;
-          button.addEventListener("click", function () { onSelect(item.key); });
+          button.addEventListener("click", function () {
+            onSelect(prefix === "dist-rail" ? item : item.key);
+          });
           list.appendChild(button);
         });
       }
@@ -295,13 +337,13 @@
       });
       pager(prefix, result);
       var select = el(prefix === "dist-rail" ? "distance-select" : "group-select");
-      var optionSignature = JSON.stringify(choices.map(function (item) { return [item.key, item.title]; }));
+      var optionSignature = JSON.stringify(choices.map(function (item) { return [choiceValue(item), item.title]; }));
       if (select.dataset.signature !== optionSignature) {
         select.dataset.signature = optionSignature;
         clear(select);
         choices.forEach(function (item) {
           var option = node("option", item.title);
-          option.value = item.key;
+          option.value = choiceValue(item);
           select.appendChild(option);
         });
       }
@@ -309,12 +351,16 @@
     }
 
     function renderResults() {
-      renderChoices("dist-rail", distanceChoices(), state.distance, "distRailPage", selectDistance);
+      var distanceSelection = state.allDistances ? "all" : JSON.stringify(["distance", state.distance]);
+      renderChoices("dist-rail", distanceChoices(), distanceSelection, "distRailPage", selectDistance);
       renderChoices("group-rail", currentGroups(), state.groupKey, "groupRailPage", selectGroup);
       var group = selectedGroup();
-      el("group-title").textContent = group ? (group.distance ? group.distance + " / " : "") + group.title : "Results";
+      el("group-title").textContent = group ?
+        (state.allDistances ? "All / " : group.distance ? group.distance + " / " : "") + group.title : "Results";
       el("all-filter").setAttribute("aria-pressed", String(state.filter === "all"));
       el("finished-filter").setAttribute("aria-pressed", String(state.filter === "finished"));
+      el("unfinished-filter").setAttribute("aria-pressed", String(state.filter === "unfinished"));
+      el("distance-column").hidden = !state.allDistances;
       var racers = filteredRows(group && group.racers, state.filter);
       var columnCount = Array.from(el("result-head").querySelectorAll("th")).filter(function (heading) {
         return env.getComputedStyle(heading).display !== "none";
@@ -336,6 +382,7 @@
         row.appendChild(node("td", r.Place || "-", "col-place"));
         row.appendChild(node("td", r.Bib, "col-bib"));
         row.appendChild(name);
+        if (state.allDistances) row.appendChild(node("td", r.Distance, "col-distance"));
         row.appendChild(node("td", r.Laps + "/" + r.LapCount, "col-laps"));
         var time = node("td", null, "col-time");
         if (r.Status === "Finished") time.textContent = r.Time;
@@ -344,7 +391,8 @@
         row.appendChild(node("td", formatGap(r.GapSeconds), "col-gap"));
         body.appendChild(row);
         if (r.LapCount > 1) {
-          var key = JSON.stringify([group.key, r.Bib, r.Name]);
+          var sourceGroupKey = r.RaceControlSourceGroupKey === undefined ? group.key : r.RaceControlSourceGroupKey;
+          var key = JSON.stringify([sourceGroupKey, r.Bib, r.Name]);
           var detail = node("tr", null, "split-detail");
           detail.id = "lap-splits-" + index;
           detail.hidden = !state.expandedRacers.has(key);
@@ -404,7 +452,9 @@
       });
       if (focusedButton) focusedButton.focus({ preventScroll: true });
       el("table-wrap").scrollTop = scrollTop;
-      message("results-empty", racers.length ? "" : state.filter === "finished" ? "No finishers in this grouping yet." : "No racers in this grouping.");
+      message("results-empty", racers.length ? "" :
+        state.filter === "finished" ? "No finishers in this grouping yet." :
+          state.filter === "unfinished" ? "No unfinished racers in this grouping." : "No racers in this grouping.");
       el("result-count").textContent = racers.length + (racers.length === 1 ? " racer" : " racers");
     }
 
@@ -505,9 +555,15 @@
     el("progress-tab").addEventListener("click", function () { setView("progress"); });
     el("results-tab").addEventListener("click", function () { setView("results"); });
     el("refresh-button").addEventListener("click", refresh);
-    el("distance-select").addEventListener("change", function () { selectDistance(el("distance-select").value); });
+    el("distance-select").addEventListener("change", function () {
+      var value = el("distance-select").value;
+      var choice = distanceChoices().find(function (item) {
+        return item.all ? value === "all" : value === JSON.stringify(["distance", item.key]);
+      });
+      if (choice) selectDistance(choice);
+    });
     el("group-select").addEventListener("change", function () { selectGroup(el("group-select").value); });
-    [["all-filter", "all"], ["finished-filter", "finished"]].forEach(function (filter) {
+    [["all-filter", "all"], ["finished-filter", "finished"], ["unfinished-filter", "unfinished"]].forEach(function (filter) {
       el(filter[0]).addEventListener("click", function () {
         state.filter = filter[1];
         el("table-wrap").scrollTop = 0;
