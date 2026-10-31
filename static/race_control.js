@@ -43,6 +43,15 @@
     return formatDuration(rounded) + (fraction ? fraction.toFixed(3).slice(1).replace(/0+$/, "") : "");
   }
 
+  function formatTimeOfDay(seconds) {
+    if (!Number.isFinite(seconds)) return "--:--:--";
+    var total = Math.floor(seconds);
+    var days = Math.floor(total / 86400);
+    var pad = function (value) { return String(value).padStart(2, "0"); };
+    return pad(Math.floor(total % 86400 / 3600)) + ":" + pad(Math.floor(total % 3600 / 60)) + ":" +
+      pad(total % 60) + (days > 0 ? " +" + days + (days === 1 ? " day" : " days") : "");
+  }
+
   function start(env) {
     var document = env.document;
     var el = function (id) { return document.getElementById(id); };
@@ -355,7 +364,7 @@
             table.setAttribute("aria-label", "Lap splits for " + r.Name);
             var head = node("thead");
             var headings = node("tr");
-            ["Lap", "Split", "Elapsed", "Place", "Change"].forEach(function (label) {
+            ["Lap", "Split", "Elapsed", "Wall clock", "Place", "Change"].forEach(function (label) {
               var heading = node("th", label);
               heading.scope = "col";
               headings.appendChild(heading);
@@ -368,6 +377,7 @@
               splitRow.appendChild(node("td", split.LapNumber));
               splitRow.appendChild(node("td", formatSplit(split.SplitSeconds)));
               splitRow.appendChild(node("td", formatSplit(split.ElapsedSeconds)));
+              splitRow.appendChild(node("td", formatTimeOfDay(split.WallClockSeconds)));
               splitRow.appendChild(node("td", split.LapPlace || "-"));
               splitRow.appendChild(placeChangeCell(split.PlaceChange));
               splitBody.appendChild(splitRow);

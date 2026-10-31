@@ -135,20 +135,26 @@ def test_control_lap_splits_include_durations_and_ending_elapsed_without_mutatin
     snapshot = _snapshot([_group("50K", 3)], [racer])
     row = project(snapshot)["groups"][0]["racers"][0]
     assert row.get("LapSplits") == [
-        {"LapNumber": 1, "SplitSeconds": 600.125, "ElapsedSeconds": 600.125, "LapPlace": 1, "PlaceChange": None},
-        {"LapNumber": 2, "SplitSeconds": 650.375, "ElapsedSeconds": 1250.5, "LapPlace": 1, "PlaceChange": 0},
-        {"LapNumber": 3, "SplitSeconds": 649.5, "ElapsedSeconds": 1900.0, "LapPlace": 1, "PlaceChange": 0},
+        {"LapNumber": 1, "SplitSeconds": 600.125, "ElapsedSeconds": 600.125, "WallClockSeconds": START + 600.125, "LapPlace": 1, "PlaceChange": None},
+        {"LapNumber": 2, "SplitSeconds": 650.375, "ElapsedSeconds": 1250.5, "WallClockSeconds": START + 1250.5, "LapPlace": 1, "PlaceChange": 0},
+        {"LapNumber": 3, "SplitSeconds": 649.5, "ElapsedSeconds": 1900.0, "WallClockSeconds": START + 1900.0, "LapPlace": 1, "PlaceChange": 0},
     ]
     assert "LapSplits" not in racer
+
+
+def test_control_lap_split_wall_clock_is_unknown_without_start_time():
+    racer = _racer("50K", start=None, crossings=[(1, 600)])
+    row = project(_snapshot([_group("50K", 2)], [racer]), START + 1000)["groups"][0]["racers"][0]
+    assert [s["WallClockSeconds"] for s in row["LapSplits"]] == [None]
 
 
 def test_control_lap_splits_do_not_treat_missing_laps_as_one_split():
     racer = _racer("50K", crossings=[(2, 700), (4, 1500), (5, 1800)])
     row = project(_snapshot([_group("50K", 5)], [racer]))["groups"][0]["racers"][0]
     assert row.get("LapSplits") == [
-        {"LapNumber": 2, "SplitSeconds": None, "ElapsedSeconds": 700.0, "LapPlace": 1, "PlaceChange": None},
-        {"LapNumber": 4, "SplitSeconds": None, "ElapsedSeconds": 1500.0, "LapPlace": 1, "PlaceChange": None},
-        {"LapNumber": 5, "SplitSeconds": 300.0, "ElapsedSeconds": 1800.0, "LapPlace": 1, "PlaceChange": 0},
+        {"LapNumber": 2, "SplitSeconds": None, "ElapsedSeconds": 700.0, "WallClockSeconds": START + 700.0, "LapPlace": 1, "PlaceChange": None},
+        {"LapNumber": 4, "SplitSeconds": None, "ElapsedSeconds": 1500.0, "WallClockSeconds": START + 1500.0, "LapPlace": 1, "PlaceChange": None},
+        {"LapNumber": 5, "SplitSeconds": 300.0, "ElapsedSeconds": 1800.0, "WallClockSeconds": START + 1800.0, "LapPlace": 1, "PlaceChange": 0},
     ]
 
 
@@ -163,7 +169,7 @@ def test_control_lap_splits_exclude_future_and_out_of_group_crossings(status):
     ], [racer])
     rows = project(snapshot, START + 1000)["groups"][1]["racers"]
     assert rows[0].get("LapSplits") == [
-        {"LapNumber": 1, "SplitSeconds": 600.0, "ElapsedSeconds": 600.0, "LapPlace": 1, "PlaceChange": None},
+        {"LapNumber": 1, "SplitSeconds": 600.0, "ElapsedSeconds": 600.0, "WallClockSeconds": START + 600.0, "LapPlace": 1, "PlaceChange": None},
     ]
     rows = project(snapshot, START + 3000)["groups"][1]["racers"]
     assert [s["LapNumber"] for s in rows[0]["LapSplits"]] == [1, 2]
