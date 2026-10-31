@@ -345,10 +345,10 @@ def test_sample_file_renders_overall_and_category_pages():
     assert pages[0]["data"]["total_racers"] == 21
     assert by_title["Overall - 40 mile"]["tier"] == "overall"
     assert by_title["Overall - 20 mile"]["tier"] == "overall"
-    assert by_title["Men 40-49"]["tier"] == "category"
+    assert by_title["40 mile Men 40-49"]["tier"] == "category"
     leader = by_title["Overall - 40 mile"]["racers"][0]
     assert (leader["Place"], leader["Name"]) == ("1", "Luis Ortega")
-    names = [r["Name"] for r in by_title["Men 40-49"]["racers"]]
+    names = [r["Name"] for r in by_title["40 mile Men 40-49"]["racers"]]
     assert "Okafor, Daniel" in names
 
 

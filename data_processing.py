@@ -5,6 +5,9 @@ def _group_name(group, tier):
     if tier == "overall":
         return group.get("distance") or "Overall"
     parts = [group.get("category", "")]
+    distance = group.get("distance")
+    if distance:
+        parts.insert(0, distance)
     gender = group.get("gender")
     if gender:
         parts.append(gender)

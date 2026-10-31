@@ -282,7 +282,7 @@ def test_csv_source_serves_pages_without_credentials(no_credentials, tmp_path):
     assert data["race_name"] == "Sample Gravel Grinder"
     titles = [p["title"] for p in data["pages"]]
     assert titles[0] == "Summary"
-    assert "Overall - 40 mile" in titles and "Men 40-49" in titles
+    assert "Overall - 40 mile" in titles and "40 mile Men 40-49" in titles
     assert data["finish_chart"]["datasets"]
 
 

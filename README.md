@@ -5,7 +5,7 @@ A TV-mounted dashboard that displays live race results from WebScorer. Designed 
 ## Features
 
 - Polls WebScorer API for live race results, or reads a CSV spreadsheet (see [Sources](#sources))
-- Auto-rotating dashboard pages: summary overview + per-category results
+- Auto-rotating dashboard pages: summary overview + per-category results with distance-prefixed titles (e.g. `5k Open - Female`)
 - Large, high-contrast dark theme optimized for TV readability
 - Configurable refresh and rotation intervals
 - Interactive race selection or pre-configured race ID
