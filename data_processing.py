@@ -461,6 +461,7 @@ def build_race_control_data(snapshot, observation_seconds):
             states.append((racer, place, status, not_started, crossed, crossings))
         lap_places = _lap_places([state[5] for state in states])
         for (racer, place, status, not_started, crossed, crossings), places in zip(states, lap_places):
+            start = racer["start_seconds"]
             completed = min(max(crossed, default=0), lap_count)
             if status == "FINISHED":
                 completed = lap_count
@@ -476,6 +477,7 @@ def build_race_control_data(snapshot, observation_seconds):
                     "SplitSeconds": round(elapsed - crossings.get(number - 1, 0), 3)
                     if number == 1 or number - 1 in crossings else None,
                     "ElapsedSeconds": elapsed,
+                    "WallClockSeconds": round(start + elapsed, 3) if start is not None else None,
                     "LapPlace": places[number],
                     "PlaceChange": places[number - 1] - places[number] if number - 1 in places else None,
                 }
