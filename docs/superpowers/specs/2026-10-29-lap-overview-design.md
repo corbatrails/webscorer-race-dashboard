@@ -124,7 +124,7 @@ The dashboard cannot determine when a racer actually stopped unless the timing s
 - When `show_lap_overview` is false (the default), the rotation, page indicators, and arrow-key navigation are exactly as before.
 - Show event name, date, and last successful refresh using the existing event header pattern.
 - Show event-level totals for Registered, DNS, Not Started, On Course, Finished, DNF, and DSQ.
-- Render one row per overall distance, shortest first by the distance parsed from its label (km, K, mi/miles, Half, Marathon); labels with no recognisable distance follow in source order. Include empty and one-lap distances. The row label shows only the distance name.
+- Render one row per overall distance in the same order as the rest of the dashboard (Webscorer's API order), including empty and one-lap distances. The row label shows only the distance name.
 - Render one column per lap up to the maximum lap count in the event, plus Finished. Cells for laps a distance does not have are subdued and marked “no lap N.”
 - Each applicable lap cell shows the number currently on course on that lap. A thin indicator may show that count as a share of the distance's starters; label or style it so it cannot be mistaken for an individual racer's progress.
 - DNF subnotes appear within their attributed lap cell, visually distinct from the on-course count. A lap can have both active racers and DNF notes.

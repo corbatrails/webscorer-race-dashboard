@@ -1,4 +1,3 @@
-import re
 _NO_PLACE = "-"
 
 
@@ -335,22 +334,6 @@ def _crossed_laps(racer, elapsed_limit):
 
 _LAP_TOTAL_KEYS = ("registered", "dns", "not_started", "on_course", "finished", "dnf", "dsq", "started")
 
-_DISTANCE_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(km|k|miles?|mi)\b", re.IGNORECASE)
-
-
-def _distance_km(name):
-    """Kilometres named by a distance label like '12.5K', '10 mi' or 'Half Marathon'; None if unknown."""
-    match = _DISTANCE_RE.search(name)
-    if match:
-        value = float(match.group(1))
-        return value * 1.609344 if match.group(2).lower().startswith("mi") else value
-    lowered = name.lower()
-    if "half" in lowered:
-        return 21.0975
-    if "marathon" in lowered:
-        return 42.195
-    return None
-
 
 def build_lap_overview_data(snapshot, observation_seconds):
     """Per-distance lap state for the Lap Overview page.
@@ -416,8 +399,6 @@ def build_lap_overview_data(snapshot, observation_seconds):
                 entry["on_course"] += 1
         distances.append(entry)
 
-    # Shortest first; labels with no recognisable distance keep source order at the end
-    distances.sort(key=lambda d: (_distance_km(d["name"]) is None, _distance_km(d["name"]) or 0))
     totals = {key: sum(d[key] for d in distances) for key in _LAP_TOTAL_KEYS}
     return {"totals": totals, "distances": distances}
 
