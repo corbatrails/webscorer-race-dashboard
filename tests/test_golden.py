@@ -1,9 +1,10 @@
-"""Golden-file characterization tests for the full /api/data pipeline.
+"""Golden-file characterization tests for the TV/announcer /api/data contract.
 
 Inputs are small, anonymized subsets of real WebScorer dumps (tests/fixtures).
 Expected outputs live in tests/golden. Racer rows are compared on the fields the
 frontend reads (see CONTRACT_FIELDS); regenerate with UPDATE_GOLDEN=1 when an
 intentional output change is made, and review the diff.
+The independent race-control projection is covered by test_race_control.py.
 """
 import json
 import os
@@ -66,6 +67,7 @@ def _contract_rows(racers):
 def _contract(payload):
     payload = json.loads(json.dumps(payload))
     payload.pop("last_refresh", None)
+    payload.pop("race_control", None)
     for page in payload["pages"]:
         if "racers" in page:
             page["racers"] = _contract_rows(page["racers"])

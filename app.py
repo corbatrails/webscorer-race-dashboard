@@ -143,7 +143,10 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
     @app.route("/race-control")
     def race_control():
         color_scheme = app.config["dashboard"].get("color_scheme", "dark")
-        return render_template("race_control.html", cache_bust=_start_time, color_scheme=color_scheme)
+        return render_template(
+            "race_control.html", cache_bust=_start_time, color_scheme=color_scheme,
+            admin_enabled=app.config["admin_enabled"],
+        )
 
     @app.route("/api/data")
     def api_data():
