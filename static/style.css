@@ -194,15 +194,22 @@ body {
   margin-bottom: 1.5vh;
 }
 
+/* Rows keep their natural height until the page runs out, then share what's left so no distance is cut off */
 .lap-grid {
-  flex: 1;
+  flex: 0 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   display: grid;
   grid-template-rows: auto;
-  grid-auto-rows: minmax(9vh, auto);
-  gap: 0.8vh 0.6vw;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: calc(0.8vh * var(--lap-scale, 1)) 0.6vw;
   align-content: start;
+  margin-bottom: 3vh;
+}
+
+.lap-grid > * {
+  min-height: 0;
+  overflow: hidden;
 }
 
 .lap-grid-head {
@@ -221,20 +228,20 @@ body {
 .lap-row-label {
   background: var(--bg-card);
   border-radius: 1vh;
-  padding: 1vh 1vw;
+  padding: calc(1vh * var(--lap-scale, 1)) 1vw;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .lap-row-name {
-  font-size: 2.8vh;
+  font-size: calc(2.8vh * var(--lap-scale, 1));
   font-weight: bold;
   color: var(--text-primary);
 }
 
 .lap-row-meta {
-  font-size: 1.6vh;
+  font-size: max(1.2vh, calc(1.6vh * var(--lap-scale, 1)));
   color: var(--text-muted);
 }
 
@@ -242,16 +249,16 @@ body {
   background: var(--bg-card);
   border: 2px solid var(--border-color);
   border-radius: 1vh;
-  padding: 0.8vh 0.6vw;
+  padding: calc(0.8vh * var(--lap-scale, 1)) 0.6vw;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.4vh;
+  gap: calc(0.4vh * var(--lap-scale, 1));
 }
 
 .lap-cell-count {
-  font-size: 4.5vh;
+  font-size: calc(4.5vh * var(--lap-scale, 1));
   font-weight: bold;
   line-height: 1;
   color: var(--text-dim);
@@ -279,7 +286,7 @@ body {
 }
 
 .lap-cell-dnf {
-  font-size: 1.6vh;
+  font-size: max(1.2vh, calc(1.6vh * var(--lap-scale, 1)));
   color: var(--error-color);
   border-top: 1px dashed var(--error-color);
   padding-top: 0.3vh;
@@ -298,7 +305,7 @@ body {
   background: transparent;
   border-style: dashed;
   color: var(--text-dim);
-  font-size: 1.8vh;
+  font-size: max(1.2vh, calc(1.8vh * var(--lap-scale, 1)));
 }
 
 .demographics-grid {

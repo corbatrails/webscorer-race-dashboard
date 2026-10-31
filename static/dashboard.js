@@ -612,7 +612,9 @@
       "Lap position comes from timing crossings, not GPS; DNF notes mark the last recorded crossing.</div>";
 
     var columns = "minmax(16vw, 1.4fr) repeat(" + (maxLaps + 1) + ", minmax(0, 1fr))";
-    html += '<div class="lap-grid" style="grid-template-columns:' + columns + '">';
+    // About six rows fit at full size; shrink text so every distance stays on screen
+    var scale = Math.max(0.5, Math.min(1, 6 / Math.max(1, d.distances.length)));
+    html += '<div class="lap-grid" style="grid-template-columns:' + columns + ";--lap-scale:" + scale + '">';
     html += '<div class="lap-grid-head">Distance</div>';
     for (var lap = 1; lap <= maxLaps; lap++) {
       html += '<div class="lap-grid-head">Lap ' + lap + "</div>";

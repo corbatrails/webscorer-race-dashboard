@@ -346,3 +346,17 @@ test("a poll refreshes the active lap overview without restarting its dwell", as
   assert.match(d.dashboard.innerHTML, /lap-cell-count">7</);
   assert.equal(d.pendingTimers().filter((ms) => ms === 999 * 1000).length, dwellTimers);
 });
+
+test("lap overview shrinks rows to fit many distances instead of hiding them", async () => {
+  const d = startDashboard();
+  const base = lapData();
+  const many = { ...base, distances: Array.from({ length: 12 }, (_, i) => ({ ...base.distances[1], name: `D${i + 1}` })) };
+  await d.respond(0, lapPayload({ lap: many }));
+  await d.respond(await d.press("ArrowRight"), lapPayload({ lap: many }));
+  const html = d.dashboard.innerHTML;
+  assert.match(html, /D12/);
+  assert.match(html, /--lap-scale:0\.5\b/);
+
+  await d.respond(await d.poll(), lapPayload());
+  assert.match(d.dashboard.innerHTML, /--lap-scale:1\b/);
+});
