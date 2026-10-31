@@ -48,12 +48,17 @@ def test_race_meta():
         "date": "Aug 9, 2026",
         "sport": "Running",
         "start_seconds": 14 * 3600 + 8 * 60,
+        "event_date_iso": "2026-08-09",
+        "timezone_offset_minutes": -300,
     }
 
 
 def test_race_meta_defaults_when_missing():
     snap = normalize_webscorer({"Results": []})
-    assert snap["race"] == {"name": "", "date": "", "sport": "", "start_seconds": 0}
+    assert snap["race"] == {
+        "name": "", "date": "", "sport": "", "start_seconds": 0,
+        "event_date_iso": None, "timezone_offset_minutes": None,
+    }
 
 
 def test_overall_racer_fields():
@@ -305,10 +310,10 @@ def test_groups_in_api_order_skip_untiered_and_deduplicate():
         {"Grouping": {"Category": "Masters"}, "Racers": []},
     ))
     assert snap["groups"] == [
-        {"tier": "overall", "distance": "Long", "category": "", "gender": ""},
-        {"tier": "category", "distance": "Long", "category": "Open", "gender": "Male"},
-        {"tier": "overall", "distance": "", "category": "", "gender": ""},
-        {"tier": "category", "distance": "", "category": "Masters", "gender": ""},
+        {"tier": "overall", "distance": "Long", "category": "", "gender": "", "lap_count": 1},
+        {"tier": "category", "distance": "Long", "category": "Open", "gender": "Male", "lap_count": 1},
+        {"tier": "overall", "distance": "", "category": "", "gender": "", "lap_count": 1},
+        {"tier": "category", "distance": "", "category": "Masters", "gender": "", "lap_count": 1},
     ]
     assert snap["racers"] == []
 
@@ -352,3 +357,101 @@ def test_race_b_names_come_from_team_name():
     raw = json.loads((FIXTURES / "race_b_teamname.json").read_text(encoding="utf-8"))
     snap = normalize_webscorer(raw)
     assert all(r["name"] and r["team"] == "" for r in snap["racers"])
+
+
+def _lap_overall(distance, lap_count, *racers):
+    group = _overall(distance, *racers)
+    if lap_count is not None:
+        group["Grouping"]["LapCount"] = lap_count
+    return group
+
+
+def _lap(number, race_time, lap_time="0:10:00.0"):
+    return {"LapNumber": number, "LapTime": lap_time, "RaceTime": race_time}
+
+
+@pytest.mark.parametrize("raw, expected", [(None, 1), (4, 4), ("3", 3), (0, 1), (-2, 1), ("abc", 1), (True, 1)])
+def test_lap_count_defaults_to_one_unless_positive_integer(raw, expected):
+    snap = normalize_webscorer(_response(_lap_overall("50K", raw)))
+    assert snap["groups"][0]["lap_count"] == expected
+
+
+def test_category_group_lap_count_is_parsed():
+    group = _category("50K", "Open", "Male")
+    group["Grouping"]["LapCount"] = 4
+    snap = normalize_webscorer(_response(group))
+    assert snap["groups"][0]["lap_count"] == 4
+
+
+def test_groups_with_different_lap_counts_still_deduplicate():
+    snap = normalize_webscorer(_response(_lap_overall("50K", 4), _lap_overall("50K", None)))
+    assert snap["groups"] == [{"tier": "overall", "distance": "50K", "category": "", "gender": "", "lap_count": 4}]
+
+
+def test_lap_crossings_use_cumulative_race_time_not_lap_time():
+    racer = _racer(Time="", LapTimes=[_lap(1, "0:30:00.0", "0:30:00.0"), _lap(2, "1:05:00.5", "0:35:00.5")])
+    snap = normalize_webscorer(_response(_lap_overall("50K", 4, racer)))
+    assert snap["racers"][0]["lap_crossings"] == [
+        {"lap_number": 1, "elapsed_seconds": 1800.0},
+        {"lap_number": 2, "elapsed_seconds": 3900.5},
+    ]
+
+
+def test_lap_crossings_skip_invalid_entries():
+    racer = _racer(Time="DNF", LapTimes=[
+        _lap(1, "0:30:00.0"),
+        _lap(2, "-"),
+        _lap("x", "0:40:00.0"),
+        _lap(0, "0:10:00.0"),
+        _lap(5, "2:00:00.0"),
+        {"LapNumber": 3},
+        "garbage",
+    ])
+    snap = normalize_webscorer(_response(_lap_overall("50K", 4, racer)))
+    assert snap["racers"][0]["lap_crossings"] == [{"lap_number": 1, "elapsed_seconds": 1800.0}]
+
+
+def test_lap_crossings_drop_duplicates_and_non_monotonic_times():
+    racer = _racer(Time="", LapTimes=[
+        _lap(2, "1:00:00.0"),
+        _lap(1, "0:30:00.0"),
+        _lap(1, "0:31:00.0"),
+        _lap(3, "0:50:00.0"),
+        _lap(4, "1:30:00.0"),
+    ])
+    snap = normalize_webscorer(_response(_lap_overall("50K", 4, racer)))
+    assert snap["racers"][0]["lap_crossings"] == [
+        {"lap_number": 1, "elapsed_seconds": 1800.0},
+        {"lap_number": 2, "elapsed_seconds": 3600.0},
+        {"lap_number": 4, "elapsed_seconds": 5400.0},
+    ]
+
+
+def test_missing_or_malformed_lap_times_yield_no_crossings():
+    snap = normalize_webscorer(_response(_lap_overall("50K", 4, _racer("1"), _racer("2", LapTimes="nope"))))
+    assert [r["lap_crossings"] for r in snap["racers"]] == [[], []]
+
+
+@pytest.mark.parametrize("start, expected", [
+    ("Saturday, November 1, 2025 8:07 AM (GMT-5)", -300),
+    ("Saturday, November 1, 2025 8:07 AM (GMT+5:30)", 330),
+    ("Saturday, November 1, 2025 8:07 AM (GMT+0)", 0),
+    ("Saturday, November 1, 2025 8:07 AM", None),
+    ("Saturday, November 1, 2025 8:07 AM (GMT+99)", None),
+])
+def test_timezone_offset_parsed_from_start_time(start, expected):
+    snap = normalize_webscorer(_response(start=start))
+    assert snap["race"]["timezone_offset_minutes"] == expected
+
+
+@pytest.mark.parametrize("date, start, expected", [
+    ("Aug 13, 2026", "", "2026-08-13"),
+    ("Saturday, June 6, 2026", "", "2026-06-06"),
+    ("2026-06-06", "", "2026-06-06"),
+    ("", "Thursday, August 13, 2026 2:08 PM (GMT-5)", "2026-08-13"),
+    ("sometime soon", "", None),
+])
+def test_event_date_iso_parsed_from_supported_formats(date, start, expected):
+    raw = _response(start=start)
+    raw["RaceInfo"]["Date"] = date
+    assert normalize_webscorer(raw)["race"]["event_date_iso"] == expected

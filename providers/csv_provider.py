@@ -4,6 +4,7 @@ import io
 import os
 import re
 
+from normalizer import parse_event_date_iso
 from providers.base import Provider
 
 MAX_REPORTED_ERRORS = 10
@@ -168,6 +169,7 @@ def _parse_row(row, index, line, errors):
         "source_place": "",
         "in_overall": True,
         "category_groups": [],
+        "lap_crossings": [],
     }
 
 
@@ -236,11 +238,11 @@ def _derive_groups(racers):
     categories = []
     for racer in racers:
         distance = racer["distance"]
-        group = {"tier": "overall", "distance": distance, "category": "", "gender": ""}
+        group = {"tier": "overall", "distance": distance, "category": "", "gender": "", "lap_count": 1}
         if group not in overall:
             overall.append(group)
         if racer["category"]:
-            group = {"tier": "category", "distance": distance, "category": racer["category"], "gender": ""}
+            group = {"tier": "category", "distance": distance, "category": racer["category"], "gender": "", "lap_count": 1}
             if group not in categories:
                 categories.append(group)
             racer["category_groups"].append(
@@ -266,6 +268,8 @@ def normalize(raw):
             "date": meta.get("date", ""),
             "sport": meta.get("sport", ""),
             "start_seconds": race_start,
+            "event_date_iso": parse_event_date_iso(meta.get("date")),
+            "timezone_offset_minutes": None,
         },
         "groups": _derive_groups(racers),
         "racers": racers,

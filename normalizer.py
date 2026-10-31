@@ -9,9 +9,12 @@ Schema
 ------
 RaceSnapshot
     error    str | None      API `Error` message; when set, `racers`/`groups` are empty.
-    race     RaceMeta        name, date, sport, start_seconds (race start time of day).
+    race     RaceMeta        name, date, sport, start_seconds (race start time of day),
+                             event_date_iso (YYYY-MM-DD | None), timezone_offset_minutes
+                             (event UTC offset | None).
     groups   list[GroupInfo] Overall/category groupings in API order, de-duplicated.
-                             Drives page order and keeps empty groups visible.
+                             Drives page order and keeps empty groups visible. Each has
+                             lap_count (positive int, 1 when absent or invalid).
     racers   list[Racer]     One entry per overall listing, plus category-only racers.
 
 Racer
@@ -30,10 +33,13 @@ Racer
                              only; views derive place themselves).
     in_overall               Listed in an Overall grouping (feeds totals/chart/demographics).
     category_groups          list[CategoryMembership], one per Category grouping listed in.
+    lap_crossings            list[LapCrossing] {lap_number, elapsed_seconds}: valid cumulative
+                             lap crossings in lap order with strictly increasing times.
 
 CategoryMembership: distance, category, gender (grouping values), source_place.
 """
 import re
+from datetime import datetime
 from typing import List, Optional, TypedDict
 
 _NON_FINISH_STATUSES = {"DNS", "DNF", "DSQ"}
@@ -41,6 +47,11 @@ _NO_TIME_VALUES = {"-", ""}
 _DAY_SECONDS = 86400
 # A racer start more than this far before the race start is on the next day.
 _NEXT_DAY_THRESHOLD_SECONDS = 12 * 3600
+_GMT_OFFSET_RE = re.compile(r"GMT\s*([+-])(\d{1,2})(?::(\d{2}))?", re.IGNORECASE)
+_MAX_OFFSET_MINUTES = 14 * 60
+_DATE_FORMATS = ("%Y-%m-%d", "%b %d, %Y", "%B %d, %Y")
+_WEEKDAY_PREFIX_RE = re.compile(r"^[A-Za-z]+day,\s*")
+_DATE_IN_TEXT_RE = re.compile(r"([A-Za-z]+ \d{1,2}, \d{4})")
 
 
 class RaceMeta(TypedDict):
@@ -48,6 +59,8 @@ class RaceMeta(TypedDict):
     date: str
     sport: str
     start_seconds: float
+    event_date_iso: Optional[str]
+    timezone_offset_minutes: Optional[int]
 
 
 class GroupInfo(TypedDict):
@@ -55,6 +68,12 @@ class GroupInfo(TypedDict):
     distance: str
     category: str
     gender: str
+    lap_count: int
+
+
+class LapCrossing(TypedDict):
+    lap_number: int
+    elapsed_seconds: float
 
 
 class CategoryMembership(TypedDict):
@@ -80,6 +99,7 @@ class Racer(TypedDict):
     source_place: str
     in_overall: bool
     category_groups: List[CategoryMembership]
+    lap_crossings: List[LapCrossing]
 
 
 class RaceSnapshot(TypedDict):
@@ -145,6 +165,75 @@ def _extract_race_start_seconds(start_time_str):
     return hour * 3600 + minute * 60
 
 
+def parse_event_date_iso(*texts):
+    """Return the first supported date (ISO, 'Aug 9, 2026', 'Saturday, June 6, 2026') as YYYY-MM-DD."""
+    for text in texts:
+        text = _WEEKDAY_PREFIX_RE.sub("", (text or "").strip())
+        candidates = [text]
+        match = _DATE_IN_TEXT_RE.search(text)
+        if match:
+            candidates.append(match.group(1))
+        for candidate in candidates:
+            for fmt in _DATE_FORMATS:
+                try:
+                    return datetime.strptime(candidate, fmt).date().isoformat()
+                except ValueError:
+                    pass
+    return None
+
+
+def _parse_timezone_offset(start_time_str):
+    match = _GMT_OFFSET_RE.search(start_time_str)
+    if not match:
+        return None
+    minutes = int(match.group(2)) * 60 + int(match.group(3) or 0)
+    if minutes > _MAX_OFFSET_MINUTES:
+        return None
+    return -minutes if match.group(1) == "-" else minutes
+
+
+def _parse_lap_count(value):
+    if isinstance(value, bool):
+        return 1
+    try:
+        count = int(value)
+    except (TypeError, ValueError):
+        return 1
+    return count if count > 0 else 1
+
+
+def _parse_lap_crossings(lap_times, lap_count):
+    """Valid cumulative crossings in lap order: first entry per lap, strictly increasing times."""
+    if not isinstance(lap_times, list):
+        return []
+    by_lap = {}
+    for entry in lap_times:
+        if not isinstance(entry, dict):
+            continue
+        number = entry.get("LapNumber")
+        if isinstance(number, bool):
+            continue
+        try:
+            number = int(number)
+        except (TypeError, ValueError):
+            continue
+        if not 1 <= number <= lap_count or number in by_lap:
+            continue
+        race_time = _match_value(entry.get("RaceTime"))
+        if race_time in _NO_TIME_VALUES:
+            continue
+        seconds = _safe_seconds(race_time)
+        if seconds is None:
+            continue
+        by_lap[number] = seconds
+    crossings = []
+    for number in sorted(by_lap):
+        if crossings and by_lap[number] <= crossings[-1]["elapsed_seconds"]:
+            continue
+        crossings.append({"lap_number": number, "elapsed_seconds": by_lap[number]})
+    return crossings
+
+
 def _as_age_int(age):
     if isinstance(age, bool):
         return None
@@ -157,7 +246,7 @@ def _as_age_int(age):
     return None
 
 
-def _build_racer(raw, distance, race_start_seconds, in_overall):
+def _build_racer(raw, distance, race_start_seconds, in_overall, lap_count=1):
     name = _match_value(raw.get("Name"))
     team = _match_value(raw.get("TeamName"))
     if not name and team:
@@ -193,6 +282,7 @@ def _build_racer(raw, distance, race_start_seconds, in_overall):
         "source_place": _match_value(raw.get("Place")) if in_overall else "",
         "in_overall": in_overall,
         "category_groups": [],
+        "lap_crossings": _parse_lap_crossings(raw.get("LapTimes"), lap_count),
     }
 
 
@@ -209,7 +299,10 @@ def normalize_webscorer(api_response):
     if "Error" in api_response:
         return {
             "error": api_response["Error"],
-            "race": {"name": "", "date": "", "sport": "", "start_seconds": 0},
+            "race": {
+                "name": "", "date": "", "sport": "", "start_seconds": 0,
+                "event_date_iso": None, "timezone_offset_minutes": None,
+            },
             "groups": [],
             "racers": [],
         }
@@ -235,14 +328,15 @@ def normalize_webscorer(api_response):
             "gender": (grouping.get("Gender") or "") if tier == "category" else "",
         }
         key = tuple(descriptor.values())
+        lap_count = _parse_lap_count(grouping.get("LapCount"))
         if key not in seen_groups:
             seen_groups.add(key)
-            groups.append(descriptor)
+            groups.append({**descriptor, "lap_count": lap_count})
 
         if tier != "overall":
             continue
         for raw in group.get("Racers", []):
-            racer = _build_racer(raw, descriptor["distance"], race_start, in_overall=True)
+            racer = _build_racer(raw, descriptor["distance"], race_start, in_overall=True, lap_count=lap_count)
             racers.append(racer)
             identity = _identity(racer["distance"], racer)
             if identity is not None:
@@ -261,7 +355,10 @@ def normalize_webscorer(api_response):
                 "gender": grouping.get("Gender") or "",
                 "source_place": _match_value(raw.get("Place")),
             }
-            candidate = _build_racer(raw, lookup_distance, race_start, in_overall=False)
+            candidate = _build_racer(
+                raw, lookup_distance, race_start, in_overall=False,
+                lap_count=_parse_lap_count(grouping.get("LapCount")),
+            )
             identity = _identity(lookup_distance, candidate)
             racer = by_identity.get(identity) if identity is not None else None
             if racer is None:
@@ -278,6 +375,8 @@ def normalize_webscorer(api_response):
             "date": info.get("Date", ""),
             "sport": info.get("Sport", ""),
             "start_seconds": race_start,
+            "event_date_iso": parse_event_date_iso(info.get("Date"), info.get("StartTime")),
+            "timezone_offset_minutes": _parse_timezone_offset(info.get("StartTime", "") or ""),
         },
         "groups": groups,
         "racers": racers,

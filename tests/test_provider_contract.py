@@ -1,4 +1,5 @@
 """Contract tests every provider must pass. Add a provider by adding a case to CASES."""
+import json
 import os
 from unittest.mock import patch
 
@@ -21,13 +22,14 @@ CASES = {
 }
 
 SNAPSHOT_KEYS = {"error", "race", "groups", "racers"}
-RACE_KEYS = {"name", "date", "sport", "start_seconds"}
-GROUP_KEYS = {"tier", "distance", "category", "gender"}
+RACE_KEYS = {"name", "date", "sport", "start_seconds", "event_date_iso", "timezone_offset_minutes"}
+GROUP_KEYS = {"tier", "distance", "category", "gender", "lap_count"}
 RACER_KEYS = {
     "bib", "name", "team", "distance", "category", "gender", "age", "status", "time_display",
     "elapsed_seconds", "start_seconds", "finish_tod_seconds", "source_place", "in_overall",
-    "category_groups",
+    "category_groups", "lap_crossings",
 }
+CROSSING_KEYS = {"lap_number", "elapsed_seconds"}
 MEMBERSHIP_KEYS = {"distance", "category", "gender", "source_place"}
 STATUSES = {"FINISHED", "IN_PROGRESS", "DNS", "DNF", "DSQ"}
 
@@ -67,10 +69,18 @@ def test_snapshot_has_the_documented_shape(source):
     assert snapshot["error"] is None
     assert set(snapshot["race"]) == RACE_KEYS
     assert isinstance(snapshot["race"]["name"], str) and snapshot["race"]["name"]
+    date_iso = snapshot["race"]["event_date_iso"]
+    assert date_iso is None or (isinstance(date_iso, str) and len(date_iso) == 10)
+    offset = snapshot["race"]["timezone_offset_minutes"]
+    assert offset is None or isinstance(offset, int)
     assert snapshot["racers"] and snapshot["groups"]
+    lap_counts = {}
     for group in snapshot["groups"]:
         assert set(group) == GROUP_KEYS
         assert group["tier"] in {"overall", "category"}
+        assert isinstance(group["lap_count"], int) and group["lap_count"] >= 1
+        if group["tier"] == "overall":
+            lap_counts[group["distance"]] = group["lap_count"]
     for racer in snapshot["racers"]:
         assert set(racer) == RACER_KEYS
         assert racer["status"] in STATUSES
@@ -78,6 +88,19 @@ def test_snapshot_has_the_documented_shape(source):
         assert isinstance(racer["in_overall"], bool)
         for membership in racer["category_groups"]:
             assert set(membership) == MEMBERSHIP_KEYS
+        previous = None
+        for crossing in racer["lap_crossings"]:
+            assert set(crossing) == CROSSING_KEYS
+            assert 1 <= crossing["lap_number"] <= lap_counts.get(racer["distance"], crossing["lap_number"])
+            if previous is not None:
+                assert crossing["lap_number"] > previous["lap_number"]
+                assert crossing["elapsed_seconds"] > previous["elapsed_seconds"]
+            previous = crossing
+
+
+def test_snapshot_is_json_serializable(source):
+    snapshot = _snapshot(source)
+    assert json.loads(json.dumps(snapshot)) == snapshot
 
 
 def test_finished_iff_elapsed_seconds_is_set(source):

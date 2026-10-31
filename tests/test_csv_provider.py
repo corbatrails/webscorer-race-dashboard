@@ -196,13 +196,17 @@ def test_metadata_comment_lines_set_race_fields():
     assert snap["race"] == {
         "name": "2026 Coon Fork 40", "date": "Aug 13, 2026",
         "sport": "Cycling - gravel", "start_seconds": 14 * 3600 + 8 * 60,
+        "event_date_iso": "2026-08-13", "timezone_offset_minutes": None,
     }
     assert snap["error"] is None
 
 
 def test_metadata_defaults_to_file_stem_and_blank_fields():
     snap = _snapshot("bib,name,time", "1,A,10:00", name="my-race")
-    assert snap["race"] == {"name": "my-race", "date": "", "sport": "", "start_seconds": 0}
+    assert snap["race"] == {
+        "name": "my-race", "date": "", "sport": "", "start_seconds": 0,
+        "event_date_iso": None, "timezone_offset_minutes": None,
+    }
 
 
 def test_start_defaults_to_earliest_racer_start():
@@ -259,7 +263,7 @@ def test_overall_groups_per_distance_in_first_appearance_order():
 
 def test_blank_distance_is_a_single_overall_group():
     snap = _snapshot("bib,name,time", "1,A,10:00", "2,B,11:00")
-    assert snap["groups"] == [{"tier": "overall", "distance": "", "category": "", "gender": ""}]
+    assert snap["groups"] == [{"tier": "overall", "distance": "", "category": "", "gender": "", "lap_count": 1}]
 
 
 def test_category_groups_per_distance_and_category():
@@ -354,3 +358,29 @@ def test_sample_file_feeds_the_finish_chart():
     chart = build_finish_chart_data(_sample_snapshot(), 15)
     assert [d["label"] for d in chart["datasets"]] == ["40 mile", "20 mile"]
     assert sum(sum(d["data"]) for d in chart["datasets"]) == 14
+
+
+def test_csv_snapshot_has_one_lap_groups_and_no_crossings():
+    snap = _snapshot("bib,name,time,distance,category", "1,A,10:00,40,Men", "2,B,,20,")
+    assert all(g["lap_count"] == 1 for g in snap["groups"])
+    assert all(r["lap_crossings"] == [] for r in snap["racers"])
+
+
+def test_csv_snapshot_has_no_timezone_offset():
+    snap = _snapshot("# start: 8:00", "bib,name,time", "1,A,10:00")
+    assert snap["race"]["timezone_offset_minutes"] is None
+
+
+@pytest.mark.parametrize("date, expected", [
+    ("Saturday, June 6, 2026", "2026-06-06"),
+    ("2026-06-06", "2026-06-06"),
+    ("next weekend", None),
+])
+def test_csv_metadata_date_normalized_to_iso(date, expected):
+    snap = _snapshot(f"# date: {date}", "bib,name,time", "1,A,10:00")
+    assert snap["race"]["event_date_iso"] == expected
+    assert snap["race"]["date"] == date
+
+
+def test_csv_without_date_has_no_event_date():
+    assert _snapshot("bib,name,time", "1,A,10:00")["race"]["event_date_iso"] is None
