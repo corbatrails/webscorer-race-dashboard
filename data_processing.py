@@ -1,4 +1,5 @@
 import json
+import math
 
 
 _NO_PLACE = "-"
@@ -516,7 +517,13 @@ def build_race_control_data(snapshot, observation_seconds):
         "progress": progress,
         "groups": groups,
         "latest_finishers": latest[:12],
-        "clock_seconds": observation_seconds - snapshot["race"]["start_seconds"],
+        "clock_seconds": observation_seconds - min(
+            (
+                r["start_seconds"] for r in snapshot["racers"]
+                if r["start_seconds"] is not None and math.isfinite(r["start_seconds"])
+            ),
+            default=snapshot["race"]["start_seconds"],
+        ),
     }
 
 
