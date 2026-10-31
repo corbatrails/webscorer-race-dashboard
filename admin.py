@@ -58,6 +58,7 @@ FIELD_GROUPS = (
         ("show_overall_results", "Show Overall result pages", None),
         ("show_category_results", "Show category result pages", None),
         ("show_demographics", "Show demographics page", None),
+        ("show_lap_overview", "Show lap overview page", None),
         ("display_unfinished_in_category", "Show category pages before racers finish", None),
         ("display_unfinished_in_overall", "Show Overall pages before racers finish", None),
     )),

@@ -9,10 +9,16 @@ Rules
 - `fetch(config, secrets)` does all I/O and returns an opaque raw payload. It honors
   `config["data_file"]` when the provider supports offline input. It may raise, and
   must never put secrets in an exception message.
-- `normalize(raw)` is pure: no config, files or network.
+- `normalize(raw)` is pure: no config, files, network, or system clock.
 - The snapshot keeps the Phase 1 invariants: `status == "FINISHED"` iff
   `elapsed_seconds` is set, every `in_overall` racer's distance has an Overall group,
   and every category membership matches a category group.
+- Every group has a positive `lap_count` (1 when the platform has no laps). Every
+  racer has `lap_crossings` (possibly empty) with lap numbers within its distance's
+  `lap_count` and strictly increasing lap numbers and cumulative elapsed times.
+- `race.event_date_iso` is `YYYY-MM-DD` or `None`; `race.timezone_offset_minutes` is
+  the event's UTC offset when the platform reports one, else `None` (the dashboard
+  then uses the machine's local clock).
 - A platform-level error may be returned as `snapshot["error"]` with empty `racers`
   and `groups`; anything else raises.
 """

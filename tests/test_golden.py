@@ -31,6 +31,12 @@ CASES = [
 
 
 @pytest.fixture(autouse=True)
+def fixed_observation_time(monkeypatch):
+    """The lap overview depends on wall-clock time; pin it to the end of the event day."""
+    monkeypatch.setattr(app_module, "_observation_seconds", lambda race, now=None: 86399)
+
+
+@pytest.fixture(autouse=True)
 def reset_cache():
     with app_module._cache_lock:
         app_module._cache.update({

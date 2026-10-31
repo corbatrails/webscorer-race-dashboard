@@ -393,6 +393,13 @@ def test_api_data_show_demographics_true_when_configured():
     assert data["show_demographics"] is True
 
 
+@pytest.mark.parametrize("configured, expected", [({}, False), ({"show_lap_overview": True}, True)])
+def test_api_data_includes_show_lap_overview(configured, expected):
+    application = create_app(configured, start_polling=False)
+    data = application.test_client().get("/api/data").get_json()
+    assert data["show_lap_overview"] is expected
+
+
 @patch("providers.webscorer.fetch_race_results")
 def test_poll_once_includes_demographics_page(mock_fetch, app, client):
     mock_fetch.return_value = MOCK_RACE_RESULTS
@@ -447,6 +454,7 @@ def test_format_config_lines_includes_all_config_options():
         "pinned_leaders": 3,
         "show_summary": True,
         "show_demographics": False,
+        "show_lap_overview": False,
         "show_overall_results": True,
         "show_category_results": True,
         "pinned_leaders_on_overall_results": False,
@@ -475,6 +483,7 @@ def test_format_config_lines_includes_all_config_options():
         "Pinned leaders:",
         "Show summary:",
         "Show demographics:",
+        "Show lap overview:",
         "Show Overall results:",
         "Show category results:",
         "Pinned leaders on Overall:",
@@ -1082,6 +1091,133 @@ def test_main_reports_admin_status_without_password(mock_load_config, mock_serve
     assert "SENTINEL-pw-123" not in out
     application = mock_server.call_args.args[2]
     assert application.config["admin_enabled"] is True
+
+
+from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+
+
+def _race(date_iso=None, offset=None, start=8 * 3600):
+    return {"event_date_iso": date_iso, "timezone_offset_minutes": offset, "start_seconds": start}
+
+
+def test_observation_seconds_converts_to_event_offset():
+    from app import _observation_seconds
+    now = _dt(2025, 11, 1, 14, 0, 30, tzinfo=_tz.utc)
+    assert _observation_seconds(_race("2025-11-01", -300), now) == 9 * 3600 + 30
+
+
+def test_observation_seconds_adds_days_after_event_date():
+    from app import _observation_seconds
+    now = _dt(2025, 11, 2, 5, 30, tzinfo=_tz.utc)
+    assert _observation_seconds(_race("2025-11-01", -300), now) == 86400 + 30 * 60
+
+
+def test_observation_seconds_is_negative_before_event_date():
+    from app import _observation_seconds
+    now = _dt(2025, 10, 31, 20, 0, tzinfo=_tz.utc)
+    assert _observation_seconds(_race("2025-11-01", 0), now) == 20 * 3600 - 86400
+
+
+def test_observation_seconds_uses_machine_local_time_without_offset():
+    from app import _observation_seconds
+    now = _dt(2026, 6, 6, 10, 0, tzinfo=_tz(_td(hours=2)))
+    assert _observation_seconds(_race("2026-06-06", None), now) == 10 * 3600
+
+
+@pytest.mark.parametrize("hour, start, expected", [
+    (10, 8 * 3600, 10 * 3600),
+    (1, 23 * 3600, 86400 + 3600),
+    (7, 8 * 3600, 7 * 3600),
+])
+def test_observation_seconds_without_event_date_uses_rollover(hour, start, expected):
+    from app import _observation_seconds
+    now = _dt(2026, 6, 6, hour, 0, tzinfo=_tz.utc)
+    assert _observation_seconds(_race(None, 0, start), now) == expected
+
+
+LAP_RACE_RESULTS = {
+    "RaceInfo": {
+        "RaceId": 100, "Name": "Lap Race", "Date": "Nov 1, 2025", "Sport": "Running",
+        "StartTime": "Saturday, November 1, 2025 8:00 AM (GMT-5)",
+    },
+    "Results": [
+        {
+            "Grouping": {"Overall": True, "Distance": "25K", "LapCount": 2},
+            "Racers": [
+                {"Place": "1", "Bib": "1", "Name": "A", "Time": "2:00:00.0", "StartTime": "08:00:00.0",
+                 "LapTimes": [{"LapNumber": 1, "RaceTime": "1:00:00.0"}, {"LapNumber": 2, "RaceTime": "2:00:00.0"}]},
+                {"Place": "", "Bib": "2", "Name": "B", "Time": "DNS", "StartTime": ""},
+                {"Place": "", "Bib": "3", "Name": "C", "Time": "DNF", "StartTime": "08:00:00.0",
+                 "LapTimes": [{"LapNumber": 1, "RaceTime": "1:10:00.0"}]},
+            ],
+        },
+        {"Grouping": {"Overall": True, "Distance": "5K", "LapCount": 1}, "Racers": []},
+    ],
+}
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_poll_once_adds_lap_overview_after_summary(mock_fetch, app, client):
+    mock_fetch.return_value = LAP_RACE_RESULTS
+    _poll(app)
+    pages = client.get("/api/data").get_json()["pages"]
+    assert [p["type"] for p in pages[:2]] == ["summary", "lap_overview"]
+    lap = pages[1]["data"]
+    assert [d["name"] for d in lap["distances"]] == ["25K", "5K"]
+    assert lap["totals"]["registered"] == 3
+    assert lap["totals"]["dns"] == 1 and lap["totals"]["finished"] == 1 and lap["totals"]["dnf"] == 1
+    assert lap["distances"][0]["dnf_by_lap"] == [1, 0]
+
+
+def test_csv_poll_includes_lap_overview(no_credentials, tmp_path):
+    import app as app_module
+    application = create_app(_csv_config(tmp_path), start_polling=False)
+    app_module.poll_once(application)
+    pages = application.test_client().get("/api/data").get_json()["pages"]
+    assert pages[1]["type"] == "lap_overview"
+    assert all(d["lap_count"] == 1 for d in pages[1]["data"]["distances"])
+
+
+def test_failed_poll_keeps_last_lap_overview_and_marks_stale(no_credentials, tmp_path):
+    import app as app_module
+    data_file = tmp_path / "results.csv"
+    data_file.write_text("bib,name,time\n1,Alice,1:00:00\n", encoding="utf-8")
+    application = create_app(_csv_config(tmp_path, str(data_file)), start_polling=False)
+    app_module.poll_once(application)
+    lap_page = app_module._cache["pages"][1]
+    assert lap_page["type"] == "lap_overview"
+
+    data_file.write_text("bib,name,time\n1,Alice,soon\n", encoding="utf-8")
+    app_module.poll_once(application)
+    data = application.test_client().get("/api/data").get_json()
+    assert data["is_stale"] is True
+    assert data["pages"][1] == lap_page
+
+
+@patch("providers.webscorer.fetch_race_results")
+def test_race_switch_drops_lap_overview_until_new_race_polls(mock_fetch, app, client):
+    from app import apply_config_reload
+
+    mock_fetch.return_value = LAP_RACE_RESULTS
+    _poll(app)
+    assert any(p["type"] == "lap_overview" for p in client.get("/api/data").get_json()["pages"])
+
+    started, release = _threading.Event(), _threading.Event()
+
+    def slow_fetch(*args, **kwargs):
+        started.set()
+        assert release.wait(5)
+        return LAP_RACE_RESULTS
+
+    mock_fetch.side_effect = slow_fetch
+    worker = _threading.Thread(target=_poll, args=(app,))
+    worker.start()
+    assert started.wait(5)
+    apply_config_reload(app, _reload(app, race_id="200"))
+    release.set()
+    worker.join(5)
+
+    assert client.get("/api/data").get_json()["pages"] == []
 
 
 @patch("providers.webscorer.fetch_race_results")

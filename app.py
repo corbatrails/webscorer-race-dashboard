@@ -5,10 +5,16 @@ import os
 import sys
 import threading
 import time
-from datetime import datetime
+from datetime import date, datetime, timedelta, timezone
 from flask import Flask, render_template, jsonify
 from werkzeug.serving import make_server
-from data_processing import process_race_data, build_pages, build_finish_chart_data, build_demographics_data
+from data_processing import (
+    process_race_data,
+    build_pages,
+    build_finish_chart_data,
+    build_demographics_data,
+    build_lap_overview_data,
+)
 from providers import get_provider
 from admin import register_admin
 from race_prompt import prompt_for_race
@@ -148,6 +154,7 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
                 "pinned_leaders": cfg.get("pinned_leaders", 3),
                 "show_summary": cfg.get("show_summary", True),
                 "show_demographics": cfg.get("show_demographics", False),
+                "show_lap_overview": cfg.get("show_lap_overview", False),
                 "chart_bucket_minutes": cfg.get("chart_bucket_minutes", 15),
                 "show_toasts": cfg.get("show_toasts", True),
                 "overall_results_layout": cfg.get("overall_results_layout", "standard"),
@@ -202,6 +209,25 @@ def _secrets_for(provider, cfg):
     return {key: cfg.get(key) for key in provider.required_secrets}
 
 
+_DAY_SECONDS = 86400
+_ROLLOVER_SECONDS = 12 * 3600
+
+
+def _observation_seconds(race, now=None):
+    """Current event-local time as seconds since midnight of the race-start day."""
+    local = now or datetime.now().astimezone()
+    offset = race.get("timezone_offset_minutes")
+    if offset is not None:
+        local = local.astimezone(timezone(timedelta(minutes=offset)))
+    seconds = local.hour * 3600 + local.minute * 60 + local.second + local.microsecond / 1e6
+    event_date = race.get("event_date_iso")
+    if event_date:
+        return seconds + (local.date() - date.fromisoformat(event_date)).days * _DAY_SECONDS
+    if seconds < (race.get("start_seconds") or 0) - _ROLLOVER_SECONDS:
+        seconds += _DAY_SECONDS
+    return seconds
+
+
 def poll_once(app):
     with _poll_lock:
         _poll_once(app)
@@ -223,7 +249,10 @@ def _poll_once(app):
             show_category_results=cfg.get("show_category_results", True),
         )
         demographics = build_demographics_data(snapshot)
-        pages = build_pages(data, demographics)
+        lap_overview = None
+        if not snapshot["error"]:
+            lap_overview = build_lap_overview_data(snapshot, _observation_seconds(snapshot["race"]))
+        pages = build_pages(data, demographics, lap_overview=lap_overview)
         finish_chart = build_finish_chart_data(snapshot, cfg.get("chart_bucket_minutes", 15))
         with _cache_lock:
             if app.config["dashboard_state"]["race_generation"] != generation:
@@ -393,6 +422,7 @@ def _format_config_lines(config, race_name, race_date):
         f"  Pinned leaders:                 {config['pinned_leaders']}",
         f"  Show summary:                   {config['show_summary']}",
         f"  Show demographics:              {config.get('show_demographics', False)}",
+        f"  Show lap overview:              {config.get('show_lap_overview', False)}",
         f"  Show Overall results:           {config['show_overall_results']}",
         f"  Show category results:          {config['show_category_results']}",
         f"  Pinned leaders on Overall:      {config['pinned_leaders_on_overall_results']}",
