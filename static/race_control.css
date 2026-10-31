@@ -116,9 +116,12 @@ td { height: 36px; padding: 0 10px; border-top: 1px solid var(--border-color); w
 .result-even > td, .split-table tr:nth-child(even) td { background: var(--row-even); }
 .col-name { position: relative; padding-right: 42px; }
 .split-toggle { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; padding: 0; }
-.split-detail > td { padding: 8px 14px; height: auto; white-space: normal; background: var(--bg-primary); }
-.split-table { width: auto; max-width: 100%; margin-left: auto; table-layout: auto; font-variant-numeric: tabular-nums; }
+.split-detail > td { padding: 8px 10px; height: auto; white-space: normal; background: var(--bg-primary); }
+.split-detail .empty-message { padding: 0; }
+.split-content { overflow-x: auto; }
+.split-table { width: auto; max-width: 100%; table-layout: auto; font-variant-numeric: tabular-nums; }
 .split-table th, .split-table td { padding-left: 18px; white-space: nowrap; }
+.split-table th:first-child, .split-table td:first-child { padding-left: 0; }
 .split-table th:first-child { width: 50px; }
 .split-table th:not(:first-child), .split-table td:not(:first-child) { text-align: right; }
 .split-table td { height: 30px; }
@@ -194,6 +197,7 @@ td.col-place { font-weight: 700; }
     .col-place { width: 40px; }
     .col-bib { width: 48px; }
     th, td { padding: 0 6px; }
+    .split-detail > td { padding-left: 6px; padding-right: 6px; }
     .racer-team { display: none; }
 }
 @media (max-height: 600px) {
