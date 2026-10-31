@@ -110,7 +110,10 @@
       groups().forEach(function (group) {
         if (group.tier !== "overall") return;
         (group.racers || []).forEach(function (racer) {
-          racers.push(Object.assign({}, racer, { Distance: group.distance || "Overall" }));
+          racers.push(Object.assign({}, racer, {
+            Distance: group.distance || "Overall",
+            RaceControlSourceGroupKey: group.key,
+          }));
         });
       });
       return [{ key: "all-distances-overall", distance: null, title: "Overall", tier: "overall", racers: racers }];
@@ -388,7 +391,8 @@
         row.appendChild(node("td", formatGap(r.GapSeconds), "col-gap"));
         body.appendChild(row);
         if (r.LapCount > 1) {
-          var key = JSON.stringify([group.key, r.Bib, r.Name]);
+          var sourceGroupKey = r.RaceControlSourceGroupKey === undefined ? group.key : r.RaceControlSourceGroupKey;
+          var key = JSON.stringify([sourceGroupKey, r.Bib, r.Name]);
           var detail = node("tr", null, "split-detail");
           detail.id = "lap-splits-" + index;
           detail.hidden = !state.expandedRacers.has(key);

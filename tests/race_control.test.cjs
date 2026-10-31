@@ -199,6 +199,32 @@ test("All with no Overall groups stays empty instead of including categories", (
   assert.equal(app.rows().length, 0);
 });
 
+test("All keeps lap expansion independent for matching racers on different distances", () => {
+  const app = ui();
+  const data = payload([
+    group("50K Overall", "50K", [racer(0, {
+      Bib: "101", Name: "Same Racer", LapCount: 2,
+      LapSplits: [{ LapNumber: 1, SplitSeconds: 600, ElapsedSeconds: 600 }],
+    })]),
+    group("25K Overall", "25K", [racer(1, {
+      Bib: "101", Name: "Same Racer", LapCount: 2,
+      LapSplits: [{ LapNumber: 1, SplitSeconds: 700, ElapsedSeconds: 700 }],
+    })]),
+  ]);
+  app.page.applyData(data);
+  app.page.setView("results");
+  app.get("distance-list").children[0].dispatch("click");
+
+  const buttons = splitButtons(app);
+  buttons[0].dispatch("click");
+  let details = app.get("result-rows").children.filter(row => row.className === "split-detail");
+  assert.deepEqual(details.map(detail => detail.hidden), [false, true]);
+
+  app.page.applyData(data);
+  details = app.get("result-rows").children.filter(row => row.className === "split-detail");
+  assert.deepEqual(details.map(detail => detail.hidden), [false, true]);
+});
+
 test("Distance column is hidden per distance and split details span visible columns", () => {
   const app = ui();
   const data = payload([group("A", "50K", [racer(0, {
