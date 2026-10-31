@@ -452,6 +452,21 @@
       "dnf_without_crossing": 0,
       "dns": 2,
       "dsq": 0,
+      "finished": 5,
+      "lap_count": 1,
+      "name": "5K",
+      "not_started": 0,
+      "on_course": 0,
+      "on_course_by_lap": [0],
+      "registered": 7,
+      "started": 5
+     },
+     {
+      "dnf": 0,
+      "dnf_by_lap": [0],
+      "dnf_without_crossing": 0,
+      "dns": 2,
+      "dsq": 0,
       "finished": 6,
       "lap_count": 1,
       "name": "12.5K",
@@ -475,6 +490,21 @@
       "on_course_by_lap": [0, 0],
       "registered": 8,
       "started": 6
+     },
+     {
+      "dnf": 0,
+      "dnf_by_lap": [0, 0, 0, 0],
+      "dnf_without_crossing": 0,
+      "dns": 2,
+      "dsq": 0,
+      "finished": 5,
+      "lap_count": 4,
+      "name": "Marathon",
+      "not_started": 0,
+      "on_course": 0,
+      "on_course_by_lap": [0, 0, 0, 0],
+      "registered": 7,
+      "started": 5
      },
      {
       "dnf": 2,
@@ -505,36 +535,6 @@
       "on_course_by_lap": [0, 0, 0, 0],
       "registered": 2,
       "started": 2
-     },
-     {
-      "dnf": 0,
-      "dnf_by_lap": [0],
-      "dnf_without_crossing": 0,
-      "dns": 2,
-      "dsq": 0,
-      "finished": 5,
-      "lap_count": 1,
-      "name": "5K",
-      "not_started": 0,
-      "on_course": 0,
-      "on_course_by_lap": [0],
-      "registered": 7,
-      "started": 5
-     },
-     {
-      "dnf": 0,
-      "dnf_by_lap": [0, 0, 0, 0],
-      "dnf_without_crossing": 0,
-      "dns": 2,
-      "dsq": 0,
-      "finished": 5,
-      "lap_count": 4,
-      "name": "Marathon",
-      "not_started": 0,
-      "on_course": 0,
-      "on_course_by_lap": [0, 0, 0, 0],
-      "registered": 7,
-      "started": 5
      }
     ],
     "totals": {"dnf": 3, "dns": 10, "dsq": 0, "finished": 29, "not_started": 0, "on_course": 0, "registered": 42, "started": 32}

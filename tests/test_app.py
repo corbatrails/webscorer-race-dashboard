@@ -1163,10 +1163,10 @@ def test_poll_once_adds_lap_overview_after_summary(mock_fetch, app, client):
     pages = client.get("/api/data").get_json()["pages"]
     assert [p["type"] for p in pages[:2]] == ["summary", "lap_overview"]
     lap = pages[1]["data"]
-    assert [d["name"] for d in lap["distances"]] == ["25K", "5K"]
+    assert [d["name"] for d in lap["distances"]] == ["5K", "25K"]
     assert lap["totals"]["registered"] == 3
     assert lap["totals"]["dns"] == 1 and lap["totals"]["finished"] == 1 and lap["totals"]["dnf"] == 1
-    assert lap["distances"][0]["dnf_by_lap"] == [1, 0]
+    assert lap["distances"][1]["dnf_by_lap"] == [1, 0]
 
 
 def test_csv_poll_includes_lap_overview(no_credentials, tmp_path):

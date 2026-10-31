@@ -56,13 +56,21 @@ def test_returns_none_without_overall_groups():
     assert build_lap_overview_data(_snapshot([_group("10K", tier="category", category="Open")], []), START) is None
 
 
-def test_every_overall_distance_appears_once_in_order_including_empty():
+def test_every_overall_distance_appears_once_including_empty():
     groups = [_group("50K", 4), _group("50K", 4, tier="category", category="Open"), _group("5K"), _group("Relay", 4)]
     data = build_lap_overview_data(_snapshot(groups, [_racer("5K")]), START + 60)
-    assert [d["name"] for d in data["distances"]] == ["50K", "5K", "Relay"]
+    assert [d["name"] for d in data["distances"]] == ["5K", "50K", "Relay"]
     relay = _distance(data, "Relay")
     assert relay["registered"] == 0 and relay["on_course_by_lap"] == [0, 0, 0, 0]
     _reconciles(relay)
+
+
+def test_distances_sort_shortest_first_with_unparseable_names_last_in_source_order():
+    names = ["50K", "Kids", "12.5K", "Marathon", "Half Marathon", "5 km", "Fun Run", "50K Relay", "10 mi", "Half"]
+    data = build_lap_overview_data(_snapshot([_group(n) for n in names], []), START)
+    assert [d["name"] for d in data["distances"]] == [
+        "5 km", "12.5K", "10 mi", "Half Marathon", "Half", "Marathon", "50K", "50K Relay", "Kids", "Fun Run",
+    ]
 
 
 def test_blank_distance_is_labelled_overall():

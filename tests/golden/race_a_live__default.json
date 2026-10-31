@@ -315,19 +315,19 @@
    "data": {
     "distances": [
      {
-      "dnf": 0,
+      "dnf": 2,
       "dnf_by_lap": [0],
-      "dnf_without_crossing": 0,
-      "dns": 0,
-      "dsq": 0,
-      "finished": 0,
+      "dnf_without_crossing": 2,
+      "dns": 2,
+      "dsq": 1,
+      "finished": 4,
       "lap_count": 1,
-      "name": "Long Course (88 miles)",
+      "name": "Short Course (28 miles)",
       "not_started": 0,
-      "on_course": 4,
-      "on_course_by_lap": [4],
-      "registered": 4,
-      "started": 4
+      "on_course": 3,
+      "on_course_by_lap": [3],
+      "registered": 12,
+      "started": 10
      },
      {
       "dnf": 0,
@@ -345,19 +345,19 @@
       "started": 10
      },
      {
-      "dnf": 2,
+      "dnf": 0,
       "dnf_by_lap": [0],
-      "dnf_without_crossing": 2,
-      "dns": 2,
-      "dsq": 1,
-      "finished": 4,
+      "dnf_without_crossing": 0,
+      "dns": 0,
+      "dsq": 0,
+      "finished": 0,
       "lap_count": 1,
-      "name": "Short Course (28 miles)",
+      "name": "Long Course (88 miles)",
       "not_started": 0,
-      "on_course": 3,
-      "on_course_by_lap": [3],
-      "registered": 12,
-      "started": 10
+      "on_course": 4,
+      "on_course_by_lap": [4],
+      "registered": 4,
+      "started": 4
      }
     ],
     "totals": {"dnf": 2, "dns": 2, "dsq": 3, "finished": 4, "not_started": 0, "on_course": 15, "registered": 26, "started": 24}

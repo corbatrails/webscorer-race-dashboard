@@ -311,14 +311,14 @@
       "dnf_without_crossing": 0,
       "dns": 0,
       "dsq": 0,
-      "finished": 6,
+      "finished": 7,
       "lap_count": 1,
-      "name": "Long Course (88 miles)",
+      "name": "Short Course (28 miles)",
       "not_started": 0,
       "on_course": 0,
       "on_course_by_lap": [0],
-      "registered": 6,
-      "started": 6
+      "registered": 7,
+      "started": 7
      },
      {
       "dnf": 0,
@@ -341,14 +341,14 @@
       "dnf_without_crossing": 0,
       "dns": 0,
       "dsq": 0,
-      "finished": 7,
+      "finished": 6,
       "lap_count": 1,
-      "name": "Short Course (28 miles)",
+      "name": "Long Course (88 miles)",
       "not_started": 0,
       "on_course": 0,
       "on_course_by_lap": [0],
-      "registered": 7,
-      "started": 7
+      "registered": 6,
+      "started": 6
      }
     ],
     "totals": {"dnf": 0, "dns": 0, "dsq": 0, "finished": 23, "not_started": 0, "on_course": 0, "registered": 23, "started": 23}
