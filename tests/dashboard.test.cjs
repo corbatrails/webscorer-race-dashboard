@@ -115,6 +115,7 @@ function startDashboard() {
     toastContainer,
     requests,
     settle,
+    pendingTimers: () => timers.filter((t) => !t.done).map((t) => t.ms),
     async respond(index, payload) {
       requests[index].resolve({ ok: true, json: () => Promise.resolve(payload) });
       await settle();
@@ -240,4 +241,108 @@ test("a failed fetch while waiting shows an error and keeps polling", async () =
   assert.match(d.dashboard.innerHTML, /Can.t reach the dashboard server/);
   await d.respond(await d.poll(), payload({ finishers: [1] }));
   assert.match(d.dashboard.innerHTML, /Race A/);
+});
+
+function lapData(name5k = "5K", onLap1 = 1) {
+  return {
+    totals: { registered: 8, dns: 1, not_started: 1, on_course: onLap1, finished: 3, dnf: 2, dsq: 0, started: 6 },
+    distances: [
+      { name: "25K", lap_count: 2, registered: 6, dns: 1, not_started: 1, started: 4, on_course: onLap1,
+        on_course_by_lap: [onLap1, 0], dnf_by_lap: [0, 1], dnf_without_crossing: 1, finished: 1, dnf: 2, dsq: 0 },
+      { name: name5k, lap_count: 1, registered: 2, dns: 0, not_started: 0, started: 2, on_course: 0,
+        on_course_by_lap: [0], dnf_by_lap: [0], dnf_without_crossing: 0, finished: 2, dnf: 0, dsq: 0 },
+    ],
+  };
+}
+
+function lapPayload({ show = true, lap = lapData(), ...rest } = {}) {
+  const p = payload({ finishers: [1], ...rest });
+  if (p.waiting) return { ...p, show_lap_overview: show };
+  const summary = { type: "summary", title: "Summary", data: {
+    total_racers: 8, total_finished: 3, total_dns: 1, total_dnf: 2, total_dsq: 0, distance_stats: [], categories: [] } };
+  return {
+    ...p,
+    show_summary: true,
+    show_lap_overview: show,
+    pages: [summary, { type: "lap_overview", title: "Lap Overview", data: lap }, ...p.pages],
+  };
+}
+
+const dotCount = (html) => (html.match(/progress-dot\b/g) || []).length;
+
+test("lap overview stays out of the rotation when the toggle is off", async () => {
+  const d = startDashboard();
+  await d.respond(0, lapPayload({ show: false }));
+  assert.equal(dotCount(d.dashboard.innerHTML), 2);
+  for (let i = 0; i < 3; i++) {
+    await d.respond(await d.press("ArrowRight"), lapPayload({ show: false }));
+    assert.doesNotMatch(d.dashboard.innerHTML, /lap-overview-page/);
+  }
+});
+
+test("lap overview follows Summary and dwells for summary_display_time", async () => {
+  const d = startDashboard();
+  await d.respond(0, lapPayload());
+  assert.equal(dotCount(d.dashboard.innerHTML), 3);
+  assert.match(d.dashboard.innerHTML, /summary-page/);
+
+  await d.respond(await d.press("ArrowRight"), lapPayload());
+  assert.match(d.dashboard.innerHTML, /lap-overview-page/);
+  assert.ok(d.pendingTimers().includes(999 * 1000), "dwell timer uses summary_display_time");
+
+  await d.respond(await d.press("ArrowRight"), lapPayload());
+  assert.match(d.dashboard.innerHTML, /Race A Overall/);
+});
+
+test("a settings change adds and removes the lap overview at once", async () => {
+  const d = startDashboard();
+  await d.respond(0, lapPayload({ show: false }));
+  await d.respond(await d.poll(), lapPayload({ show: true, configVersion: 2 }));
+  assert.equal(dotCount(d.dashboard.innerHTML), 3);
+  await d.respond(await d.poll(), lapPayload({ show: false, configVersion: 3 }));
+  assert.equal(dotCount(d.dashboard.innerHTML), 2);
+});
+
+test("a race switch clears the lap overview before the new race renders", async () => {
+  const d = startDashboard();
+  await d.respond(0, lapPayload());
+  await d.respond(await d.press("ArrowRight"), lapPayload());
+  assert.match(d.dashboard.innerHTML, /lap-overview-page/);
+
+  await d.respond(await d.poll(), lapPayload({ generation: 2, waiting: true }));
+  assert.doesNotMatch(d.dashboard.innerHTML, /lap-overview-page|25K/);
+});
+
+test("lap overview renders cells, DNF notes, and non-applicable laps", async () => {
+  const d = startDashboard();
+  await d.respond(0, lapPayload());
+  await d.respond(await d.press("ArrowRight"), lapPayload());
+  const html = d.dashboard.innerHTML;
+  assert.match(html, /DNF · no crossing recorded/);
+  assert.match(html, /1 DNF · last recorded here/);
+  assert.doesNotMatch(html, /DNF on lap/);
+  assert.match(html, /no lap 2/);
+  assert.match(html, /Not Started/);
+  assert.match(html, /Registered = DNS \+ Not Started \+ On Course \+ Finished \+ DNF \+ DSQ/);
+});
+
+test("lap overview escapes distance names", async () => {
+  const d = startDashboard();
+  const lap = lapData("<b>5K</b>");
+  await d.respond(0, lapPayload({ lap }));
+  await d.respond(await d.press("ArrowRight"), lapPayload({ lap }));
+  assert.match(d.dashboard.innerHTML, /&lt;b&gt;5K&lt;\/b&gt;/);
+  assert.doesNotMatch(d.dashboard.innerHTML, /<b>5K/);
+});
+
+test("a poll refreshes the active lap overview without restarting its dwell", async () => {
+  const d = startDashboard();
+  await d.respond(0, lapPayload());
+  await d.respond(await d.press("ArrowRight"), lapPayload());
+  const dwellTimers = d.pendingTimers().filter((ms) => ms === 999 * 1000).length;
+
+  await d.respond(await d.poll(), lapPayload({ lap: lapData("5K", 7) }));
+  assert.match(d.dashboard.innerHTML, /lap-overview-page/);
+  assert.match(d.dashboard.innerHTML, /lap-cell-count">7</);
+  assert.equal(d.pendingTimers().filter((ms) => ms === 999 * 1000).length, dwellTimers);
 });

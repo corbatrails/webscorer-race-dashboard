@@ -2,6 +2,7 @@
   var currentIndex = 0;
   var categories = [];
   var summaryPage = null;
+  var lapOverviewPage = null;
   var demographicsPage = null;
   var config = {};
   var scrollAnimationId = null;
@@ -14,6 +15,7 @@
   var genderChart = null;
   var distanceChart = null;
   var hasRenderedPage = false;
+  var renderedPageType = null;
   var configVersion = null;
   var raceGeneration = null;
   var fetchSeq = 0;
@@ -40,6 +42,7 @@
           pinnedLeaders: data.pinned_leaders,
           showSummary: data.show_summary !== false,
           showDemographics: data.show_demographics === true,
+          showLapOverview: data.show_lap_overview === true,
           pinnedLeadersOnOverallResults: data.pinned_leaders_on_overall_results === true,
           overallResultsLayout: data.overall_results_layout || "standard",
           displayUnfinishedInCategory: data.display_unfinished_in_category === true,
@@ -57,6 +60,10 @@
         // Otherwise render on first data arrival or a settings change; ongoing animations pick up new data on next advance
         if (raceChanged || (!skipRender && (!hasRenderedPage || (previousTotalPages === 0 && getTotalPages() > 0) || configChanged))) {
           renderCurrentPage();
+        } else if (!skipRender && currentPageType() === "lap_overview") {
+          // Live counts change every poll; redraw in place so the dwell timer keeps running
+          document.getElementById("dashboard").innerHTML =
+            renderLapOverview(lapOverviewPage, lastData) + renderProgressDots(getTotalPages(), currentIndex);
         }
       })
       .catch(function (err) {
@@ -79,23 +86,22 @@
       if (chart) chart.destroy();
     });
     finishChart = ageChart = genderChart = distanceChart = null;
+    renderedPageType = null;
   }
 
   function buildPageList(data) {
-    if (data.waiting && data.pages.length === 0) {
-      summaryPage = null;
-      demographicsPage = null;
-      categories = [];
-      return;
-    }
-
     summaryPage = null;
+    lapOverviewPage = null;
     demographicsPage = null;
     categories = [];
+    if (data.waiting && data.pages.length === 0) return;
+
     for (var i = 0; i < data.pages.length; i++) {
       var page = data.pages[i];
       if (page.type === "summary" && config.showSummary) {
         summaryPage = page;
+      } else if (page.type === "lap_overview" && config.showLapOverview) {
+        lapOverviewPage = page;
       } else if (page.type === "demographics" && config.showDemographics) {
         demographicsPage = page;
       } else if (page.type === "category" && pageHasResults(page)) {
@@ -113,15 +119,34 @@
   }
 
   function getTotalPages() {
-    return (summaryPage ? 1 : 0) + (demographicsPage ? 1 : 0) + categories.length;
+    return (summaryPage ? 1 : 0) + (lapOverviewPage ? 1 : 0) + (demographicsPage ? 1 : 0) + categories.length;
+  }
+
+  // Rotation order: Summary, Lap Overview, Demographics, then result pages
+  function pageTypeAt(index) {
+    var fixed = [];
+    if (summaryPage) fixed.push("summary");
+    if (lapOverviewPage) fixed.push("lap_overview");
+    if (demographicsPage) fixed.push("demographics");
+    return index < fixed.length ? fixed[index] : "category";
+  }
+
+  function fixedPageCount() {
+    return (summaryPage ? 1 : 0) + (lapOverviewPage ? 1 : 0) + (demographicsPage ? 1 : 0);
+  }
+
+  function currentPageType() {
+    if (!renderedPageType || renderedPageType !== pageTypeAt(currentIndex)) return null;
+    return renderedPageType;
   }
 
   function renderCurrentPage() {
     stopAnimations();
     var container = document.getElementById("dashboard");
     hasRenderedPage = true;
+    renderedPageType = null;
 
-    if (!summaryPage && !demographicsPage && categories.length === 0) {
+    if (getTotalPages() === 0) {
       container.innerHTML = renderWaiting(lastData);
       return;
     }
@@ -129,11 +154,9 @@
     var totalPages = getTotalPages();
     if (currentIndex >= totalPages) currentIndex = 0;
 
-    var summaryOffset = summaryPage ? 1 : 0;
-    var demographicsIndex = summaryOffset;
-
+    var pageType = pageTypeAt(currentIndex);
     var html;
-    if (summaryPage && currentIndex === 0) {
+    if (pageType === "summary") {
       html = renderSummary(summaryPage, lastData);
       html += renderProgressDots(totalPages, currentIndex);
       container.innerHTML = html;
@@ -141,20 +164,26 @@
         renderFinishChart(lastData.finish_chart);
       }
       advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
-    } else if (demographicsPage && currentIndex === demographicsIndex) {
+    } else if (pageType === "lap_overview") {
+      html = renderLapOverview(lapOverviewPage, lastData);
+      html += renderProgressDots(totalPages, currentIndex);
+      container.innerHTML = html;
+      advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
+    } else if (pageType === "demographics") {
       html = renderDemographics(demographicsPage);
       html += renderProgressDots(totalPages, currentIndex);
       container.innerHTML = html;
       renderDemographicsCharts(demographicsPage.data);
       advanceTimer = setTimeout(advance, config.summaryDisplayTime * 1000);
     } else {
-      var catIndex = currentIndex - summaryOffset - (demographicsPage ? 1 : 0);
+      var catIndex = currentIndex - fixedPageCount();
       var category = categories[catIndex];
       html = renderCategory(category, catIndex, lastData);
       html += renderProgressDots(totalPages, currentIndex);
       container.innerHTML = html;
       startScroll();
     }
+    renderedPageType = pageType;
   }
 
   // Re-read data and config first so a settings change applies on the next page, not the next poll
@@ -525,6 +554,86 @@
       html += '</div>';
     }
     html += '</div>';
+    return html;
+  }
+
+  function lapStatCard(value, label, primary) {
+    return '<div class="stat-card ' + (primary ? "stat-card-primary" : "stat-card-secondary") +
+      '"><div class="stat-value">' + value + '</div><div class="stat-label">' + label + "</div></div>";
+  }
+
+  function plural(count, word) {
+    return count + " " + word + (count === 1 ? "" : "s");
+  }
+
+  function renderLapCell(distance, lapIndex) {
+    var lapNumber = lapIndex + 1;
+    if (lapIndex >= distance.lap_count) {
+      return '<div class="lap-cell lap-cell-na">no lap ' + lapNumber + "</div>";
+    }
+    var count = distance.on_course_by_lap[lapIndex] || 0;
+    var share = distance.started > 0 ? Math.round((count / distance.started) * 100) : 0;
+    var html = '<div class="lap-cell' + (count > 0 ? " lap-cell-active" : "") + '">';
+    html += '<div class="lap-cell-count">' + count + "</div>";
+    html += '<div class="lap-cell-share" title="Share of starters on this lap"><div style="width:' + share + '%"></div></div>';
+    var dnfHere = distance.dnf_by_lap[lapIndex] || 0;
+    if (dnfHere > 0) {
+      html += '<div class="lap-cell-dnf">' + dnfHere + " DNF \u00b7 last recorded here</div>";
+    }
+    if (lapIndex === 0 && distance.dnf_without_crossing > 0) {
+      html += '<div class="lap-cell-dnf">' + distance.dnf_without_crossing + " DNF \u00b7 no crossing recorded</div>";
+    }
+    html += "</div>";
+    return html;
+  }
+
+  function renderLapOverview(page, data) {
+    var d = page.data;
+    var t = d.totals;
+    var maxLaps = 1;
+    for (var i = 0; i < d.distances.length; i++) {
+      maxLaps = Math.max(maxLaps, d.distances[i].lap_count);
+    }
+
+    var html = '<div class="page active lap-overview-page">';
+    html += renderEventHeader(data);
+
+    html += '<div class="summary-stats-row lap-stats-row">';
+    html += lapStatCard(t.registered, "Registered", true);
+    html += lapStatCard(t.on_course, "On Course", true);
+    html += lapStatCard(t.finished, "Finished", true);
+    html += lapStatCard(t.dns, "DNS", false);
+    html += lapStatCard(t.not_started, "Not Started", false);
+    html += lapStatCard(t.dnf, "DNF", false);
+    html += lapStatCard(t.dsq, "DSQ", false);
+    html += "</div>";
+
+    html += '<div class="lap-help">Registered = DNS + Not Started + On Course + Finished + DNF + DSQ. ' +
+      "Lap position comes from timing crossings, not GPS; DNF notes mark the last recorded crossing.</div>";
+
+    var columns = "minmax(16vw, 1.4fr) repeat(" + (maxLaps + 1) + ", minmax(0, 1fr))";
+    html += '<div class="lap-grid" style="grid-template-columns:' + columns + '">';
+    html += '<div class="lap-grid-head">Distance</div>';
+    for (var lap = 1; lap <= maxLaps; lap++) {
+      html += '<div class="lap-grid-head">Lap ' + lap + "</div>";
+    }
+    html += '<div class="lap-grid-head">Finished</div>';
+
+    for (var j = 0; j < d.distances.length; j++) {
+      var dist = d.distances[j];
+      var meta = [plural(dist.lap_count, "lap"), dist.registered + " registered", dist.dns + " DNS",
+        dist.not_started + " not started", dist.started + " started"];
+      if (dist.dsq > 0) meta.push(dist.dsq + " DSQ");
+      html += '<div class="lap-row-label"><div class="lap-row-name">' + escapeHtml(dist.name) + "</div>";
+      html += '<div class="lap-row-meta">' + meta.join(" \u00b7 ") + "</div></div>";
+      for (var k = 0; k < maxLaps; k++) {
+        html += renderLapCell(dist, k);
+      }
+      html += '<div class="lap-cell lap-cell-finished"><div class="lap-cell-count">' + dist.finished + "</div></div>";
+    }
+    html += "</div>";
+
+    html += "</div>";
     return html;
   }
 

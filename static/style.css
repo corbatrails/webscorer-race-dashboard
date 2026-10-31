@@ -161,6 +161,146 @@ body {
   flex-direction: column;
 }
 
+/* Lap overview page */
+.lap-overview-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.lap-stats-row {
+  gap: 1vw;
+  margin-bottom: 1.5vh;
+}
+
+.lap-stats-row .stat-card {
+  padding: 1.2vh 1vw;
+}
+
+.lap-stats-row .stat-card-primary .stat-value {
+  font-size: 6vh;
+}
+
+.lap-stats-row .stat-card-secondary .stat-value {
+  font-size: 4.5vh;
+}
+
+.lap-stats-row .stat-label {
+  font-size: 2vh;
+}
+
+.lap-help {
+  font-size: 1.8vh;
+  color: var(--text-muted);
+  margin-bottom: 1.5vh;
+}
+
+.lap-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-rows: auto;
+  grid-auto-rows: minmax(9vh, auto);
+  gap: 0.8vh 0.6vw;
+  align-content: start;
+}
+
+.lap-grid-head {
+  font-size: 2vh;
+  font-weight: bold;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  align-self: end;
+  text-align: center;
+}
+
+.lap-grid-head:first-child {
+  text-align: left;
+}
+
+.lap-row-label {
+  background: var(--bg-card);
+  border-radius: 1vh;
+  padding: 1vh 1vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.lap-row-name {
+  font-size: 2.8vh;
+  font-weight: bold;
+  color: var(--text-primary);
+}
+
+.lap-row-meta {
+  font-size: 1.6vh;
+  color: var(--text-muted);
+}
+
+.lap-cell {
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 1vh;
+  padding: 0.8vh 0.6vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4vh;
+}
+
+.lap-cell-count {
+  font-size: 4.5vh;
+  font-weight: bold;
+  line-height: 1;
+  color: var(--text-dim);
+}
+
+.lap-cell-active {
+  border-color: var(--accent-primary);
+}
+
+.lap-cell-active .lap-cell-count {
+  color: var(--accent-primary);
+}
+
+.lap-cell-share {
+  width: 80%;
+  height: 0.6vh;
+  background: var(--bg-track);
+  border-radius: 0.3vh;
+  overflow: hidden;
+}
+
+.lap-cell-share > div {
+  height: 100%;
+  background: var(--accent-primary);
+}
+
+.lap-cell-dnf {
+  font-size: 1.6vh;
+  color: var(--error-color);
+  border-top: 1px dashed var(--error-color);
+  padding-top: 0.3vh;
+  text-align: center;
+}
+
+.lap-cell-finished {
+  border-color: var(--accent-secondary);
+}
+
+.lap-cell-finished .lap-cell-count {
+  color: var(--accent-secondary);
+}
+
+.lap-cell-na {
+  background: transparent;
+  border-style: dashed;
+  color: var(--text-dim);
+  font-size: 1.8vh;
+}
+
 .demographics-grid {
   flex: 1;
   display: grid;
