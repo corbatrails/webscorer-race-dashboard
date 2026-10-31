@@ -62,6 +62,54 @@ def test_control_projection_returns_none_for_provider_error():
     assert project(_snapshot([], [], error="unavailable")) is None
 
 
+def test_control_lap_splits_include_durations_and_ending_elapsed_without_mutating_snapshot():
+    racer = _racer("50K", crossings=[(1, 600.125), (2, 1250.5), (3, 1900)])
+    snapshot = _snapshot([_group("50K", 3)], [racer])
+    row = project(snapshot)["groups"][0]["racers"][0]
+    assert row.get("LapSplits") == [
+        {"LapNumber": 1, "SplitSeconds": 600.125, "ElapsedSeconds": 600.125},
+        {"LapNumber": 2, "SplitSeconds": 650.375, "ElapsedSeconds": 1250.5},
+        {"LapNumber": 3, "SplitSeconds": 649.5, "ElapsedSeconds": 1900.0},
+    ]
+    assert "LapSplits" not in racer
+
+
+def test_control_lap_splits_do_not_treat_missing_laps_as_one_split():
+    racer = _racer("50K", crossings=[(2, 700), (4, 1500), (5, 1800)])
+    row = project(_snapshot([_group("50K", 5)], [racer]))["groups"][0]["racers"][0]
+    assert row.get("LapSplits") == [
+        {"LapNumber": 2, "SplitSeconds": None, "ElapsedSeconds": 700.0},
+        {"LapNumber": 4, "SplitSeconds": None, "ElapsedSeconds": 1500.0},
+        {"LapNumber": 5, "SplitSeconds": 300.0, "ElapsedSeconds": 1800.0},
+    ]
+
+
+@pytest.mark.parametrize("status", ["IN_PROGRESS", "DNF", "FINISHED"])
+def test_control_lap_splits_exclude_future_and_out_of_group_crossings(status):
+    racer = _racer("50K", status, crossings=[(1, 600), (2, 1900), (3, 2500)])
+    racer["category_groups"] = [
+        {"distance": "50K", "category": "Open", "gender": "", "source_place": ""},
+    ]
+    snapshot = _snapshot([
+        _group("50K", 3), _group("50K", 2, tier="category", category="Open"),
+    ], [racer])
+    rows = project(snapshot, START + 1000)["groups"][1]["racers"]
+    assert rows[0].get("LapSplits") == [
+        {"LapNumber": 1, "SplitSeconds": 600.0, "ElapsedSeconds": 600.0},
+    ]
+    rows = project(snapshot, START + 3000)["groups"][1]["racers"]
+    assert [s["LapNumber"] for s in rows[0]["LapSplits"]] == [1, 2]
+
+
+@pytest.mark.parametrize("status,start", [
+    ("IN_PROGRESS", START + 3000), ("DNS", START), ("IN_PROGRESS", START),
+])
+def test_control_lap_splits_are_empty_without_visible_crossings(status, start):
+    racer = _racer("50K", status, start=start)
+    row = project(_snapshot([_group("50K", 2)], [racer]))["groups"][0]["racers"][0]
+    assert row.get("LapSplits") == []
+
+
 @pytest.mark.parametrize("scheme", ["dark", "light"])
 def test_race_control_route_renders_configured_theme(scheme):
     app = create_app({"color_scheme": scheme}, start_polling=False)
