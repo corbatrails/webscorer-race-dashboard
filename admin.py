@@ -195,6 +195,10 @@ def _password_matches(submitted):
 def _build_blueprint():
     bp = Blueprint("admin", __name__, url_prefix="/admin")
 
+    @bp.context_processor
+    def theme_context():
+        return {"color_scheme": current_app.config["dashboard"].get("color_scheme", "dark")}
+
     @bp.after_request
     def security_headers(response):
         for name, value in _SECURITY_HEADERS.items():

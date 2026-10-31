@@ -1,4 +1,4 @@
-/* Color scheme variables shared by the dashboard and results pages. */
+/* Color scheme variables shared by the dashboard, results and admin pages. */
 [data-theme="dark"] {
   --bg-primary: #1a1a2e;
   --bg-card: #16213e;
@@ -11,6 +11,7 @@
   --accent-secondary: #ff9f43;
   --border-color: #2a2a4a;
   --error-color: #ff6b6b;
+  --success-color: #6bffb0;
   --row-even: #16213e;
 }
 
@@ -26,5 +27,6 @@
   --accent-secondary: #e07000;
   --border-color: #dddddd;
   --error-color: #cc0000;
+  --success-color: #167443;
   --row-even: #f0f0f0;
 }
