@@ -176,7 +176,7 @@ git commit -m "feat: add show_lap_overview option" -m "Co-authored-by: Copilot A
 
 **Interfaces:**
 - `dashboard.js` reads `page.data.totals` and `page.data.distances` from the `lap_overview` page, and `config.showLapOverview` from `data.show_lap_overview === true`.
-- `renderLapOverview(page, data)` renders the existing event header, event totals, reconciliation hint, distance rows, lap cells, DNF subnotes, and `renderProgressDots` output.
+- `renderLapOverview(page, data)` renders the existing event header, event totals, distance-name-only rows, lap cells, count-only DNF subnotes, and `renderProgressDots` output. No reconciliation hint or explanatory paragraph is displayed.
 - Page order is supplied by the backend; the frontend must count and render `lap_overview` as one normal rotating page when the toggle is on, and skip it otherwise.
 
 - [ ] **Step 1: Write failing dashboard script tests** in `tests/dashboard.test.cjs`: toggle off leaves the page out of the count and rotation; toggle on puts it after Summary and before Demographics/results with a `summary_display_time` dwell; a new `config_version` adds/removes it without a poll; a `race_generation` change clears it before the new race renders; distance names are escaped.

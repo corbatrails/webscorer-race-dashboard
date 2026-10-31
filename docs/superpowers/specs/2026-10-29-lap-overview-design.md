@@ -14,7 +14,7 @@ The inspiration is concept 1 v2, generated from the CORBA Fall Back Blast 2025 r
 - Add a dedicated Lap Overview screen to the existing page rotation without replacing or crowding the Summary screen.
 - Show every overall distance, including one-lap events and distances with no current racers.
 - Show each distance's lap count and a current on-course count in each applicable lap cell.
-- Show a DNF subnote in the lap cell corresponding to the racer's last recorded crossing; show a distinct note when the DNF has no recorded crossing.
+- Show a concise DNF count in the lap cell corresponding to the racer's last recorded crossing; include no-crossing DNFs in the Lap 1 note.
 - Count DNS separately and exclude DNS racers from all lap and finish counts, even if stray lap-time data is present.
 - Distinguish registered racers who have not yet started from those already on course.
 - Reconcile status totals per distance and for the event.
@@ -104,8 +104,8 @@ Event totals are the sums of the corresponding per-distance values. One-lap dist
 - For an on-course racer, `completed_crossings` is the count of valid cumulative lap crossings at or before the snapshot observation time. Their active lap is `min(completed_crossings + 1, lap_count)`.
 - A racer who completes all laps is counted only in Finished, never in an on-course lap cell.
 - DNF racers are excluded from on-course and finish counts. Their DNF note is placed in the cell for their last valid recorded crossing. That note is additive: the large cell count continues to mean racers currently on course.
-- When a DNF has no valid crossing, show its note in the Lap 1 cell as **“DNF · no crossing recorded”**, not as a claim that the racer reached Lap 1.
-- When valid crossings exist, label the subnote to communicate its meaning (for example **“2 DNF · last recorded here”**). Do not label it “DNF on lap N.”
+- When a DNF has no valid crossing, include it in the Lap 1 DNF note, not as a claim that the racer reached Lap 1.
+- Label every subnote with only the count and **“DNF”** (for example **“2 DNF”**). Combine no-crossing and Lap 1-attributed DNFs into one Lap 1 note. Do not label it “DNF on lap N.”
 - If the source status is DNF but its last crossing is not available in the snapshot, count it in the DNF total and use the no-crossing note.
 
 The dashboard cannot determine when a racer actually stopped unless the timing source reports that time. A DNF count appears after the provider reports DNF; in a replay, the state is reconstructed from each racer's status and recorded splits at the selected observation time.
@@ -128,9 +128,9 @@ The dashboard cannot determine when a racer actually stopped unless the timing s
 - Render one column per lap up to the maximum lap count in the event, plus Finished. Cells for laps a distance does not have are subdued and marked “no lap N.”
 - Each applicable lap cell shows the number currently on course on that lap. A thin indicator may show that count as a share of the distance's starters; label or style it so it cannot be mistaken for an individual racer's progress.
 - DNF subnotes appear within their attributed lap cell, visually distinct from the on-course count. A lap can have both active racers and DNF notes.
-- Finished has a distinct color and count. DNS and Not Started are visible in each row's metadata and in the event totals, not added to a lap cell.
+- Finished has a distinct color and count. DNS and Not Started appear in event totals, not added to a lap cell. Distance blocks show only the distance name, with no metadata.
 - Use the existing dark/light theme variables, typography scale, layout conventions, and progress indicators. The page must remain legible at the dashboard's 1080p TV target. If the event has more distance rows than fit vertically, use the existing page's controlled scrolling behavior or another consistent fit-to-screen treatment without omitting any distance.
-- Show a short legend/help text clarifying that lap state is timing-based, DNF notes mean last recorded crossing, and the display is not GPS.
+- Do not show a reconciliation equation, legend, or explanatory paragraph on the page; timing attribution is documented here instead.
 - The server builds the page whenever the snapshot has at least one overall distance group; the browser shows it only when `show_lap_overview` is true.
 - When no race is selected or the new race's first poll hasn't completed, there is no Lap Overview page; the existing waiting screen applies.
 
@@ -187,7 +187,7 @@ The dashboard cannot determine when a racer actually stopped unless the timing s
 - After a live race switch, the TV never shows the previous race's lap counts.
 - The screen has one row for every overall distance, including one-lap and empty distances, with cells for applicable laps and a Finished cell.
 - On-course counts show each active racer in exactly one lap cell, determined by valid completed crossings.
-- DNF subnotes are shown on the last recorded crossing's lap without being included in the on-course number; no-crossing DNFs are explicitly described as such.
+- DNF subnotes show only the count and “DNF” on the last recorded crossing's lap without being included in the on-course number; no-crossing DNFs are included in the Lap 1 note.
 - DNS racers are counted separately and excluded from every lap and finish cell, even when split data is present.
 - Future scheduled starters appear in Not Started rather than on Lap 1.
 - Registered, DNS, Not Started, On Course, Finished, DNF, and DSQ totals reconcile for every distance and event.

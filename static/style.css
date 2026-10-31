@@ -188,12 +188,6 @@ body {
   font-size: 2vh;
 }
 
-.lap-help {
-  font-size: 1.8vh;
-  color: var(--text-muted);
-  margin-bottom: 1.5vh;
-}
-
 /* Rows keep their natural height until the page runs out, then share what's left so no distance is cut off */
 .lap-grid {
   flex: 0 1 auto;
@@ -238,11 +232,6 @@ body {
   font-size: calc(2.8vh * var(--lap-scale, 1));
   font-weight: bold;
   color: var(--text-primary);
-}
-
-.lap-row-meta {
-  font-size: max(1.2vh, calc(1.6vh * var(--lap-scale, 1)));
-  color: var(--text-muted);
 }
 
 .lap-cell {

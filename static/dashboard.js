@@ -562,10 +562,6 @@
       '"><div class="stat-value">' + value + '</div><div class="stat-label">' + label + "</div></div>";
   }
 
-  function plural(count, word) {
-    return count + " " + word + (count === 1 ? "" : "s");
-  }
-
   function renderLapCell(distance, lapIndex) {
     var lapNumber = lapIndex + 1;
     if (lapIndex >= distance.lap_count) {
@@ -577,11 +573,9 @@
     html += '<div class="lap-cell-count">' + count + "</div>";
     html += '<div class="lap-cell-share" title="Share of starters on this lap"><div style="width:' + share + '%"></div></div>';
     var dnfHere = distance.dnf_by_lap[lapIndex] || 0;
+    if (lapIndex === 0) dnfHere += distance.dnf_without_crossing;
     if (dnfHere > 0) {
-      html += '<div class="lap-cell-dnf">' + dnfHere + " DNF \u00b7 last recorded here</div>";
-    }
-    if (lapIndex === 0 && distance.dnf_without_crossing > 0) {
-      html += '<div class="lap-cell-dnf">' + distance.dnf_without_crossing + " DNF \u00b7 no crossing recorded</div>";
+      html += '<div class="lap-cell-dnf">' + dnfHere + " DNF</div>";
     }
     html += "</div>";
     return html;
@@ -608,9 +602,6 @@
     html += lapStatCard(t.dsq, "DSQ", false);
     html += "</div>";
 
-    html += '<div class="lap-help">Registered = DNS + Not Started + On Course + Finished + DNF + DSQ. ' +
-      "Lap position comes from timing crossings, not GPS; DNF notes mark the last recorded crossing.</div>";
-
     var columns = "minmax(16vw, 1.4fr) repeat(" + (maxLaps + 1) + ", minmax(0, 1fr))";
     // About six rows fit at full size; shrink text so every distance stays on screen
     var scale = Math.max(0.5, Math.min(1, 6 / Math.max(1, d.distances.length)));
@@ -623,11 +614,7 @@
 
     for (var j = 0; j < d.distances.length; j++) {
       var dist = d.distances[j];
-      var meta = [plural(dist.lap_count, "lap"), dist.registered + " registered", dist.dns + " DNS",
-        dist.not_started + " not started", dist.started + " started"];
-      if (dist.dsq > 0) meta.push(dist.dsq + " DSQ");
-      html += '<div class="lap-row-label"><div class="lap-row-name">' + escapeHtml(dist.name) + "</div>";
-      html += '<div class="lap-row-meta">' + meta.join(" \u00b7 ") + "</div></div>";
+      html += '<div class="lap-row-label"><div class="lap-row-name">' + escapeHtml(dist.name) + "</div></div>";
       for (var k = 0; k < maxLaps; k++) {
         html += renderLapCell(dist, k);
       }

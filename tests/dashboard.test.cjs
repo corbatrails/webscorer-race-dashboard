@@ -318,12 +318,22 @@ test("lap overview renders cells, DNF notes, and non-applicable laps", async () 
   await d.respond(0, lapPayload());
   await d.respond(await d.press("ArrowRight"), lapPayload());
   const html = d.dashboard.innerHTML;
-  assert.match(html, /DNF · no crossing recorded/);
-  assert.match(html, /1 DNF · last recorded here/);
-  assert.doesNotMatch(html, /DNF on lap/);
+  assert.equal((html.match(/class="lap-cell-dnf">1 DNF<\/div>/g) || []).length, 2);
+  assert.doesNotMatch(html, /last recorded|no crossing recorded|DNF on lap/);
   assert.match(html, /no lap 2/);
   assert.match(html, /Not Started/);
-  assert.match(html, /Registered = DNS \+ Not Started \+ On Course \+ Finished \+ DNF \+ DSQ/);
+  assert.doesNotMatch(html, /lap-help|Registered =|not GPS|lap-row-meta/);
+  assert.match(html, /lap-row-name">25K<\/div><\/div>/);
+});
+
+test("lap overview combines DNF notes in the first lap cell", async () => {
+  const d = startDashboard();
+  const lap = lapData();
+  lap.distances[0].dnf_by_lap = [1, 0];
+  await d.respond(0, lapPayload({ lap }));
+  await d.respond(await d.press("ArrowRight"), lapPayload({ lap }));
+  assert.match(d.dashboard.innerHTML, /class="lap-cell-dnf">2 DNF<\/div>/);
+  assert.equal((d.dashboard.innerHTML.match(/class="lap-cell-dnf"/g) || []).length, 1);
 });
 
 test("lap overview escapes distance names", async () => {
