@@ -409,6 +409,22 @@ def build_lap_overview_data(snapshot, observation_seconds):
     return {"totals": totals, "distances": distances}
 
 
+def _lap_places(crossings_by_racer):
+    """Per-racer {lap_number: place}, competition-ranked by cumulative elapsed among racers who crossed that lap."""
+    places = [{} for _ in crossings_by_racer]
+    laps = {lap for crossings in crossings_by_racer for lap in crossings}
+    for lap in laps:
+        entries = sorted(
+            (crossings[lap], index) for index, crossings in enumerate(crossings_by_racer) if lap in crossings
+        )
+        place, previous = 0, None
+        for position, (elapsed, index) in enumerate(entries, start=1):
+            if elapsed != previous:
+                place, previous = position, elapsed
+            places[index][lap] = place
+    return places
+
+
 def build_race_control_data(snapshot, observation_seconds):
     """Read-only operational view, independent of TV page visibility settings."""
     if snapshot["error"]:
@@ -429,12 +445,21 @@ def build_race_control_data(snapshot, observation_seconds):
         leader = next((r["elapsed_seconds"] for r, place in ranked if place is not None), None)
         rows = []
         lap_count = group["lap_count"]
+        states = []
         for racer, place in ranked:
             start = racer["start_seconds"]
             elapsed_limit = observation_seconds - start if start is not None else None
             status = racer["status"]
             not_started = status == "IN_PROGRESS" and start is not None and start > observation_seconds
             crossed = _crossed_laps(racer, elapsed_limit)
+            crossings = {
+                c["lap_number"]: c["elapsed_seconds"] for c in racer["lap_crossings"]
+                if c["lap_number"] in crossed and c["lap_number"] <= lap_count
+                and status != "DNS" and not not_started
+            }
+            states.append((racer, place, status, not_started, crossed, crossings))
+        lap_places = _lap_places([state[5] for state in states])
+        for (racer, place, status, not_started, crossed, crossings), places in zip(states, lap_places):
             completed = min(max(crossed, default=0), lap_count)
             if status == "FINISHED":
                 completed = lap_count
@@ -444,17 +469,14 @@ def build_race_control_data(snapshot, observation_seconds):
                 "Not started" if not_started else "On course" if status == "IN_PROGRESS"
                 else "Finished" if status == "FINISHED" else status
             )
-            crossings = {
-                c["lap_number"]: c["elapsed_seconds"] for c in racer["lap_crossings"]
-                if c["lap_number"] in crossed and c["lap_number"] <= lap_count
-                and status != "DNS" and not not_started
-            }
             splits = [
                 {
                     "LapNumber": number,
                     "SplitSeconds": round(elapsed - crossings.get(number - 1, 0), 3)
                     if number == 1 or number - 1 in crossings else None,
                     "ElapsedSeconds": elapsed,
+                    "LapPlace": places[number],
+                    "PlaceChange": places[number - 1] - places[number] if number - 1 in places else None,
                 }
                 for number, elapsed in sorted(crossings.items())
             ]
