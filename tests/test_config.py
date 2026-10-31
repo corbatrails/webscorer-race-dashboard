@@ -75,6 +75,7 @@ def test_load_config_defaults(clean_env, tmp_path):
     assert cfg["display_unfinished_in_category"] is False
     assert cfg["display_unfinished_in_overall"] is False
     assert cfg["show_demographics"] is False
+    assert cfg["show_lap_overview"] is False
 
 
 @pytest.mark.parametrize("missing", ["WEBSCORER_API_ID", "WEBSCORER_API_TOKEN"])
@@ -100,6 +101,8 @@ def test_load_config_missing_data_file(clean_env, tmp_path, monkeypatch):
     ({"display_unfinished_in_category": True}, "display_unfinished_in_category", True),
     ({"display_unfinished_in_overall": True}, "display_unfinished_in_overall", True),
     ({"show_demographics": True}, "show_demographics", True),
+    ({"show_lap_overview": True}, "show_lap_overview", True),
+    ({"show_lap_overview": "false"}, "show_lap_overview", False),
 ])
 def test_config_yaml_option_values(clean_env, tmp_path, data, key, expected):
     assert _load(tmp_path, data)[key] == expected

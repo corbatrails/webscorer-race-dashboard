@@ -34,6 +34,8 @@ show_overall_results: true
 show_category_results: true
 # Age/gender/distance/team breakdown page.
 show_demographics: false
+# Per-distance lap progress page (on course, finished, DNF, DNS).
+show_lap_overview: false
 # Show in-progress result pages before racers finish.
 display_unfinished_in_category: false
 display_unfinished_in_overall: false

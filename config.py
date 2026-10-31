@@ -99,6 +99,7 @@ OPTIONS = (
     Option("show_overall_results", True, _parse_bool),
     Option("show_category_results", True, _parse_bool),
     Option("show_demographics", False, _parse_bool),
+    Option("show_lap_overview", False, _parse_bool),
     Option("pinned_leaders_on_overall_results", False, _parse_bool),
     Option("overall_results_layout", "standard", _parse_choice(_OVERALL_RESULTS_LAYOUTS)),
     Option("display_unfinished_in_category", False, _parse_bool),

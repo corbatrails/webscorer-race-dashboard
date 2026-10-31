@@ -617,6 +617,7 @@
  "scroll_pause_time": 2,
  "scroll_speed": 100,
  "show_demographics": false,
+ "show_lap_overview": false,
  "show_summary": true,
  "show_toasts": true,
  "summary_display_time": 20,

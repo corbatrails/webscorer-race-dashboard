@@ -75,6 +75,7 @@ Environment variables never override non-secret options; only the secrets above 
 | `show_overall_results` | true | Show Overall result pages |
 | `show_category_results` | true | Show category result pages |
 | `show_demographics` | false | Show the demographics page (age/gender/distance/team breakdown) |
+| `show_lap_overview` | false | Show the lap overview page (per-distance lap progress, finished, DNF, DNS) |
 | `pinned_leaders_on_overall_results` | false | Pinned leaders row + medal coloring on Overall pages |
 | `overall_results_layout` | standard | Overall table layout: `standard` or `detailed` |
 | `display_unfinished_in_category` | false | Show in-progress category pages before racers finish |

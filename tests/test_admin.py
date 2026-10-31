@@ -290,6 +290,20 @@ def test_save_updates_only_selected_config(tmp_path):
     assert "Settings saved" in c.get("/admin?saved=1").get_data(as_text=True)
 
 
+def test_save_toggles_show_lap_overview(tmp_path):
+    app, c, path = _settings_app(tmp_path)
+    fields = _form(c)
+    assert fields["show_lap_overview"] is None
+
+    assert _post_form(c, fields, show_lap_overview="true").status_code == 303
+    assert _yaml(path)["show_lap_overview"] is True
+    assert app.config["dashboard"]["show_lap_overview"] is True
+
+    assert _post_form(c, _form(c), show_lap_overview=None).status_code == 303
+    assert _yaml(path)["show_lap_overview"] is False
+    assert app.config["dashboard"]["show_lap_overview"] is False
+
+
 def test_validation_error_keeps_submitted_values(tmp_path):
     app, c, path = _settings_app(tmp_path)
     before_file, before_cfg = path.read_bytes(), app.config["dashboard"]

@@ -393,6 +393,13 @@ def test_api_data_show_demographics_true_when_configured():
     assert data["show_demographics"] is True
 
 
+@pytest.mark.parametrize("configured, expected", [({}, False), ({"show_lap_overview": True}, True)])
+def test_api_data_includes_show_lap_overview(configured, expected):
+    application = create_app(configured, start_polling=False)
+    data = application.test_client().get("/api/data").get_json()
+    assert data["show_lap_overview"] is expected
+
+
 @patch("providers.webscorer.fetch_race_results")
 def test_poll_once_includes_demographics_page(mock_fetch, app, client):
     mock_fetch.return_value = MOCK_RACE_RESULTS
@@ -447,6 +454,7 @@ def test_format_config_lines_includes_all_config_options():
         "pinned_leaders": 3,
         "show_summary": True,
         "show_demographics": False,
+        "show_lap_overview": False,
         "show_overall_results": True,
         "show_category_results": True,
         "pinned_leaders_on_overall_results": False,
@@ -475,6 +483,7 @@ def test_format_config_lines_includes_all_config_options():
         "Pinned leaders:",
         "Show summary:",
         "Show demographics:",
+        "Show lap overview:",
         "Show Overall results:",
         "Show category results:",
         "Pinned leaders on Overall:",
