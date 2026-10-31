@@ -2,11 +2,53 @@ import pytest
 
 import data_processing
 from app import create_app, poll_once
+from normalizer import normalize_webscorer
 from tests.test_lap_overview import START, _group, _racer, _snapshot
 
 
 def project(snapshot, observed=START + 2000):
     return data_processing.build_race_control_data(snapshot, observed)
+
+
+def test_clock_uses_precise_first_wave_start_regardless_of_group_order():
+    snapshot = _snapshot([_group("50K"), _group("5K")], [
+        _racer("50K", start=29215.9),
+        _racer("5K", start=28917.8, bib="2"),
+        _racer("5K", start=None, bib="3"),
+    ])
+    snapshot["race"]["start_seconds"] = 28860
+    assert project(snapshot, 32517.8)["clock_seconds"] == pytest.approx(3600)
+    assert snapshot["race"]["start_seconds"] == 28860
+    assert [r["start_seconds"] for r in snapshot["racers"]] == [29215.9, 28917.8, None]
+
+
+@pytest.mark.parametrize("starts", [[], ["", None, "not-a-time"]])
+def test_clock_falls_back_to_race_info_without_valid_racer_starts(starts):
+    snapshot = normalize_webscorer({
+        "RaceInfo": {"StartTime": "Saturday, October 31, 2026 8:01 AM (GMT-5)"},
+        "Results": [{
+            "Grouping": {"Distance": "5K", "Overall": True},
+            "Racers": [
+                {"Bib": str(i), "Time": "-", "StartTime": value}
+                for i, value in enumerate(starts)
+            ],
+        }],
+    })
+    assert project(snapshot, 28920)["clock_seconds"] == 60
+
+
+def test_clock_uses_first_wave_across_midnight():
+    snapshot = normalize_webscorer({
+        "RaceInfo": {"StartTime": "Saturday, October 31, 2026 11:59 PM (GMT-5)"},
+        "Results": [{
+            "Grouping": {"Distance": "5K", "Overall": True},
+            "Racers": [
+                {"Bib": "1", "Time": "-", "StartTime": "00:04:55.9"},
+                {"Bib": "2", "Time": "-", "StartTime": "23:59:57.8"},
+            ],
+        }],
+    })
+    assert project(snapshot, 86700)["clock_seconds"] == pytest.approx(302.2)
 
 
 def test_control_projection_keeps_rank_ties_statuses_and_lap_state():
