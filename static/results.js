@@ -2,6 +2,17 @@
 (function (root) {
   var DEFAULT_COUNT = 3;
   var RETRY_SECONDS = 5;
+  var NOTICE_SECONDS = 4;
+  var TEXT_INPUT_TYPES = ["", "text", "search", "email", "url", "tel", "password"];
+
+  // Fields where "r" is real typing; number inputs can't take letters, so R still refreshes there.
+  function isTextEntry(target) {
+    if (!target) return false;
+    if (target.isContentEditable) return true;
+    var tag = String(target.tagName || "").toUpperCase();
+    if (tag === "TEXTAREA" || tag === "SELECT") return true;
+    return tag === "INPUT" && TEXT_INPUT_TYPES.indexOf(String(target.type || "").toLowerCase()) !== -1;
+  }
 
   function helpers() {
     return root.ResultHelpers;
@@ -63,6 +74,9 @@
     var document = env.document;
     var fetchFn = env.fetch;
     var setTimeoutFn = env.setTimeout;
+    var clearTimeoutFn = env.clearTimeout || function () {};
+    var pollTimer = null;
+    var refreshing = false;
     var el = function (id) { return document.getElementById(id); };
 
     var state = {
@@ -72,6 +86,7 @@
       raceGeneration: null,
       fetchFailed: false,
       listSignature: null,
+      notice: null,
     };
 
     function selectedGroup() {
@@ -151,7 +166,7 @@
       if (data && data.race_name) el("race-name").textContent = data.race_name;
       setMessage("page-notice", pageNotice(data));
       setMessage("results-status", statusText(data));
-      el("last-updated").textContent = data && data.last_refresh ? "Updated " + data.last_refresh : "";
+      el("last-updated").textContent = state.notice || (data && data.last_refresh ? "Updated " + data.last_refresh : "");
 
       renderList();
       var group = selectedGroup();
@@ -183,6 +198,7 @@
       state.raceGeneration = data.race_generation;
       state.data = data;
       state.fetchFailed = false;
+      state.notice = null;
       if (data.color_scheme) document.body.dataset.theme = data.color_scheme;
       if (raceChanged) {
         state.selectedKey = null;
@@ -212,13 +228,57 @@
           render();
         })
         .then(function () {
-          setTimeoutFn(poll, nextDelaySeconds() * 1000);
+          clearTimeoutFn(pollTimer);
+          pollTimer = setTimeoutFn(poll, nextDelaySeconds() * 1000);
         });
+    }
+
+    // Briefly replaces the "Updated" time; the next data load also clears it.
+    function flashNotice(text) {
+      state.notice = text;
+      render();
+      setTimeoutFn(function () {
+        if (state.notice !== text) return;
+        state.notice = null;
+        render();
+      }, NOTICE_SECONDS * 1000);
+    }
+
+    function refreshNow() {
+      if (refreshing) return;
+      refreshing = true;
+      state.notice = "Refreshing results\u2026";
+      render();
+      return fetchFn("/api/refresh", { method: "POST" })
+        .then(function (response) { return response.json(); })
+        .then(function (body) {
+          if (body.reason === "cooldown") {
+            flashNotice("Just refreshed \u2014 try again in " + body.retry_after + "s");
+            return;
+          }
+          state.notice = null;
+          return poll();
+        })
+        .catch(function (err) {
+          if (root.console) root.console.error("Refresh error:", err);
+          flashNotice("Refresh failed");
+        })
+        .then(function () { refreshing = false; });
+    }
+
+    if (document.addEventListener) {
+      document.addEventListener("keydown", function (e) {
+        if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || isTextEntry(e.target)) return;
+        var key = e.key && e.key.length === 1 ? e.key.toLowerCase() : e.key;
+        if (key !== "r") return;
+        e.preventDefault();
+        if (!e.repeat) refreshNow();
+      });
     }
 
     el("top-count").addEventListener("input", render);
     render();
-    return { poll: poll, state: state, render: render };
+    return { poll: poll, refresh: refreshNow, state: state, render: render };
   }
 
   var api = {
@@ -232,7 +292,8 @@
     module.exports = api;
   } else {
     root.ResultsPage = api;
-    var page = start({ document: root.document, fetch: root.fetch.bind(root), setTimeout: root.setTimeout.bind(root) });
+    var page = start({ document: root.document, fetch: root.fetch.bind(root), setTimeout: root.setTimeout.bind(root),
+      clearTimeout: root.clearTimeout.bind(root) });
     page.poll();
   }
 })(typeof globalThis !== "undefined" ? globalThis : this);
