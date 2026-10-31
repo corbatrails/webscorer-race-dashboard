@@ -1,7 +1,6 @@
 // Fixed-viewport race director and timing desk.
 (function (root) {
   "use strict";
-  var ROW_HEIGHT = 36;
   var CHOICE_HEIGHT = 36;
 
   function capacity(height, reserved, itemHeight) {
@@ -34,9 +33,14 @@
 
   function formatGap(seconds) {
     if (!(seconds > 0)) return "";
+    return "+" + formatSplit(seconds);
+  }
+
+  function formatSplit(seconds) {
+    if (!Number.isFinite(seconds)) return "--:--:--";
     var rounded = Math.round(seconds * 1000) / 1000;
     var fraction = rounded % 1;
-    return "+" + formatDuration(rounded) + (fraction ? fraction.toFixed(3).slice(1).replace(/0+$/, "") : "");
+    return formatDuration(rounded) + (fraction ? fraction.toFixed(3).slice(1).replace(/0+$/, "") : "");
   }
 
   function start(env) {
@@ -47,7 +51,8 @@
     var pendingPoll = null;
     var state = {
       data: null, view: "progress", distance: null, groupKey: null, filter: "all",
-      resultPage: 0, distancePage: 0, lapPage: 0, distRailPage: 0, groupRailPage: 0,
+      distancePage: 0, lapPage: 0, distRailPage: 0, groupRailPage: 0,
+      expandedRacers: new Set(),
       raceGeneration: null, fetchFailed: false, refreshing: false, notice: "",
     };
 
@@ -86,7 +91,9 @@
     function resetSelection() {
       state.distance = null;
       state.groupKey = null;
-      state.resultPage = state.distancePage = state.lapPage = state.distRailPage = state.groupRailPage = 0;
+      state.distancePage = state.lapPage = state.distRailPage = state.groupRailPage = 0;
+      state.expandedRacers.clear();
+      el("table-wrap").scrollTop = 0;
       state.filter = "all";
     }
     function ensureSelection() {
@@ -94,12 +101,13 @@
       if (!choices.some(function (d) { return d.key === state.distance; })) {
         state.distance = choices.length ? choices[0].key : null;
         state.groupKey = null;
-        state.resultPage = state.groupRailPage = 0;
+        state.groupRailPage = 0;
+        el("table-wrap").scrollTop = 0;
       }
       if (!selectedGroup()) {
         var available = currentGroups();
         state.groupKey = available.length ? available[0].key : null;
-        state.resultPage = 0;
+        el("table-wrap").scrollTop = 0;
       }
     }
 
@@ -240,13 +248,14 @@
     function selectDistance(distance) {
       state.distance = distance;
       state.groupKey = null;
-      state.resultPage = state.groupRailPage = 0;
+      state.groupRailPage = 0;
+      el("table-wrap").scrollTop = 0;
       ensureSelection();
       render();
     }
     function selectGroup(key) {
       state.groupKey = key;
-      state.resultPage = 0;
+      el("table-wrap").scrollTop = 0;
       render();
     }
     function renderChoices(prefix, choices, selected, pageField, onSelect) {
@@ -292,13 +301,18 @@
       el("all-filter").setAttribute("aria-pressed", String(state.filter === "all"));
       el("finished-filter").setAttribute("aria-pressed", String(state.filter === "finished"));
       var racers = filteredRows(group && group.racers, state.filter);
-      var perPage = capacity(el("table-wrap").clientHeight, el("result-head").offsetHeight, ROW_HEIGHT);
-      var page = paginate(racers, perPage, state.resultPage);
-      state.resultPage = page.page;
+      var columnCount = Array.from(el("result-head").querySelectorAll("th")).filter(function (heading) {
+        return env.getComputedStyle(heading).display !== "none";
+      }).length;
+      var scrollTop = el("table-wrap").scrollTop;
+      var focusedKey = document.activeElement && document.activeElement.dataset &&
+        document.activeElement.dataset.racerKey;
+      var focusedButton = null;
       var body = el("result-rows");
       clear(body);
-      page.items.forEach(function (r) {
+      racers.forEach(function (r, index) {
         var row = node("tr", null, r.Status === "Finished" ? "finished" : "unfinished");
+        if (index % 2) row.className += " result-even";
         if (r.Status === "Finished" && Number(r.Place) > 0 && Number(r.Place) <= 3) row.className += " podium";
         var name = node("td", null, "col-name");
         name.appendChild(node("span", r.Name));
@@ -314,10 +328,60 @@
         row.appendChild(time);
         row.appendChild(node("td", formatGap(r.GapSeconds), "col-gap"));
         body.appendChild(row);
+        if (r.LapCount > 1) {
+          var key = JSON.stringify([group.key, r.Bib, r.Name]);
+          var detail = node("tr", null, "split-detail");
+          detail.id = "lap-splits-" + index;
+          detail.hidden = !state.expandedRacers.has(key);
+          var cell = node("td");
+          cell.colSpan = columnCount;
+          var toggle = node("button", detail.hidden ? "+" : "-", "split-toggle");
+          toggle.type = "button";
+          toggle.dataset.racerKey = key;
+          toggle.setAttribute("aria-controls", detail.id);
+          toggle.setAttribute("aria-expanded", String(!detail.hidden));
+          toggle.setAttribute("aria-label", "Lap splits for " + r.Name);
+          name.appendChild(toggle);
+          if (focusedKey === key) focusedButton = toggle;
+          var splits = r.LapSplits || [];
+          if (splits.length) {
+            var table = node("table", null, "split-table");
+            table.setAttribute("aria-label", "Lap splits for " + r.Name);
+            var head = node("thead");
+            var headings = node("tr");
+            ["Lap", "Split", "Elapsed"].forEach(function (label) {
+              var heading = node("th", label);
+              heading.scope = "col";
+              headings.appendChild(heading);
+            });
+            head.appendChild(headings);
+            table.appendChild(head);
+            var splitBody = node("tbody");
+            splits.forEach(function (split) {
+              var splitRow = node("tr");
+              splitRow.appendChild(node("td", split.LapNumber));
+              splitRow.appendChild(node("td", formatSplit(split.SplitSeconds)));
+              splitRow.appendChild(node("td", formatSplit(split.ElapsedSeconds)));
+              splitBody.appendChild(splitRow);
+            });
+            table.appendChild(splitBody);
+            cell.appendChild(table);
+          } else cell.appendChild(node("p", "No lap splits available.", "empty-message"));
+          detail.appendChild(cell);
+          body.appendChild(detail);
+          toggle.addEventListener("click", function () {
+            detail.hidden = !detail.hidden;
+            if (detail.hidden) state.expandedRacers.delete(key);
+            else state.expandedRacers.add(key);
+            toggle.textContent = detail.hidden ? "+" : "-";
+            toggle.setAttribute("aria-expanded", String(!detail.hidden));
+          });
+        }
       });
+      if (focusedButton) focusedButton.focus({ preventScroll: true });
+      el("table-wrap").scrollTop = scrollTop;
       message("results-empty", racers.length ? "" : state.filter === "finished" ? "No finishers in this grouping yet." : "No racers in this grouping.");
-      pager("result", page, racers.length ?
-        (page.start + 1) + "-" + (page.start + page.items.length) + " of " + racers.length + " / page " + (page.page + 1) + "/" + page.pages : "No racers");
+      el("result-count").textContent = racers.length + (racers.length === 1 ? " racer" : " racers");
     }
 
     function render() {
@@ -410,9 +474,13 @@
     el("distance-select").addEventListener("change", function () { selectDistance(el("distance-select").value); });
     el("group-select").addEventListener("change", function () { selectGroup(el("group-select").value); });
     [["all-filter", "all"], ["finished-filter", "finished"]].forEach(function (filter) {
-      el(filter[0]).addEventListener("click", function () { state.filter = filter[1]; state.resultPage = 0; render(); });
+      el(filter[0]).addEventListener("click", function () {
+        state.filter = filter[1];
+        el("table-wrap").scrollTop = 0;
+        render();
+      });
     });
-    [["result", "resultPage"], ["distance", "distancePage"], ["lap", "lapPage"],
+    [["distance", "distancePage"], ["lap", "lapPage"],
       ["dist-rail", "distRailPage"], ["group-rail", "groupRailPage"]].forEach(function (pair) {
       [-1, 1].forEach(function (step) {
         var button = el(pair[0] + (step < 0 ? "-prev" : "-next"));
@@ -428,16 +496,10 @@
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || event.repeat ||
           target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
       var key = event.key.toLowerCase();
-      if (["1", "2", "r", "arrowleft", "arrowright"].indexOf(key) < 0) return;
-      if (key.indexOf("arrow") === 0 && state.view !== "results") return;
+      if (["1", "2", "r"].indexOf(key) < 0) return;
       event.preventDefault();
       if (key === "1" || key === "2") setView(key === "1" ? "progress" : "results");
       else if (key === "r") refresh();
-      else {
-        var step = key === "arrowleft" ? -1 : 1;
-        var button = el(step < 0 ? "result-prev" : "result-next");
-        if (!button.disabled) { state.resultPage += step; render(); }
-      }
     });
     if (env.addEventListener) env.addEventListener("resize", render);
     if (env.ResizeObserver) {
@@ -458,6 +520,7 @@
     root.RaceControl = api;
     start({
       document: root.document, fetch: root.fetch.bind(root), setTimeout: root.setTimeout.bind(root),
+      getComputedStyle: root.getComputedStyle.bind(root),
       clearTimeout: root.clearTimeout.bind(root), setInterval: root.setInterval.bind(root),
       addEventListener: root.addEventListener.bind(root), ResizeObserver: root.ResizeObserver,
     }).poll();

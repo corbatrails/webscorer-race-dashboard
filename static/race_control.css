@@ -22,7 +22,7 @@ button, select {
     color: var(--text-body);
     padding: 6px 10px;
 }
-button:focus-visible, a:focus-visible, select:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 2px; }
+button:focus-visible, a:focus-visible, select:focus-visible, .result-table-wrap:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: -2px; }
 h1, h2, p { margin: 0; }
 h1 { font-size: 19px; color: var(--text-primary); }
 .control-header {
@@ -108,11 +108,19 @@ kbd { font: 10px inherit; opacity: .65; }
 .result-filters { display: flex; gap: 4px; flex: none; }
 .result-filters button { font-size: 11px; padding: 4px 8px; border-radius: 12px; color: var(--text-muted); }
 .result-filters button[aria-pressed="true"] { color: var(--accent-primary); border-color: var(--accent-primary); }
-.result-table-wrap { flex: 1; min-height: 0; }
+.result-table-wrap { flex: 1; min-height: 0; overflow: auto; overflow-anchor: none; }
+#result-head { position: sticky; top: 0; z-index: 1; background: var(--bg-card); }
 table { border-collapse: collapse; width: 100%; table-layout: fixed; }
 th { height: 32px; padding: 0 10px; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; text-align: left; color: var(--text-muted); font-weight: 600; }
 td { height: 36px; padding: 0 10px; border-top: 1px solid var(--border-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-tr:nth-child(even) td { background: var(--row-even); }
+.result-even > td, .split-table tr:nth-child(even) td { background: var(--row-even); }
+.col-name { position: relative; padding-right: 42px; }
+.split-toggle { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; padding: 0; }
+.split-detail > td { padding: 8px 14px; height: auto; white-space: normal; background: var(--bg-primary); }
+.split-table { max-width: 480px; }
+.split-table th:first-child { width: 50px; }
+.split-table th:not(:first-child), .split-table td:not(:first-child) { text-align: right; }
+.split-table td { height: 30px; }
 .col-place { width: 52px; }
 .col-bib { width: 60px; }
 .col-laps { width: 58px; }

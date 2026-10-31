@@ -71,18 +71,18 @@
                     <h2 id="group-title"></h2>
                     <div class="result-filters"><button id="all-filter" type="button" aria-pressed="true">All racers</button><button id="finished-filter" type="button" aria-pressed="false">Finished only</button></div>
                 </div>
-                <div class="result-table-wrap" id="table-wrap">
+                <div class="result-table-wrap" id="table-wrap" tabindex="0" role="region" aria-label="Scrollable race results">
                     <table id="control-table" aria-label="Selected race results">
                         <thead id="result-head"><tr><th class="col-place" scope="col">Place</th><th class="col-bib" scope="col">Bib</th><th scope="col">Name</th><th class="col-laps" scope="col">Laps</th><th class="col-time" scope="col">Time / status</th><th class="col-gap" scope="col">Gap</th></tr></thead>
                         <tbody id="result-rows"></tbody>
                     </table>
                     <p id="results-empty" class="empty-message" hidden></p>
                 </div>
-                <div class="panel-footer pager"><button id="result-prev" type="button">&larr; Prev</button><span id="result-page"></span><button id="result-next" type="button">Next &rarr;</button></div>
+                <div class="panel-footer"><span id="result-count"></span></div>
             </section>
         </section>
     </main>
-    <footer class="control-footer">Read-only race control <span>1 / 2: switch views &middot; Arrow keys: results pages &middot; R: refresh</span></footer>
+    <footer class="control-footer">Read-only race control <span>1 / 2: switch views &middot; R: refresh</span></footer>
     <script src="/static/result_helpers.js?v={{ cache_bust }}"></script>
     <script src="/static/race_control.js?v={{ cache_bust }}"></script>
 </body>

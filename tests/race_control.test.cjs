@@ -7,13 +7,20 @@ const Control = require("../static/race_control.js");
 function element(tag) {
   return {
     tagName: tag.toUpperCase(), children: [], dataset: {}, attributes: {}, listeners: {}, style: {},
-    hidden: false, disabled: false, value: "", clientHeight: 300, clientWidth: 900, offsetHeight: 32,
+    hidden: false, disabled: false, value: "", scrollTop: 0, clientHeight: 300, clientWidth: 900, offsetHeight: 32,
     _text: "",
     get firstChild() { return this.children[0]; },
     appendChild(child) { this.children.push(child); return child; },
     removeChild(child) { this.children.splice(this.children.indexOf(child), 1); },
     setAttribute(key, value) { this.attributes[key] = String(value); },
     getAttribute(key) { return this.attributes[key]; },
+    focus() { this.focused = true; },
+    querySelectorAll(selector) {
+      return this.children.flatMap(child => [
+        ...(child.tagName === selector.toUpperCase() ? [child] : []),
+        ...child.querySelectorAll(selector),
+      ]);
+    },
     addEventListener(key, fn) { (this.listeners[key] ||= []).push(fn); },
     dispatch(key) { (this.listeners[key] || []).forEach(fn => fn({ target: this })); },
     get textContent() { return this._text + this.children.map(c => c.textContent).join(""); },
@@ -51,6 +58,7 @@ function ui(responses = []) {
   };
   const env = {
     document, now: () => 1000000,
+    getComputedStyle(node) { return { display: node.hidden ? "none" : "table-cell" }; },
     setTimeout(fn, ms) { timers.push({ fn, ms }); return timers.length; },
     clearTimeout(id) { if (timers[id - 1]) timers[id - 1].cleared = true; },
     setInterval() {}, addEventListener() {},
@@ -61,13 +69,15 @@ function ui(responses = []) {
       return Promise.resolve(next && "ok" in next ? next : { ok: true, json: async () => next });
     },
   };
+  for (let i = 0; i < 6; i++) get("result-head").appendChild(element("th"));
   const page = Control.start(env);
   return {
     page, get, timers, requests, document,
     press(key, extra = {}) {
       listeners.keydown({ key, target: document.body, preventDefault() {}, ...extra });
     },
-    rows: () => get("result-rows").children.map(row => row.children.map(td => td.textContent)),
+    rows: () => get("result-rows").children.filter(row => !row.hidden)
+      .map(row => row.children.map(td => td.textContent)),
   };
 }
 
@@ -93,20 +103,101 @@ test("duration supports multi-day races and time until the start", () => {
   assert.equal(Control.formatDuration(-60), "-0:01:00");
 });
 
-test("configured theme applies on every poll, selections and page survive refresh", () => {
+test("all result rows render without paging and selections and scroll survive refresh", () => {
   const app = ui();
   const racers = Array.from({ length: 25 }, (_, i) => racer(i));
   app.page.applyData(payload([group("A"), group("B", "25K", racers)]));
   app.page.selectDistance("25K");
   app.page.setView("results");
-  app.get("result-next").dispatch("click");
-  assert.match(app.get("result-page").textContent, /8-14 of 25/);
+  assert.equal(app.rows().length, 25);
+  app.get("table-wrap").scrollTop = 240;
   app.page.applyData(payload([group("A"), group("B", "25K", racers)], { color_scheme: "light" }));
   assert.equal(app.document.body.dataset.theme, "light");
   assert.equal(app.page.state.groupKey, "B");
-  assert.equal(app.page.state.resultPage, 1);
   assert.equal(app.page.state.view, "results");
-  assert.equal(app.rows().length, 7);
+  assert.equal(app.rows().length, 25);
+  assert.equal(app.get("table-wrap").scrollTop, 240);
+  assert.match(app.get("result-count").textContent, /25 racers/);
+});
+
+function splitButtons(app) {
+  return app.get("result-rows").children.filter(row => !row.hidden && row.className !== "split-detail")
+    .flatMap(row => row.children[2].children.filter(child => child.tagName === "BUTTON"));
+}
+
+test("multi-lap racers expand inline with split and ending elapsed; single-lap racers do not", () => {
+  const app = ui();
+  app.page.applyData(payload([group("A", "50K", [
+    racer(0, { LapSplits: [
+      { LapNumber: 1, SplitSeconds: 600.125, ElapsedSeconds: 600.125 },
+      { LapNumber: 3, SplitSeconds: null, ElapsedSeconds: 1800 },
+    ] }),
+    racer(1, { LapCount: 1 }),
+    racer(2, { LapSplits: [] }),
+  ])]));
+  app.page.setView("results");
+  const buttons = splitButtons(app);
+  assert.equal(buttons.length, 2);
+  assert.equal(buttons[0].getAttribute("aria-expanded"), "false");
+  buttons[0].dispatch("click");
+  assert.equal(buttons[0].getAttribute("aria-expanded"), "true");
+  const detail = app.get("result-rows").children.find(row => row.className === "split-detail");
+  assert.equal(detail.hidden, false);
+  assert.equal(detail.id, buttons[0].getAttribute("aria-controls"));
+  assert.match(detail.textContent, /Lap.*Split.*Elapsed.*1.*0:10:00\.125.*0:10:00\.125/);
+  assert.match(detail.textContent, /3.*--:--:--.*0:30:00/);
+  buttons[1].dispatch("click");
+  assert.match(app.rows().flat().join(" "), /No lap splits available/);
+  assert.equal(buttons[0].getAttribute("aria-expanded"), "true");
+  buttons[0].dispatch("click");
+  assert.equal(detail.hidden, true);
+});
+
+test("expanded racers and focused toggle survive updates and reset on a race switch", () => {
+  const app = ui();
+  const data = payload([group("A", "50K", [racer(0), racer(1)])]);
+  app.page.applyData(data);
+  app.page.setView("results");
+  const buttons = splitButtons(app);
+  assert.equal(buttons.length, 2);
+  app.document.activeElement = buttons[0];
+  buttons[0].dispatch("click");
+  buttons[1].dispatch("click");
+  app.get("table-wrap").scrollTop = 144;
+  const updated = payload([group("A", "50K", [racer(1), racer(0, { LapSplits: [
+    { LapNumber: 1, SplitSeconds: 700, ElapsedSeconds: 700 },
+  ] })])]);
+  app.page.applyData(updated);
+  assert.ok(splitButtons(app).every(button => button.getAttribute("aria-expanded") === "true"));
+  assert.equal(splitButtons(app)[1].focused, true);
+  assert.match(app.rows().flat().join(" "), /0:11:40/);
+  assert.equal(app.get("table-wrap").scrollTop, 144);
+  app.page.applyData({ ...updated, race_generation: 2 });
+  assert.ok(splitButtons(app).every(button => button.getAttribute("aria-expanded") === "false"));
+  assert.equal(app.get("table-wrap").scrollTop, 0);
+});
+
+test("arrow keys no longer intercept native navigation in results", () => {
+  const app = ui();
+  app.page.applyData(payload([group("A")]));
+  app.page.setView("results");
+  let prevented = false;
+  app.press("ArrowRight", { preventDefault() { prevented = true; } });
+  assert.equal(prevented, false);
+});
+
+test("split details span visible columns without adding a phantom column on narrow screens", () => {
+  const app = ui();
+  app.page.applyData(payload([group("A")]));
+  app.page.setView("results");
+  app.get("result-head").children[3].hidden = true;
+  app.page.render();
+  let detail = app.get("result-rows").children.find(row => row.className === "split-detail");
+  assert.equal(detail.children[0].colSpan, 5);
+  app.get("result-head").children[5].hidden = true;
+  app.page.render();
+  detail = app.get("result-rows").children.find(row => row.className === "split-detail");
+  assert.equal(detail.children[0].colSpan, 4);
 });
 
 test("race changes reset state and waiting clears previous rows and event identity", () => {
