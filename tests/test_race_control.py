@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 import data_processing
@@ -35,6 +37,30 @@ def test_clock_falls_back_to_race_info_without_valid_racer_starts(starts):
         }],
     })
     assert project(snapshot, 28920)["clock_seconds"] == 60
+
+
+@pytest.mark.parametrize("starts,expected", [
+    (["NaN", "Infinity", "-Infinity"], 60),
+    (["NaN", "08:01:57.8"], 2.2),
+    (["08:01:57.8", "NaN"], 2.2),
+    (["Infinity", "08:01:57.8"], 2.2),
+    (["08:01:57.8", "Infinity"], 2.2),
+    (["-Infinity", "08:01:57.8"], 2.2),
+])
+def test_clock_ignores_nonfinite_starts_and_remains_valid_json(starts, expected):
+    snapshot = normalize_webscorer({
+        "RaceInfo": {"StartTime": "Saturday, October 31, 2026 8:01 AM (GMT-5)"},
+        "Results": [{
+            "Grouping": {"Distance": "5K", "Overall": True},
+            "Racers": [
+                {"Bib": str(i), "Time": "-", "StartTime": value}
+                for i, value in enumerate(starts)
+            ],
+        }],
+    })
+    control = project(snapshot, 28920)
+    assert control["clock_seconds"] == pytest.approx(expected)
+    json.dumps(control, allow_nan=False)
 
 
 def test_clock_uses_first_wave_across_midnight():
