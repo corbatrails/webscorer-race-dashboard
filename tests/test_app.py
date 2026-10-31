@@ -81,6 +81,25 @@ def test_index_includes_data_theme(client):
     assert b'data-theme="dark"' in response.data
 
 
+def test_dashboard_has_no_results_link(client):
+    html = client.get("/").get_data(as_text=True)
+    assert 'href="/results"' not in html
+    assert "/static/theme.css?v=" in html
+
+
+@pytest.mark.parametrize("scheme", ["dark", "light"])
+def test_results_page_renders_theme_and_assets(scheme):
+    application = create_app({"color_scheme": scheme}, start_polling=False)
+    response = application.test_client().get("/results")
+    html = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert f'data-theme="{scheme}"' in html
+    for asset in ("theme.css", "results.css", "result_helpers.js", "results.js"):
+        assert f"/static/{asset}?v=" in html
+    assert 'id="top-count"' in html and 'value="3"' in html
+    assert 'id="group-list"' in html
+
+
 @patch("providers.webscorer.fetch_race_results")
 def test_api_data_returns_json(mock_fetch, app, client):
     mock_fetch.return_value = MOCK_RACE_RESULTS

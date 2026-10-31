@@ -9,6 +9,7 @@ A TV-mounted dashboard that displays live race results from WebScorer. Designed 
 - Large, high-contrast dark theme optimized for TV readability
 - Configurable refresh and rotation intervals
 - Interactive race selection or pre-configured race ID
+- [Race results page](#race-results-page) for announcing winners: pick a distance/category, show its top finishers
 
 ## Quick Start
 
@@ -53,6 +54,15 @@ Press these on a keyboard attached to the dashboard browser:
 | `P` | Pause on the current page (stops rotation and scrolling, shows a "Paused" badge). Press again to resume where it stopped. Arrow keys and `R` still work while paused. |
 
 `R` calls `POST /api/refresh`, which needs no login (like `/api/data`), so anyone on the network can trigger it; the cooldown keeps it from flooding the WebScorer API.
+
+## Race results page
+
+`http://<host>:5000/results` gives the race director a list of winners to announce. The admin page header links to it (**Race results**, opens in a new tab); the TV dashboard does not.
+
+- The left side lists the same distance/category groupings as the TV dashboard's result pages, following the `display_unfinished_*` options. Click one to show its finishers on the right.
+- **Show top** (default 3) sets how many places to show. Places are used exactly as ranked on the dashboard (overall winners are not removed from category lists), and everyone tied at the cutoff is included, so "top 3" with a tie for third shows four racers. DNS/DNF/DSQ and unplaced racers are never shown.
+- The page refreshes on `refresh_interval` and keeps your grouping and count. It doesn't rotate or scroll by itself, and it uses the configured `color_scheme`.
+- Like `/` and `/api/data`, it needs no login.
 
 ## Configuration
 
@@ -204,7 +214,7 @@ Run the tests from the repo root:
 
 ```bash
 pytest                                  # server, config and admin tests
-node --test tests/dashboard.test.cjs    # TV page script (Node 22+, no npm install needed)
+node --test tests/dashboard.test.cjs tests/results.test.cjs    # TV and results page scripts (Node 22+, no npm install needed)
 ```
 
 For a quick manual check, point `--config` at a throwaway YAML file with `data_file` set to one of the files in `tests/fixtures/` (or use the [offline demo](#offline-demo)); no WebScorer credentials are needed.

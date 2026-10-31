@@ -1,0 +1,30 @@
+/* Color scheme variables shared by the dashboard and results pages. */
+[data-theme="dark"] {
+  --bg-primary: #1a1a2e;
+  --bg-card: #16213e;
+  --bg-track: #0f3460;
+  --text-primary: #ffffff;
+  --text-body: #e0e0e0;
+  --text-muted: #a0a0c0;
+  --text-dim: #606080;
+  --accent-primary: #00d4ff;
+  --accent-secondary: #ff9f43;
+  --border-color: #2a2a4a;
+  --error-color: #ff6b6b;
+  --row-even: #16213e;
+}
+
+[data-theme="light"] {
+  --bg-primary: #f5f5f5;
+  --bg-card: #ffffff;
+  --bg-track: #e0e0e0;
+  --text-primary: #1a1a2e;
+  --text-body: #333333;
+  --text-muted: #666666;
+  --text-dim: #999999;
+  --accent-primary: #0088cc;
+  --accent-secondary: #e07000;
+  --border-color: #dddddd;
+  --error-color: #cc0000;
+  --row-even: #f0f0f0;
+}

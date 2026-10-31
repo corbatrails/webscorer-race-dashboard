@@ -416,18 +416,7 @@
   }
 
   function isFinished(racer) {
-    var t = (racer.Time || "").trim().toUpperCase();
-    return t && t !== "-" && t !== "DNS" && t !== "DNF" && t !== "DSQ";
-  }
-
-  function hasResult(racer) {
-    var t = (racer.Time || "").trim().toUpperCase();
-    return t === "DNS" || t === "DNF" || t === "DSQ" || isFinished(racer);
-  }
-
-  function isUnfinished(racer) {
-    var t = (racer.Time || "").trim();
-    return t === "" || t === "-";
+    return ResultHelpers.isFinished(racer);
   }
 
   function shouldDisplayUnfinished(category) {
@@ -435,7 +424,7 @@
   }
 
   function shouldDisplayRacer(category, racer) {
-    return hasResult(racer) || (shouldDisplayUnfinished(category) && isUnfinished(racer));
+    return ResultHelpers.shouldDisplayRacer(racer, shouldDisplayUnfinished(category));
   }
 
   function renderCategory(category, catIndex, data) {

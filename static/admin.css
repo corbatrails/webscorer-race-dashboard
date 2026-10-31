@@ -31,6 +31,8 @@ h1 { margin: 0 0 1rem; font-size: 1.4rem; }
 }
 
 .admin-header h1 { margin: 0; }
+.header-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.header-link { color: var(--accent); font-weight: 600; }
 
 .admin-card {
   max-width: 48rem;
