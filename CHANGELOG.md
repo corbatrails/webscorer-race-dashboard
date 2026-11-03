@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.0.0 (unreleased)
+
+### Breaking Changes
+
+* Non-secret settings no longer load from environment variables or `.env`; move them to `config.yaml`. `WEBSCORER_API_ID`, `WEBSCORER_API_TOKEN`, and `ADMIN_PASSWORD` remain environment-based secrets.
+* `/api/data` racer rows no longer include raw WebScorer fields such as `Email`, `LapTimes`, and `ChipId`; the `config_restart_required` response field was also removed.
+
+### Functionality
+
+* Record the Race Control Unfinished filter and All-distances view, which shipped in v1.30.2 under a `fix:` commit label.
+
 ## 1.0.0 (2026-08-09)
 
 

@@ -84,6 +84,9 @@ Options are split by sensitivity:
 - **`.env` (secrets only, never committed):** `WEBSCORER_API_ID`, `WEBSCORER_API_TOKEN`, and optionally `ADMIN_PASSWORD`.
 - **`config.yaml` (committed):** every other option. Edit it to change intervals, which pages show, layout, colors, etc.
 
+For the configuration and `/api/data` compatibility changes in v2, see the
+[v2 migration guide](docs/migrations/v2.md).
+
 ### Choosing a config file
 
 The app reads `config.yaml` next to `app.py` by default. Pass `--config` to use another file, for example a throwaway test setup:
