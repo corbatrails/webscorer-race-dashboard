@@ -58,6 +58,8 @@
     var document = env.document;
     var el = function (id) { return document.getElementById(id); };
     var now = env.now || root.performance.now.bind(root.performance);
+    var location = env.location || root.location;
+    var history = env.history || root.history;
     var requestedView = document.body && document.body.dataset && document.body.dataset.initialView;
     var pollTimer = null;
     var pendingPoll = null;
@@ -481,7 +483,29 @@
       else renderResults();
     }
 
-    function setView(view) { state.view = view; render(); }
+    function syncOperatorNavigation() {
+      ["progress", "results"].forEach(function (view) {
+        var link = el("operator-nav-" + view);
+        if (!link) return;
+        var active = state.view === view;
+        link.className = "operator-nav__link" + (active ? " is-active" : "");
+        if (active) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      });
+    }
+    function syncViewLocation() {
+      if (!location || !history || typeof history.replaceState !== "function") return;
+      var url = new URL(location.href);
+      url.searchParams.set("view", state.view);
+      history.replaceState(null, "", url.toString());
+    }
+    function setView(view) {
+      if (view !== "progress" && view !== "results") return;
+      state.view = view;
+      syncOperatorNavigation();
+      syncViewLocation();
+      render();
+    }
     function applyData(data) {
       var raceChanged = state.raceGeneration !== data.race_generation;
       if (state.raceGeneration !== null && raceChanged) resetSelection();
@@ -556,6 +580,13 @@
 
     el("progress-tab").addEventListener("click", function () { setView("progress"); });
     el("results-tab").addEventListener("click", function () { setView("results"); });
+    [["progress", "progress"], ["results", "results"]].forEach(function (entry) {
+      var link = el("operator-nav-" + entry[0]);
+      if (link) link.addEventListener("click", function (event) {
+        event.preventDefault();
+        setView(entry[1]);
+      });
+    });
     el("refresh-button").addEventListener("click", refresh);
     el("distance-select").addEventListener("change", function () {
       var value = el("distance-select").value;
@@ -615,6 +646,7 @@
       getComputedStyle: root.getComputedStyle.bind(root),
       clearTimeout: root.clearTimeout.bind(root), setInterval: root.setInterval.bind(root),
       addEventListener: root.addEventListener.bind(root), ResizeObserver: root.ResizeObserver,
+      history: root.history, location: root.location,
     }).poll();
   }
 })(typeof globalThis !== "undefined" ? globalThis : this);

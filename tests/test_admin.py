@@ -85,6 +85,21 @@ def test_operator_navigation_is_shared(client):
         assert 'aria-current="page"' in html
 
 
+def test_admin_navigation_opens_destinations_in_new_tabs(client):
+    _login(client)
+    html = client.get("/admin").get_data(as_text=True)
+    for destination in (
+        "/race-control?view=progress",
+        "/race-control?view=results",
+        "/results",
+        "/admin",
+    ):
+        match = re.search(r'<a\b[^>]*href="' + re.escape(destination) + r'"[^>]*>', html)
+        assert match
+        assert 'target="_blank"' in match.group(0)
+        assert 'rel="noopener"' in match.group(0)
+
+
 def test_admin_nav_requires_login(client):
     results_html = client.get("/results").get_data(as_text=True)
     assert 'href="/admin"' in results_html

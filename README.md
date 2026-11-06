@@ -146,6 +146,7 @@ Non-secret values in `.env` or the process environment (for example `REFRESH_INT
 Set `ADMIN_PASSWORD` in `.env` and restart to enable `http://<host>:5000/admin`. Leave it empty and the admin page is disabled (every `/admin` URL returns 404). Startup prints whether the admin page is enabled, never the password.
 
 Admin uses the shared operator navigation, as do the read-only Race control and Race results pages. Those read-only pages do not require a login and must be deployed only on a race-staff-restricted network or at a staff-only location; Admin remains protected by `ADMIN_PASSWORD`.
+From Admin, navigation links open in new tabs so unsaved settings stay available in the original tab.
 
 The admin settings and login pages use the dashboard's configured `color_scheme`. Saving a color scheme change applies it to the admin page after the save.
 

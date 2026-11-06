@@ -14,6 +14,7 @@ function element(tag) {
     removeChild(child) { this.children.splice(this.children.indexOf(child), 1); },
     setAttribute(key, value) { this.attributes[key] = String(value); },
     getAttribute(key) { return this.attributes[key]; },
+    removeAttribute(key) { delete this.attributes[key]; },
     focus() { this.focused = true; },
     querySelectorAll(selector) {
       return this.children.flatMap(child => [
@@ -22,7 +23,11 @@ function element(tag) {
       ]);
     },
     addEventListener(key, fn) { (this.listeners[key] ||= []).push(fn); },
-    dispatch(key) { (this.listeners[key] || []).forEach(fn => fn({ target: this })); },
+    dispatch(key) {
+      const event = { target: this, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+      (this.listeners[key] || []).forEach(fn => fn(event));
+      return event;
+    },
     get textContent() { return this._text + this.children.map(c => c.textContent).join(""); },
     set textContent(value) { this.children = []; this._text = String(value); },
     set innerHTML(_) { throw new Error("Render API values as text, not HTML"); },
@@ -53,13 +58,17 @@ function ui(responses = [], initialView) {
   const get = id => nodes[id] ||= element("div");
   const listeners = {}, timers = [], intervals = [], requests = [];
   let now = 1000000;
+  const location = { href: `http://localhost/race-control${initialView ? `?view=${initialView}` : ""}` };
+  const history = {
+    replaceState(_state, _title, url) { location.href = new URL(url, location.href).href; },
+  };
   const document = {
     body: element("body"), getElementById: get, createElement: element,
     addEventListener(name, fn) { listeners[name] = fn; },
   };
   if (initialView !== undefined) document.body.dataset.initialView = initialView;
   const env = {
-    document, now: () => now,
+    document, location, history, now: () => now,
     getComputedStyle(node) { return { display: node.hidden ? "none" : "table-cell" }; },
     setTimeout(fn, ms) { timers.push({ fn, ms }); return timers.length; },
     clearTimeout(id) { if (timers[id - 1]) timers[id - 1].cleared = true; },
@@ -79,9 +88,16 @@ function ui(responses = [], initialView) {
     }
     get("result-head").appendChild(heading);
   }
+  const initialNavView = initialView === "results" ? "results" : "progress";
+  ["progress", "results"].forEach(view => {
+    const link = get(`operator-nav-${view}`);
+    const active = view === initialNavView;
+    link.className = "operator-nav__link" + (active ? " is-active" : "");
+    if (active) link.setAttribute("aria-current", "page");
+  });
   const page = Control.start(env);
   return {
-    page, get, timers, requests, document,
+    page, get, timers, requests, document, location,
     advance(ms) { now += ms; },
     tick() { intervals.forEach(fn => fn()); },
     press(key, extra = {}) {
@@ -109,6 +125,22 @@ test("initial view uses the results query", () => {
 test("initial view falls back to progress", () => {
   const app = ui([], "unknown");
   assert.equal(app.page.state.view, "progress");
+});
+
+test("operator navigation keeps its active link and URL in sync with the view", () => {
+  const app = ui();
+  const event = app.get("operator-nav-results").dispatch("click");
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(app.page.state.view, "results");
+  assert.equal(app.location.href, "http://localhost/race-control?view=results");
+  assert.equal(app.get("operator-nav-results").className, "operator-nav__link is-active");
+  assert.equal(app.get("operator-nav-results").getAttribute("aria-current"), "page");
+  assert.equal(app.get("operator-nav-progress").getAttribute("aria-current"), undefined);
+
+  app.page.setView("progress");
+  assert.equal(app.location.href, "http://localhost/race-control?view=progress");
+  assert.equal(app.get("operator-nav-progress").getAttribute("aria-current"), "page");
+  assert.equal(app.get("operator-nav-results").getAttribute("aria-current"), undefined);
 });
 
 test("all racers includes statuses; finished-only excludes every non-finisher", () => {
