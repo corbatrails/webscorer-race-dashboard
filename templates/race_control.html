@@ -6,11 +6,12 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Race control</title>
     <link rel="stylesheet" href="/static/theme.css?v={{ cache_bust }}">
+    <link rel="stylesheet" href="/static/operator.css?v={{ cache_bust }}">
     <link rel="stylesheet" href="/static/race_control.css?v={{ cache_bust }}">
 </head>
-<body data-theme="{{ color_scheme }}" data-initial-view="{{ initial_view }}">
+<body class="operator-page" data-theme="{{ color_scheme }}" data-initial-view="{{ initial_view }}">
     {% include "operator_nav.html" %}
-    <header class="control-header">
+    <header class="control-header operator-page-header">
         <div class="race-identity">
             <h1 id="race-name">Race control</h1>
             <p id="race-date">Director &amp; timing desk</p>
@@ -25,8 +26,8 @@
             <button type="button" id="refresh-button" title="Refresh from source (R)">Refresh</button>
         </div>
     </header>
-    <p class="control-warning" id="control-status" role="alert" hidden></p>
-    <p class="control-notice" id="page-notice" role="status">Loading race data&hellip;</p>
+    <p class="control-warning operator-status operator-status--error" id="control-status" role="alert" hidden></p>
+    <p class="control-notice operator-status operator-status--notice" id="page-notice" role="status">Loading race data&hellip;</p>
     <main id="control-main" hidden>
         <section class="control-view" id="progress-view" aria-label="Race progress">
             <div class="control-stats" id="progress-stats" aria-label="Event totals"></div>

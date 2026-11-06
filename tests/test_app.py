@@ -107,6 +107,14 @@ def test_results_page_renders_theme_and_assets(scheme):
     assert 'id="group-list"' in html
 
 
+def test_operator_pages_include_shared_styles(client):
+    for path in ("/race-control", "/results"):
+        html = client.get(path).get_data(as_text=True)
+        assert "/static/operator.css?v=" in html
+    dashboard_html = client.get("/").get_data(as_text=True)
+    assert "/static/operator.css" not in dashboard_html
+
+
 @patch("providers.webscorer.fetch_race_results")
 def test_api_data_returns_json(mock_fetch, app, client):
     mock_fetch.return_value = MOCK_RACE_RESULTS

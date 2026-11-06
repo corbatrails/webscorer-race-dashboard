@@ -1,0 +1,123 @@
+.operator-nav {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.4rem clamp(0.75rem, 2vw, 1.25rem);
+    color: var(--text-body);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.operator-nav__links {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.operator-nav__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 0.4rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.operator-nav__link:hover {
+    color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+.operator-nav__link.is-active {
+    color: var(--text-primary);
+    background: var(--bg-track);
+    box-shadow: inset 0 -2px var(--accent-primary);
+}
+
+.operator-nav__logout {
+    flex: none;
+    margin: 0;
+}
+
+.operator-nav__logout button {
+    min-height: 2.5rem;
+    margin: 0;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.4rem;
+    color: var(--text-body);
+    background: transparent;
+    font: inherit;
+    font-weight: 600;
+}
+
+.operator-nav__logout button:hover {
+    color: var(--text-primary);
+    background: var(--bg-primary);
+}
+
+.operator-page .operator-page-header h1 {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: clamp(1.25rem, 2vw, 1.625rem);
+    line-height: 1.2;
+}
+
+.operator-page :is(button, input, select, textarea) {
+    font-family: inherit;
+}
+
+.operator-page :focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+.operator-status {
+    overflow-wrap: anywhere;
+    border-radius: 0.4rem;
+}
+
+.operator-status--error { color: var(--error-color); }
+.operator-status--notice { color: var(--text-muted); }
+.operator-status--success { color: var(--success-color); }
+
+.operator-page--admin .operator-nav {
+    margin: -1rem -1rem 1rem;
+}
+
+@media (max-width: 40rem) {
+    .operator-nav {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .operator-nav__links {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .operator-nav__link {
+        white-space: normal;
+    }
+
+    .operator-nav__logout button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 30rem) {
+    .operator-page--admin .operator-nav {
+        margin: -0.5rem -0.5rem 0.5rem;
+    }
+}

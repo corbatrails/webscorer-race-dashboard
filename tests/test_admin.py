@@ -93,6 +93,12 @@ def test_admin_nav_requires_login(client):
     assert response.headers["Location"].endswith("/admin/login")
 
 
+def test_operator_pages_include_shared_styles(client):
+    _login(client)
+    html = client.get("/admin").get_data(as_text=True)
+    assert 'href="/static/operator.css"' in html
+
+
 def test_logout_from_results_clears_admin_session(client):
     _login(client)
     html = client.get("/results").get_data(as_text=True)

@@ -6,19 +6,20 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Race results</title>
     <link rel="stylesheet" href="/static/theme.css?v={{ cache_bust }}">
+    <link rel="stylesheet" href="/static/operator.css?v={{ cache_bust }}">
     <link rel="stylesheet" href="/static/results.css?v={{ cache_bust }}">
 </head>
-<body data-theme="{{ color_scheme }}">
+<body class="operator-page" data-theme="{{ color_scheme }}">
     {% include "operator_nav.html" %}
-    <header class="results-header">
+    <header class="results-header operator-page-header">
         <div>
             <h1>Race results</h1>
             <p class="race-name" id="race-name"></p>
         </div>
         <p class="last-updated" id="last-updated" aria-live="polite"></p>
     </header>
-    <p class="page-notice" id="page-notice" role="status">Loading race data&hellip;</p>
-    <p class="results-status" id="results-status" role="alert" hidden></p>
+    <p class="page-notice operator-status operator-status--notice" id="page-notice" role="status">Loading race data&hellip;</p>
+    <p class="results-status operator-status operator-status--error" id="results-status" role="alert" hidden></p>
     <main class="results-layout">
         <nav class="group-list" id="group-list" aria-label="Result groupings"></nav>
         <section class="results-panel" id="results-panel" aria-labelledby="group-title" hidden>
@@ -28,7 +29,7 @@
                     <input id="top-count" type="number" min="1" step="1" value="3" inputmode="numeric" aria-describedby="count-error">
                 </label>
             </div>
-            <p class="count-error" id="count-error" role="alert" hidden></p>
+            <p class="count-error operator-status operator-status--error" id="count-error" role="alert" hidden></p>
             <table class="winners-table" id="results-table">
                 <thead><tr><th class="col-place">Place</th><th class="col-bib">Bib</th><th class="col-name">Name</th><th class="col-time">Time</th></tr></thead>
                 <tbody id="results-rows"></tbody>
