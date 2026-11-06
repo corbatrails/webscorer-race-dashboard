@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="/static/theme.css?v={{ cache_bust }}">
     <link rel="stylesheet" href="/static/race_control.css?v={{ cache_bust }}">
 </head>
-<body data-theme="{{ color_scheme }}">
+<body data-theme="{{ color_scheme }}" data-initial-view="{{ initial_view }}">
+    {% include "operator_nav.html" %}
     <header class="control-header">
         <div class="race-identity">
             <h1 id="race-name">Race control</h1>
@@ -22,7 +23,6 @@
             <p id="last-updated" aria-live="polite"></p>
             <div class="race-clock"><strong id="race-clock">--:--:--</strong><span>Race clock</span></div>
             <button type="button" id="refresh-button" title="Refresh from source (R)">Refresh</button>
-            {% if admin_enabled %}<a href="/admin">Admin</a>{% endif %}
         </div>
     </header>
     <p class="control-warning" id="control-status" role="alert" hidden></p>

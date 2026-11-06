@@ -145,6 +145,7 @@ def _render_settings(values, revision, *, errors=None, form_error=None, notice=N
         groups=_field_groups(values, errors or {}),
         form_error=form_error,
         notice=notice,
+        active_destination="admin",
     ), status
 
 

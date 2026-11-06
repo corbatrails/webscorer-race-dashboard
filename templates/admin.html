@@ -9,16 +9,9 @@
     <script src="{{ url_for('static', filename='admin.js') }}" defer></script>
 </head>
 <body data-theme="{{ color_scheme }}">
+    {% include "operator_nav.html" %}
     <header class="admin-header">
         <h1>Dashboard admin</h1>
-        <div class="header-actions">
-            <a class="header-link" href="{{ url_for('race_control') }}" target="_blank" rel="noopener">Race control</a>
-            <a class="header-link" href="{{ url_for('results') }}" target="_blank" rel="noopener">Race results</a>
-            <form method="post" action="{{ url_for('admin.logout') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button type="submit" class="secondary">Log out</button>
-            </form>
-        </div>
     </header>
     <main class="admin-main">
         {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}

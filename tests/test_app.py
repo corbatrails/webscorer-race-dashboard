@@ -87,6 +87,13 @@ def test_dashboard_has_no_results_link(client):
     assert "/static/theme.css?v=" in html
 
 
+def test_operator_pages_stay_public_when_admin_disabled(client):
+    assert client.get("/race-control").status_code == 200
+    results_html = client.get("/results").get_data(as_text=True)
+    assert 'href="/admin"' not in results_html
+    assert 'class="operator-nav"' not in client.get("/").get_data(as_text=True)
+
+
 @pytest.mark.parametrize("scheme", ["dark", "light"])
 def test_results_page_renders_theme_and_assets(scheme):
     application = create_app({"color_scheme": scheme}, start_polling=False)

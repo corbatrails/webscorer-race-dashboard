@@ -48,7 +48,7 @@ function payload(groups, extra = {}) {
   };
 }
 
-function ui(responses = []) {
+function ui(responses = [], initialView) {
   const nodes = {};
   const get = id => nodes[id] ||= element("div");
   const listeners = {}, timers = [], intervals = [], requests = [];
@@ -57,6 +57,7 @@ function ui(responses = []) {
     body: element("body"), getElementById: get, createElement: element,
     addEventListener(name, fn) { listeners[name] = fn; },
   };
+  if (initialView !== undefined) document.body.dataset.initialView = initialView;
   const env = {
     document, now: () => now,
     getComputedStyle(node) { return { display: node.hidden ? "none" : "table-cell" }; },
@@ -98,6 +99,16 @@ test("pagination clamps removed pages and never overfills a short viewport", () 
   assert.equal(Control.capacity(90, 32, 36), 1);
   assert.equal(Control.capacity(10, 32, 36), 1);
   assert.equal(Control.paginate([], 3, 9).page, 0);
+});
+
+test("initial view uses the results query", () => {
+  const app = ui([], "results");
+  assert.equal(app.page.state.view, "results");
+});
+
+test("initial view falls back to progress", () => {
+  const app = ui([], "unknown");
+  assert.equal(app.page.state.view, "progress");
 });
 
 test("all racers includes statuses; finished-only excludes every non-finisher", () => {

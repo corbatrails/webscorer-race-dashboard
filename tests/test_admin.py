@@ -64,15 +64,63 @@ def test_admin_redirects_to_login_when_logged_out(client):
     assert response.headers["Location"].endswith("/admin/login")
 
 
+def test_operator_navigation_is_shared(client):
+    _login(client)
+    pages = [
+        client.get("/race-control").get_data(as_text=True),
+        client.get("/results").get_data(as_text=True),
+        client.get("/admin").get_data(as_text=True),
+    ]
+    destinations = (
+        'href="/race-control?view=progress"',
+        'href="/race-control?view=results"',
+        'href="/results"',
+        'href="/admin"',
+    )
+    for html in pages:
+        assert 'class="operator-nav"' in html
+        assert all(destination in html for destination in destinations)
+        assert "Observability" not in html
+        assert 'action="/admin/logout"' in html
+        assert 'aria-current="page"' in html
+
+
+def test_admin_nav_requires_login(client):
+    results_html = client.get("/results").get_data(as_text=True)
+    assert 'href="/admin"' in results_html
+    response = client.get("/admin")
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/login")
+
+
+def test_logout_from_results_clears_admin_session(client):
+    _login(client)
+    html = client.get("/results").get_data(as_text=True)
+    match = re.search(
+        r'<form[^>]*action="/admin/logout"[^>]*>.*?name="csrf_token" value="([^"]+)"',
+        html,
+        re.DOTALL,
+    )
+    assert match
+    token = match.group(1)
+
+    assert client.post("/admin/logout", data={}).status_code == 403
+    assert _session(client).get("authenticated") is True
+    assert client.post("/admin/logout", data={"csrf_token": token}).status_code == 303
+    assert "authenticated" not in _session(client)
+    assert client.get("/results").status_code == 200
+    assert client.get("/admin").headers["Location"].endswith("/admin/login")
+
+
 def test_admin_page_links_to_results_page(client):
     _login(client)
     html = client.get("/admin").get_data(as_text=True)
-    assert re.search(r'<a [^>]*href="/results"[^>]*>Race results</a>', html)
+    assert re.search(r'<a [^>]*href="/results"[^>]*>Winner announcements</a>', html)
 
 def test_admin_page_links_to_race_control(client):
     _login(client)
     html = client.get("/admin").get_data(as_text=True)
-    assert re.search(r'<a [^>]*href="/race-control"[^>]*>Race control</a>', html)
+    assert re.search(r'<a [^>]*href="/race-control\?view=progress"[^>]*>Race progress</a>', html)
 
 
 def test_login_uses_constant_time_bytes_comparison(client, monkeypatch):

@@ -230,6 +230,16 @@ def test_race_control_route_renders_configured_theme(scheme):
     assert 'id="theme"' not in html
 
 
+def test_race_control_invalid_view_defaults_to_progress():
+    client = create_app({}, start_polling=False).test_client()
+
+    results_html = client.get("/race-control?view=results").get_data(as_text=True)
+    invalid_html = client.get("/race-control?view=unknown").get_data(as_text=True)
+
+    assert 'data-initial-view="results"' in results_html
+    assert 'data-initial-view="progress"' in invalid_html
+
+
 def test_control_payload_ignores_tv_visibility_options_and_resets_on_race_switch(tmp_path):
     from pathlib import Path
 

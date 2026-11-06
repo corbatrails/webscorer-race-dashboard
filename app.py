@@ -6,7 +6,7 @@ import sys
 import threading
 import time
 from datetime import date, datetime, timedelta, timezone
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from werkzeug.serving import make_server
 from data_processing import (
     process_race_data,
@@ -138,14 +138,21 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
     @app.route("/results")
     def results():
         color_scheme = app.config["dashboard"].get("color_scheme", "dark")
-        return render_template("results.html", cache_bust=_start_time, color_scheme=color_scheme)
+        return render_template(
+            "results.html", cache_bust=_start_time, color_scheme=color_scheme,
+            active_destination="announcements",
+        )
 
     @app.route("/race-control")
     def race_control():
         color_scheme = app.config["dashboard"].get("color_scheme", "dark")
+        requested_view = request.args.get("view")
+        initial_view = requested_view if requested_view in ("progress", "results") else "progress"
         return render_template(
             "race_control.html", cache_bust=_start_time, color_scheme=color_scheme,
             admin_enabled=app.config["admin_enabled"],
+            initial_view=initial_view,
+            active_destination="detailed-results" if initial_view == "results" else "progress",
         )
 
     @app.route("/api/data")

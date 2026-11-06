@@ -1,0 +1,24 @@
+<nav class="operator-nav" aria-label="Race staff navigation">
+    <div class="operator-nav__links">
+        <a class="operator-nav__link{% if active_destination == 'progress' %} is-active{% endif %}"
+           href="{{ url_for('race_control', view='progress') }}"
+           {% if active_destination == 'progress' %}aria-current="page"{% endif %}>Race progress</a>
+        <a class="operator-nav__link{% if active_destination == 'detailed-results' %} is-active{% endif %}"
+           href="{{ url_for('race_control', view='results') }}"
+           {% if active_destination == 'detailed-results' %}aria-current="page"{% endif %}>Detailed results</a>
+        <a class="operator-nav__link{% if active_destination == 'announcements' %} is-active{% endif %}"
+           href="{{ url_for('results') }}"
+           {% if active_destination == 'announcements' %}aria-current="page"{% endif %}>Winner announcements</a>
+        {% if config["admin_enabled"] %}
+        <a class="operator-nav__link{% if active_destination == 'admin' %} is-active{% endif %}"
+           href="{{ url_for('admin.settings') }}"
+           {% if active_destination == 'admin' %}aria-current="page"{% endif %}>Admin</a>
+        {% endif %}
+    </div>
+    {% if session.get("authenticated") %}
+    <form class="operator-nav__logout" method="post" action="{{ url_for('admin.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ session.get('csrf_token', '') }}">
+        <button type="submit">Log out</button>
+    </form>
+    {% endif %}
+</nav>

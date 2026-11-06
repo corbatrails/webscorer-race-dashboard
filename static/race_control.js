@@ -58,10 +58,12 @@
     var document = env.document;
     var el = function (id) { return document.getElementById(id); };
     var now = env.now || root.performance.now.bind(root.performance);
+    var requestedView = document.body && document.body.dataset && document.body.dataset.initialView;
     var pollTimer = null;
     var pendingPoll = null;
     var state = {
-      data: null, view: "progress", distance: null, allDistances: false, distanceInitialized: false,
+      data: null, view: requestedView === "results" ? "results" : "progress",
+      distance: null, allDistances: false, distanceInitialized: false,
       groupKey: null, filter: "all",
       distancePage: 0, lapPage: 0, distRailPage: 0, groupRailPage: 0,
       expandedRacers: new Set(),
