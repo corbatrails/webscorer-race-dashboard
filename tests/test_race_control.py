@@ -221,7 +221,7 @@ def test_control_lap_splits_are_empty_without_visible_crossings(status, start):
 @pytest.mark.parametrize("scheme", ["dark", "light"])
 def test_race_control_route_renders_configured_theme(scheme):
     app = create_app({"color_scheme": scheme}, start_polling=False)
-    response = app.test_client().get("/race-control")
+    response = app.test_client().get("/progress")
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert f'data-theme="{scheme}"' in html
@@ -233,8 +233,8 @@ def test_race_control_route_renders_configured_theme(scheme):
 def test_race_control_invalid_view_defaults_to_progress():
     client = create_app({}, start_polling=False).test_client()
 
-    results_html = client.get("/race-control?view=results").get_data(as_text=True)
-    invalid_html = client.get("/race-control?view=unknown").get_data(as_text=True)
+    results_html = client.get("/race-control?view=results", follow_redirects=True).get_data(as_text=True)
+    invalid_html = client.get("/race-control?view=unknown", follow_redirects=True).get_data(as_text=True)
 
     assert 'data-initial-view="results"' in results_html
     assert 'data-initial-view="progress"' in invalid_html

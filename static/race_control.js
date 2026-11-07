@@ -496,7 +496,8 @@
     function syncViewLocation() {
       if (!location || !history || typeof history.replaceState !== "function") return;
       var url = new URL(location.href);
-      url.searchParams.set("view", state.view);
+      url.pathname = new URL(el("operator-nav-" + state.view).href, location.href).pathname;
+      url.searchParams.delete("view");
       history.replaceState(null, "", url.toString());
     }
     function setView(view) {
@@ -583,6 +584,8 @@
     [["progress", "progress"], ["results", "results"]].forEach(function (entry) {
       var link = el("operator-nav-" + entry[0]);
       if (link) link.addEventListener("click", function (event) {
+        if (event.defaultPrevented || event.button > 0 ||
+            event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
         event.preventDefault();
         setView(entry[1]);
       });

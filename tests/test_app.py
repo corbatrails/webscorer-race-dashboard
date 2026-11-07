@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import pytest
 from unittest.mock import patch, MagicMock
 from app import create_app
@@ -83,21 +84,54 @@ def test_index_includes_data_theme(client):
 
 def test_dashboard_has_no_results_link(client):
     html = client.get("/").get_data(as_text=True)
-    assert 'href="/results"' not in html
+    for path in ("/progress", "/race-results", "/announcements"):
+        assert f'href="{path}"' not in html
     assert "/static/theme.css?v=" in html
 
 
 def test_operator_pages_stay_public_when_admin_disabled(client):
-    assert client.get("/race-control").status_code == 200
-    results_html = client.get("/results").get_data(as_text=True)
-    assert 'href="/admin"' not in results_html
+    for path in ("/progress", "/race-results", "/announcements"):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert 'href="/admin"' not in response.get_data(as_text=True)
     assert 'class="operator-nav"' not in client.get("/").get_data(as_text=True)
+
+
+@pytest.mark.parametrize("path,view,label", [
+    ("/progress", "progress", "Race progress"),
+    ("/progress?view=results", "progress", "Race progress"),
+    ("/race-results", "results", "Detailed results"),
+    ("/race-results?view=progress", "results", "Detailed results"),
+    ("/announcements", None, "Winner announcements"),
+])
+def test_canonical_operator_routes(client, path, view, label):
+    response = client.get(path)
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    if view:
+        assert f'data-initial-view="{view}"' in html
+    active_links = re.findall(r'<a\b[^>]*aria-current="page"[^>]*>([^<]+)</a>', html)
+    assert active_links == [label]
+
+
+@pytest.mark.parametrize("old,new", [
+    ("/race-control", "/progress"),
+    ("/race-control?view=progress", "/progress"),
+    ("/race-control?view=unknown", "/progress"),
+    ("/race-control?view=results", "/race-results"),
+    ("/results", "/announcements"),
+])
+def test_legacy_operator_redirects(client, old, new):
+    response = client.get(old)
+    assert response.status_code == 301
+    assert response.headers["Location"] == new
+    assert client.get(response.headers["Location"]).status_code == 200
 
 
 @pytest.mark.parametrize("scheme", ["dark", "light"])
 def test_results_page_renders_theme_and_assets(scheme):
     application = create_app({"color_scheme": scheme}, start_polling=False)
-    response = application.test_client().get("/results")
+    response = application.test_client().get("/announcements")
     html = response.get_data(as_text=True)
     assert response.status_code == 200
     assert f'data-theme="{scheme}"' in html
@@ -108,7 +142,7 @@ def test_results_page_renders_theme_and_assets(scheme):
 
 
 def test_operator_pages_include_shared_styles(client):
-    for path in ("/race-control", "/results"):
+    for path in ("/progress", "/race-results", "/announcements"):
         html = client.get(path).get_data(as_text=True)
         assert "/static/operator.css?v=" in html
     dashboard_html = client.get("/").get_data(as_text=True)

@@ -23,8 +23,9 @@ function element(tag) {
       ]);
     },
     addEventListener(key, fn) { (this.listeners[key] ||= []).push(fn); },
-    dispatch(key) {
-      const event = { target: this, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+    dispatch(key, extra = {}) {
+      const event = { target: this, button: 0, defaultPrevented: false,
+        preventDefault() { this.defaultPrevented = true; }, ...extra };
       (this.listeners[key] || []).forEach(fn => fn(event));
       return event;
     },
@@ -58,7 +59,7 @@ function ui(responses = [], initialView) {
   const get = id => nodes[id] ||= element("div");
   const listeners = {}, timers = [], intervals = [], requests = [];
   let now = 1000000;
-  const location = { href: `http://localhost/race-control${initialView ? `?view=${initialView}` : ""}` };
+  const location = { href: initialView === "results" ? "http://localhost/race-results" : "http://localhost/progress" };
   const history = {
     replaceState(_state, _title, url) { location.href = new URL(url, location.href).href; },
   };
@@ -91,6 +92,7 @@ function ui(responses = [], initialView) {
   const initialNavView = initialView === "results" ? "results" : "progress";
   ["progress", "results"].forEach(view => {
     const link = get(`operator-nav-${view}`);
+    link.href = view === "progress" ? "http://localhost/progress" : "http://localhost/race-results";
     const active = view === initialNavView;
     link.className = "operator-nav__link" + (active ? " is-active" : "");
     if (active) link.setAttribute("aria-current", "page");
@@ -117,7 +119,7 @@ test("pagination clamps removed pages and never overfills a short viewport", () 
   assert.equal(Control.paginate([], 3, 9).page, 0);
 });
 
-test("initial view uses the results query", () => {
+test("initial view uses the server-selected results view", () => {
   const app = ui([], "results");
   assert.equal(app.page.state.view, "results");
 });
@@ -132,15 +134,38 @@ test("operator navigation keeps its active link and URL in sync with the view", 
   const event = app.get("operator-nav-results").dispatch("click");
   assert.equal(event.defaultPrevented, true);
   assert.equal(app.page.state.view, "results");
-  assert.equal(app.location.href, "http://localhost/race-control?view=results");
+  assert.equal(app.location.href, "http://localhost/race-results");
   assert.equal(app.get("operator-nav-results").className, "operator-nav__link is-active");
   assert.equal(app.get("operator-nav-results").getAttribute("aria-current"), "page");
   assert.equal(app.get("operator-nav-progress").getAttribute("aria-current"), undefined);
 
   app.page.setView("progress");
-  assert.equal(app.location.href, "http://localhost/race-control?view=progress");
+  assert.equal(app.location.href, "http://localhost/progress");
   assert.equal(app.get("operator-nav-progress").getAttribute("aria-current"), "page");
   assert.equal(app.get("operator-nav-results").getAttribute("aria-current"), undefined);
+});
+
+test("view switching preserves unrelated URL state and current selection", () => {
+  const app = ui();
+  app.location.href = "http://localhost/progress?view=progress&filter=finished#table";
+  app.page.state.filter = "finished";
+  app.page.state.distance = "50K";
+  app.page.state.groupKey = "women";
+  app.get("operator-nav-results").dispatch("click");
+  assert.equal(app.location.href, "http://localhost/race-results?filter=finished#table");
+  assert.equal(app.page.state.filter, "finished");
+  assert.equal(app.page.state.distance, "50K");
+  assert.equal(app.page.state.groupKey, "women");
+});
+
+test("modified navigation clicks retain explicit browser gestures", () => {
+  for (const extra of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 }]) {
+    const app = ui();
+    const event = app.get("operator-nav-results").dispatch("click", extra);
+    assert.equal(event.defaultPrevented, false);
+    assert.equal(app.page.state.view, "progress");
+    assert.equal(app.location.href, "http://localhost/progress");
+  }
 });
 
 test("all racers includes statuses; finished-only excludes every non-finisher", () => {

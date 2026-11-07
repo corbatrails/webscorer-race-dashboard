@@ -67,14 +67,15 @@ def test_admin_redirects_to_login_when_logged_out(client):
 def test_operator_navigation_is_shared(client):
     _login(client)
     pages = [
-        client.get("/race-control").get_data(as_text=True),
-        client.get("/results").get_data(as_text=True),
+        client.get("/progress").get_data(as_text=True),
+        client.get("/race-results").get_data(as_text=True),
+        client.get("/announcements").get_data(as_text=True),
         client.get("/admin").get_data(as_text=True),
     ]
     destinations = (
-        'href="/race-control?view=progress"',
-        'href="/race-control?view=results"',
-        'href="/results"',
+        'href="/progress"',
+        'href="/race-results"',
+        'href="/announcements"',
         'href="/admin"',
     )
     for html in pages:
@@ -85,23 +86,19 @@ def test_operator_navigation_is_shared(client):
         assert 'aria-current="page"' in html
 
 
-def test_admin_navigation_opens_destinations_in_new_tabs(client):
+def test_operator_navigation_stays_in_the_same_tab(client):
     _login(client)
-    html = client.get("/admin").get_data(as_text=True)
-    for destination in (
-        "/race-control?view=progress",
-        "/race-control?view=results",
-        "/results",
-        "/admin",
-    ):
-        match = re.search(r'<a\b[^>]*href="' + re.escape(destination) + r'"[^>]*>', html)
-        assert match
-        assert 'target="_blank"' in match.group(0)
-        assert 'rel="noopener"' in match.group(0)
+    for page in ("/progress", "/race-results", "/announcements", "/admin"):
+        html = client.get(page).get_data(as_text=True)
+        nav = re.search(r'<nav\b.*?</nav>', html, re.DOTALL)
+        assert nav
+        links = re.findall(r'<a\b[^>]*>', nav.group(0))
+        assert len(links) == 4
+        assert all('target=' not in link for link in links)
 
 
 def test_admin_nav_requires_login(client):
-    results_html = client.get("/results").get_data(as_text=True)
+    results_html = client.get("/announcements").get_data(as_text=True)
     assert 'href="/admin"' in results_html
     response = client.get("/admin")
     assert response.status_code == 302
@@ -116,7 +113,7 @@ def test_operator_pages_include_shared_styles(client):
 
 def test_logout_from_results_clears_admin_session(client):
     _login(client)
-    html = client.get("/results").get_data(as_text=True)
+    html = client.get("/announcements").get_data(as_text=True)
     match = re.search(
         r'<form[^>]*action="/admin/logout"[^>]*>.*?name="csrf_token" value="([^"]+)"',
         html,
@@ -129,19 +126,19 @@ def test_logout_from_results_clears_admin_session(client):
     assert _session(client).get("authenticated") is True
     assert client.post("/admin/logout", data={"csrf_token": token}).status_code == 303
     assert "authenticated" not in _session(client)
-    assert client.get("/results").status_code == 200
+    assert client.get("/announcements").status_code == 200
     assert client.get("/admin").headers["Location"].endswith("/admin/login")
 
 
 def test_admin_page_links_to_results_page(client):
     _login(client)
     html = client.get("/admin").get_data(as_text=True)
-    assert re.search(r'<a [^>]*href="/results"[^>]*>Winner announcements</a>', html)
+    assert re.search(r'<a [^>]*href="/announcements"[^>]*>Winner announcements</a>', html)
 
 def test_admin_page_links_to_race_control(client):
     _login(client)
     html = client.get("/admin").get_data(as_text=True)
-    assert re.search(r'<a [^>]*href="/race-control\?view=progress"[^>]*>Race progress</a>', html)
+    assert re.search(r'<a [^>]*href="/progress"[^>]*>Race progress</a>', html)
 
 
 def test_login_uses_constant_time_bytes_comparison(client, monkeypatch):
@@ -371,7 +368,7 @@ def test_saved_theme_applies_to_admin_and_dashboard(tmp_path, theme):
     _, c, _ = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {previous}\n")
     response = _post_form(c, _form(c), color_scheme=theme)
     assert response.status_code == 303
-    for url in (response.headers["Location"], "/admin/login", "/", "/results"):
+    for url in (response.headers["Location"], "/admin/login", "/", "/progress", "/race-results", "/announcements"):
         assert f'data-theme="{theme}"' in c.get(url).get_data(as_text=True)
 
 

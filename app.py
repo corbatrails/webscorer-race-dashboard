@@ -6,7 +6,7 @@ import sys
 import threading
 import time
 from datetime import date, datetime, timedelta, timezone
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, redirect, url_for
 from werkzeug.serving import make_server
 from data_processing import (
     process_race_data,
@@ -135,7 +135,7 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
         color_scheme = app.config["dashboard"].get("color_scheme", "dark")
         return render_template("dashboard.html", cache_bust=_start_time, color_scheme=color_scheme)
 
-    @app.route("/results")
+    @app.route("/announcements")
     def results():
         color_scheme = app.config["dashboard"].get("color_scheme", "dark")
         return render_template(
@@ -143,17 +143,31 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
             active_destination="announcements",
         )
 
-    @app.route("/race-control")
-    def race_control():
+    @app.route("/results")
+    def legacy_results():
+        return redirect(url_for("results"), code=301)
+
+    def _render_race_control(initial_view):
         color_scheme = app.config["dashboard"].get("color_scheme", "dark")
-        requested_view = request.args.get("view")
-        initial_view = requested_view if requested_view in ("progress", "results") else "progress"
         return render_template(
             "race_control.html", cache_bust=_start_time, color_scheme=color_scheme,
             admin_enabled=app.config["admin_enabled"],
             initial_view=initial_view,
             active_destination="detailed-results" if initial_view == "results" else "progress",
         )
+
+    @app.route("/progress")
+    def race_progress():
+        return _render_race_control("progress")
+
+    @app.route("/race-results")
+    def race_results():
+        return _render_race_control("results")
+
+    @app.route("/race-control")
+    def race_control():
+        destination = "race_results" if request.args.get("view") == "results" else "race_progress"
+        return redirect(url_for(destination), code=301)
 
     @app.route("/api/data")
     def api_data():
