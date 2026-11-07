@@ -103,7 +103,8 @@ def _display(value):
     return str(value)
 
 
-def _field_groups(values, errors):
+def _field_groups(values, errors, saved_values=None):
+    saved_values = values if saved_values is None else saved_values
     options = {opt.key: opt for opt in OPTIONS}
     placed = set()
     groups = []
@@ -119,6 +120,7 @@ def _field_groups(values, errors):
             "choices": option_choices(opt) or (),
             "minimum": option_minimum(opt),
             "value": _display(values.get(key, opt.default)),
+            "saved_value": _display(saved_values.get(key, opt.default)),
             "error": errors.get(key),
         }
 
@@ -138,11 +140,22 @@ def _active_secrets():
 
 
 def _render_settings(values, revision, *, errors=None, form_error=None, notice=None, status=200):
+    saved_values = values
+    if status >= 400:
+        try:
+            saved_values, _ = read_config_snapshot(
+                current_app.config["dashboard_config_path"], _active_secrets(),
+            )
+        except ConfigError:
+            saved_values = current_app.config["dashboard"]
+            form_error = (form_error or "Nothing was saved.") + (
+                " Saved settings could not be read; change tracking uses the last running settings."
+            )
     return render_template(
         "admin.html",
         csrf_token=csrf_token(),
         revision=revision,
-        groups=_field_groups(values, errors or {}),
+        groups=_field_groups(values, errors or {}, saved_values),
         form_error=form_error,
         notice=notice,
         active_destination="admin",

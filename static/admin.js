@@ -6,15 +6,19 @@
     var form = document.querySelector(".settings-form");
     if (!form) return;
 
-    function snapshot() {
+    function snapshot(saved) {
       return JSON.stringify(Array.from(form.elements).filter(function (field) {
         return field.name;
       }).map(function (field) {
-        return [field.name, field.type === "checkbox" || field.type === "radio" ? field.checked : field.value];
+        var checked = field.type === "checkbox" || field.type === "radio";
+        var savedValue = saved && field.dataset ? field.dataset.savedValue : undefined;
+        var value = savedValue !== undefined ? (checked ? savedValue === "true" : savedValue) :
+          (checked ? field.checked : field.value);
+        return [field.name, value];
       }));
     }
 
-    var initial = snapshot();
+    var initial = snapshot(true);
     var leavingExplicitly = false;
     window.addEventListener("beforeunload", function (event) {
       if (!leavingExplicitly && snapshot() !== initial) {

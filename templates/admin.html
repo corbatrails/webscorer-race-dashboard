@@ -27,21 +27,21 @@
                 <div class="field field-{{ f.kind }}{% if f.error %} has-error{% endif %}">
                     {% if f.kind == "bool" %}
                     <label class="check">
-                        <input type="checkbox" id="field-{{ f.key }}" name="{{ f.key }}" value="true"{% if f.value %} checked{% endif %}>
+                        <input type="checkbox" id="field-{{ f.key }}" name="{{ f.key }}" value="true" data-saved-value="{{ 'true' if f.saved_value else 'false' }}"{% if f.value %} checked{% endif %}>
                         {{ f.label }}
                     </label>
                     {% else %}
                     <label for="field-{{ f.key }}">{{ f.label }}</label>
                     {% if f.kind == "choice" %}
-                    <select id="field-{{ f.key }}" name="{{ f.key }}">
+                    <select id="field-{{ f.key }}" name="{{ f.key }}" data-saved-value="{{ f.saved_value }}">
                         {% for choice in f.choices %}
                         <option value="{{ choice }}"{% if choice == f.value %} selected{% endif %}>{{ choice }}</option>
                         {% endfor %}
                     </select>
                     {% elif f.kind == "int" %}
-                    <input type="number" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}"{% if f.minimum is not none %} min="{{ f.minimum }}"{% endif %} step="1">
+                    <input type="number" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" data-saved-value="{{ f.saved_value }}"{% if f.minimum is not none %} min="{{ f.minimum }}"{% endif %} step="1">
                     {% else %}
-                    <input type="text" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" autocomplete="off">
+                    <input type="text" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" data-saved-value="{{ f.saved_value }}" autocomplete="off">
                     {% endif %}
                     {% endif %}
                     {% if f.help %}<p class="help">{{ f.help }}</p>{% endif %}

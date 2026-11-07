@@ -279,10 +279,13 @@ class _FormParser(HTMLParser):
     def __init__(self):
         super().__init__()
         self.fields = {}
+        self.saved_values = {}
         self._select = None
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        if tag in ("input", "select") and "name" in a and "data-saved-value" in a:
+            self.saved_values[a["name"]] = a["data-saved-value"]
         if tag == "input" and "name" in a:
             if a.get("type") == "checkbox":
                 self.fields[a["name"]] = "true" if "checked" in a else None
@@ -360,6 +363,46 @@ def test_rejected_theme_change_keeps_active_theme(tmp_path):
     parser = _FormParser()
     parser.feed(html)
     assert parser.fields["color_scheme"] == "dark"
+
+
+@pytest.mark.parametrize("failure,status", [("validation", 400), ("conflict", 409), ("write", 500)])
+def test_failed_save_preserves_saved_settings_baseline(tmp_path, failure, status):
+    app, c, path = _settings_app(tmp_path, "race_id: '100'\ncolor_scheme: dark\nshow_summary: true\n")
+    fields = _form(c)
+    changes = {"race_id": "300", "color_scheme": "light", "show_summary": None}
+    if failure == "validation":
+        changes["scroll_speed"] = "0"
+    elif failure == "conflict":
+        changes["revision"] = "stale"
+    else:
+        def reject_write(updates, revision):
+            raise admin_module.ConfigError("disk unavailable")
+        app.extensions["admin_save_settings"] = reject_write
+
+    response = _post_form(c, fields, **changes)
+    assert response.status_code == status
+    parser = _FormParser()
+    parser.feed(response.get_data(as_text=True))
+    assert parser.fields["race_id"] == "300"
+    assert parser.fields["color_scheme"] == "light"
+    assert parser.fields["show_summary"] is None
+    assert parser.saved_values.get("race_id") == "100"
+    assert parser.saved_values.get("color_scheme") == "dark"
+    assert parser.saved_values.get("show_summary") == "true"
+    assert _yaml(path)["race_id"] == "100"
+
+
+def test_failed_save_with_unreadable_config_uses_explicit_running_baseline(tmp_path):
+    _, c, path = _settings_app(tmp_path)
+    fields = _form(c)
+    path.write_text("scroll_speed: fast\n", encoding="utf-8")
+    response = _post_form(c, fields, race_id="300")
+    assert response.status_code == 409
+    html = response.get_data(as_text=True)
+    parser = _FormParser()
+    parser.feed(html)
+    assert parser.saved_values.get("race_id") == "100"
+    assert "last running settings" in html
 
 
 @pytest.mark.parametrize("theme", ["dark", "light"])
