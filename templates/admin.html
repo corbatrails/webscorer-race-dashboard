@@ -62,7 +62,7 @@
             {% endfor %}
             <div class="actions">
                 <button type="submit">Save settings</button>
-                <a class="secondary-link" href="{{ url_for('admin.settings') }}">Discard changes</a>
+                <a class="secondary-link" href="{{ url_for('admin.settings') }}" data-discard-changes>Discard changes</a>
             </div>
         </form>
     </main>
