@@ -230,6 +230,19 @@ def test_race_control_route_renders_configured_theme(scheme):
     assert 'id="theme"' not in html
 
 
+@pytest.mark.parametrize("path", ["/progress", "/race-results"])
+def test_race_control_uses_shared_navigation_without_duplicate_view_buttons(path):
+    response = create_app({}, start_polling=False).test_client().get(path)
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'href="/progress"' in html
+    assert 'href="/race-results"' in html
+    assert 'id="progress-tab"' not in html
+    assert 'id="results-tab"' not in html
+    assert 'aria-label="Race control views"' not in html
+    assert 'id="refresh-button"' in html
+
+
 def test_race_control_invalid_view_defaults_to_progress():
     client = create_app({}, start_polling=False).test_client()
 

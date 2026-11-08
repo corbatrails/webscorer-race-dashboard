@@ -28,7 +28,7 @@ h1 { font-size: 19px; color: var(--text-primary); }
 .control-header {
     flex: none;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 16px;
     padding: 12px 20px;
@@ -38,10 +38,6 @@ h1 { font-size: 19px; color: var(--text-primary); }
 .race-identity { min-width: 0; }
 .race-identity h1, .race-identity p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .race-identity p { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-.view-tabs { display: flex; gap: 4px; background: var(--bg-primary); padding: 4px; border-radius: 8px; }
-.view-tabs button { border: none; color: var(--text-muted); background: transparent; font-weight: 600; white-space: nowrap; }
-.view-tabs button[aria-pressed="true"] { background: var(--accent-primary); color: var(--bg-primary); }
-kbd { font: 10px inherit; opacity: .65; }
 .header-status { display: flex; justify-content: flex-end; align-items: center; gap: 12px; min-width: 0; }
 #last-updated { font-size: 11px; color: var(--text-muted); max-width: 180px; }
 .updated:not(:empty)::before { content: "\25CF"; color: var(--accent-primary); margin-right: 5px; }
@@ -154,8 +150,6 @@ td.col-place { font-weight: 700; }
     .control-view { padding: 10px 12px; gap: 10px; }
 }
 @media (max-width: 820px) {
-    .control-header { grid-template-columns: minmax(0, 1fr) auto; }
-    .view-tabs { grid-row: 2; grid-column: 1 / -1; justify-self: center; }
     #last-updated { max-width: 140px; }
     .race-clock strong { font-size: 17px; }
     .control-stats { gap: 5px; }
@@ -207,8 +201,6 @@ td.col-place { font-weight: 700; }
     .control-stat strong { font-size: 22px; }
     .panel-heading { padding-top: 6px; padding-bottom: 6px; }
     .panel-footer { padding-top: 4px; padding-bottom: 4px; }
-    .view-tabs { padding: 2px; }
-    .view-tabs button { font-size: 12px; }
 }
 @media (max-height: 600px) and (max-width: 1100px) {
     .progress-layout { grid-template-rows: minmax(0, 1fr) 100px; gap: 8px; }

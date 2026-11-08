@@ -182,8 +182,6 @@
       el("last-updated").className = warnings.length ? "stale" : "updated";
       el("refresh-button").disabled = state.refreshing;
       renderClock();
-      el("progress-tab").setAttribute("aria-pressed", String(state.view === "progress"));
-      el("results-tab").setAttribute("aria-pressed", String(state.view === "results"));
     }
 
     function renderStats(progress) {
@@ -579,8 +577,6 @@
         });
     }
 
-    el("progress-tab").addEventListener("click", function () { setView("progress"); });
-    el("results-tab").addEventListener("click", function () { setView("results"); });
     [["progress", "progress"], ["results", "results"]].forEach(function (entry) {
       var link = el("operator-nav-" + entry[0]);
       if (link) link.addEventListener("click", function (event) {

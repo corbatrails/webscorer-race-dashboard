@@ -56,7 +56,10 @@ function payload(groups, extra = {}) {
 
 function ui(responses = [], initialView) {
   const nodes = {};
-  const get = id => nodes[id] ||= element("div");
+  const get = id => {
+    if (id === "progress-tab" || id === "results-tab") return null;
+    return nodes[id] ||= element("div");
+  };
   const listeners = {}, timers = [], intervals = [], requests = [];
   let now = 1000000;
   const location = { href: initialView === "results" ? "http://localhost/race-results" : "http://localhost/progress" };
@@ -127,6 +130,28 @@ test("initial view uses the server-selected results view", () => {
 test("initial view falls back to progress", () => {
   const app = ui([], "unknown");
   assert.equal(app.page.state.view, "progress");
+});
+
+test("shared navigation and shortcuts work without duplicate view buttons", () => {
+  for (const initialView of ["progress", "results"]) {
+    let app;
+    assert.doesNotThrow(() => {
+      app = ui([], initialView);
+      app.page.applyData(payload([group("Overall")]));
+    });
+
+    app.get("operator-nav-results").dispatch("click");
+    assert.equal(app.location.href, "http://localhost/race-results");
+    assert.equal(app.get("results-view").hidden, false);
+    assert.equal(app.get("progress-view").hidden, true);
+    assert.equal(app.rows().length, 1);
+
+    app.press("1");
+    assert.equal(app.location.href, "http://localhost/progress");
+    assert.equal(app.get("progress-view").hidden, false);
+    assert.equal(app.get("results-view").hidden, true);
+    assert.equal(app.get("operator-nav-progress").getAttribute("aria-current"), "page");
+  }
 });
 
 test("operator navigation keeps its active link and URL in sync with the view", () => {

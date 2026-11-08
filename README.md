@@ -67,7 +67,7 @@ Press these on a keyboard attached to the dashboard browser:
 
 ## Race control
 
-`http://<host>:5000/progress` and `http://<host>:5000/race-results` provide a read-only workspace for race directors and timers. Shared operator navigation links these pages with Winner announcements (`/announcements`) and Admin (`/admin`) when enabled. Each page has its own path and remains selected on refresh. Switching between Progress and detailed results retains your current filters and selection without reloading.
+`http://<host>:5000/progress` and `http://<host>:5000/race-results` provide a read-only workspace for race directors and timers. Shared operator navigation links these pages with Winner announcements (`/announcements`) and Admin (`/admin`) when enabled. Each page has its own path and remains selected on refresh. Use **Race progress** and **Detailed results** in the top navigation to switch views without reloading; your current filters and selection are retained.
 
 Top-navigation links open in the current browser tab. Legacy `/race-control?view=progress` and `/race-control?view=results` URLs redirect to `/progress` and `/race-results`; a missing or unknown legacy view redirects to `/progress`. Legacy `/results` URLs redirect to `/announcements`.
 
