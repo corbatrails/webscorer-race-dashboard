@@ -225,6 +225,8 @@ def test_race_control_route_renders_configured_theme(scheme):
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert f'data-theme="{scheme}"' in html
+    assert f'data-bs-theme="{scheme}"' in html
+    assert "/static/vendor/bootstrap.min.css" in html
     for asset in ("theme.css", "operator.css", "race_control.css", "result_helpers.js", "race_control.js"):
         assert f"/static/{asset}?v=" in html
     assert 'id="theme"' not in html

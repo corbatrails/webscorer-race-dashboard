@@ -97,7 +97,7 @@ function ui(responses = [], initialView) {
     const link = get(`operator-nav-${view}`);
     link.href = view === "progress" ? "http://localhost/progress" : "http://localhost/race-results";
     const active = view === initialNavView;
-    link.className = "operator-nav__link" + (active ? " is-active" : "");
+    link.className = "operator-nav__link nav-link" + (active ? " is-active" : "");
     if (active) link.setAttribute("aria-current", "page");
   });
   const page = Control.start(env);
@@ -160,7 +160,7 @@ test("operator navigation keeps its active link and URL in sync with the view", 
   assert.equal(event.defaultPrevented, true);
   assert.equal(app.page.state.view, "results");
   assert.equal(app.location.href, "http://localhost/race-results");
-  assert.equal(app.get("operator-nav-results").className, "operator-nav__link is-active");
+  assert.equal(app.get("operator-nav-results").className, "operator-nav__link nav-link is-active");
   assert.equal(app.get("operator-nav-results").getAttribute("aria-current"), "page");
   assert.equal(app.get("operator-nav-progress").getAttribute("aria-current"), undefined);
 
@@ -444,6 +444,7 @@ test("all result rows render without paging and selections and scroll survive re
   app.get("table-wrap").scrollTop = 240;
   app.page.applyData(payload([group("A"), group("B", "25K", racers)], { color_scheme: "light" }));
   assert.equal(app.document.body.dataset.theme, "light");
+  assert.equal(app.document.body.dataset.bsTheme, "light");
   assert.equal(app.page.state.groupKey, "B");
   assert.equal(app.page.state.view, "results");
   assert.equal(app.rows().length, 25);

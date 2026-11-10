@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Race results</title>
+    <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
     <link rel="stylesheet" href="/static/theme.css?v={{ cache_bust }}">
     <link rel="stylesheet" href="/static/operator.css?v={{ cache_bust }}">
     <link rel="stylesheet" href="/static/results.css?v={{ cache_bust }}">
 </head>
-<body class="operator-page" data-theme="{{ color_scheme }}">
+<body class="operator-page" data-theme="{{ color_scheme }}" data-bs-theme="{{ color_scheme }}">
     {% include "operator_nav.html" %}
     <header class="results-header operator-page-header">
         <div>
@@ -18,22 +19,24 @@
         </div>
         <p class="last-updated" id="last-updated" aria-live="polite"></p>
     </header>
-    <p class="page-notice operator-status operator-status--notice" id="page-notice" role="status">Loading race data&hellip;</p>
-    <p class="results-status operator-status operator-status--error" id="results-status" role="alert" hidden></p>
+    <p class="page-notice operator-status operator-status--notice alert alert-secondary mb-0" id="page-notice" role="status">Loading race data&hellip;</p>
+    <p class="results-status operator-status operator-status--error alert alert-danger mb-0" id="results-status" role="alert" hidden></p>
     <main class="results-layout">
-        <nav class="group-list" id="group-list" aria-label="Result groupings"></nav>
-        <section class="results-panel" id="results-panel" aria-labelledby="group-title" hidden>
+        <nav class="group-list nav nav-pills flex-column" id="group-list" aria-label="Result groupings"></nav>
+        <section class="results-panel card border-0 rounded-0" id="results-panel" aria-labelledby="group-title" hidden>
             <div class="results-toolbar">
                 <h2 id="group-title"></h2>
                 <label class="count-label" for="top-count">Show top
-                    <input id="top-count" type="number" min="1" step="1" value="3" inputmode="numeric" aria-describedby="count-error">
+                    <input class="form-control form-control-sm d-inline-block" id="top-count" type="number" min="1" step="1" value="3" inputmode="numeric" aria-describedby="count-error">
                 </label>
             </div>
-            <p class="count-error operator-status operator-status--error" id="count-error" role="alert" hidden></p>
-            <table class="winners-table" id="results-table">
+            <p class="count-error operator-status operator-status--error alert alert-danger mt-3 mb-0" id="count-error" role="alert" hidden></p>
+            <div class="table-responsive">
+            <table class="winners-table table table-hover align-middle mb-0" id="results-table">
                 <thead><tr><th class="col-place">Place</th><th class="col-bib">Bib</th><th class="col-name">Name</th><th class="col-time">Time</th></tr></thead>
                 <tbody id="results-rows"></tbody>
             </table>
+            </div>
             <p class="results-empty" id="results-empty" hidden></p>
             <p class="results-summary" id="results-summary"></p>
         </section>

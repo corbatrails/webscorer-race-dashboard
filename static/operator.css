@@ -7,8 +7,9 @@
     min-width: 0;
     padding: 0.4rem clamp(0.75rem, 2vw, 1.25rem);
     color: var(--text-body);
-    background: var(--bg-card);
+    background: var(--bg-nav);
     border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 0.125rem 0.35rem rgba(23, 29, 24, 0.12);
 }
 
 .operator-nav__links {
@@ -20,7 +21,7 @@
     min-width: 0;
 }
 
-.operator-nav__link {
+.operator-nav__link.nav-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -50,7 +51,7 @@
     margin: 0;
 }
 
-.operator-nav__logout button {
+.operator-nav__logout .btn {
     min-height: 2.5rem;
     margin: 0;
     padding: 0.45rem 0.75rem;
@@ -62,7 +63,7 @@
     font-weight: 600;
 }
 
-.operator-nav__logout button:hover {
+.operator-nav__logout .btn:hover {
     color: var(--text-primary);
     background: var(--bg-primary);
 }
@@ -86,6 +87,7 @@
 .operator-status {
     overflow-wrap: anywhere;
     border-radius: 0.4rem;
+    border-color: var(--border-color);
 }
 
 .operator-status--error { color: var(--error-color); }
@@ -111,7 +113,7 @@
         white-space: normal;
     }
 
-    .operator-nav__logout button {
+    .operator-nav__logout .btn {
         width: 100%;
     }
 }

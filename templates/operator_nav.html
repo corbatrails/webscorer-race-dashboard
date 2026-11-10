@@ -1,16 +1,16 @@
 <nav class="operator-nav" aria-label="Race staff navigation">
-    <div class="operator-nav__links">
-        <a id="operator-nav-progress" class="operator-nav__link{% if active_destination == 'progress' %} is-active{% endif %}"
+    <div class="operator-nav__links nav nav-pills">
+        <a id="operator-nav-progress" class="operator-nav__link nav-link{% if active_destination == 'progress' %} is-active{% endif %}"
            href="{{ url_for('race_progress') }}"
            {% if active_destination == 'progress' %}aria-current="page"{% endif %}>Race progress</a>
-        <a id="operator-nav-results" class="operator-nav__link{% if active_destination == 'detailed-results' %} is-active{% endif %}"
+        <a id="operator-nav-results" class="operator-nav__link nav-link{% if active_destination == 'detailed-results' %} is-active{% endif %}"
            href="{{ url_for('race_results') }}"
            {% if active_destination == 'detailed-results' %}aria-current="page"{% endif %}>Detailed results</a>
-        <a class="operator-nav__link{% if active_destination == 'announcements' %} is-active{% endif %}"
+        <a class="operator-nav__link nav-link{% if active_destination == 'announcements' %} is-active{% endif %}"
            href="{{ url_for('results') }}"
            {% if active_destination == 'announcements' %}aria-current="page"{% endif %}>Winner announcements</a>
         {% if config["admin_enabled"] %}
-        <a class="operator-nav__link{% if active_destination == 'admin' %} is-active{% endif %}"
+        <a class="operator-nav__link nav-link{% if active_destination == 'admin' %} is-active{% endif %}"
            href="{{ url_for('admin.settings') }}"
            {% if active_destination == 'admin' %}aria-current="page"{% endif %}>Admin</a>
         {% endif %}
@@ -18,7 +18,7 @@
     {% if session.get("authenticated") %}
     <form class="operator-nav__logout" method="post" action="{{ url_for('admin.logout') }}">
         <input type="hidden" name="csrf_token" value="{{ session.get('csrf_token', '') }}">
-        <button type="submit">Log out</button>
+        <button class="btn btn-outline-secondary btn-sm" type="submit">Log out</button>
     </form>
     {% endif %}
 </nav>

@@ -147,6 +147,8 @@ def test_results_page_renders_theme_and_assets(scheme):
     html = response.get_data(as_text=True)
     assert response.status_code == 200
     assert f'data-theme="{scheme}"' in html
+    assert f'data-bs-theme="{scheme}"' in html
+    assert "/static/vendor/bootstrap.min.css" in html
     for asset in ("theme.css", "results.css", "result_helpers.js", "results.js"):
         assert f"/static/{asset}?v=" in html
     assert 'id="top-count"' in html and 'value="3"' in html
@@ -156,6 +158,7 @@ def test_results_page_renders_theme_and_assets(scheme):
 def test_operator_pages_include_shared_styles(client):
     for path in ("/progress", "/race-results", "/announcements"):
         html = client.get(path).get_data(as_text=True)
+        assert "/static/vendor/bootstrap.min.css" in html
         assert "/static/operator.css?v=" in html
     dashboard_html = client.get("/").get_data(as_text=True)
     assert "/static/operator.css" not in dashboard_html

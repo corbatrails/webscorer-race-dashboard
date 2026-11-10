@@ -190,7 +190,7 @@
       [["registered", "Registered"], ["on_course", "On course"], ["finished", "Finished"],
         ["dns", "DNS"], ["not_started", "Not started"], ["dnf", "DNF"], ["dsq", "DSQ"]]
         .forEach(function (entry) {
-          var card = node("div", null, "control-stat stat-" + entry[0]);
+          var card = node("div", null, "control-stat card stat-" + entry[0]);
           card.appendChild(node("strong", progress.totals[entry[0]] || 0));
           card.appendChild(node("span", entry[1]));
           box.appendChild(card);
@@ -324,7 +324,7 @@
         list.dataset.signature = signature;
         clear(list);
         result.items.forEach(function (item) {
-          var button = node("button", item.title);
+          var button = node("button", item.title, "btn btn-sm");
           button.type = "button";
           button.dataset.key = choiceValue(item);
           button.title = item.title;
@@ -404,7 +404,7 @@
           detail.appendChild(spacer);
           var cell = node("td");
           cell.colSpan = columnCount - 2;
-          var toggle = node("button", detail.hidden ? "+" : "-", "split-toggle");
+          var toggle = node("button", detail.hidden ? "+" : "-", "split-toggle btn btn-outline-secondary btn-sm");
           toggle.type = "button";
           toggle.dataset.racerKey = key;
           toggle.setAttribute("aria-controls", detail.id);
@@ -486,7 +486,7 @@
         var link = el("operator-nav-" + view);
         if (!link) return;
         var active = state.view === view;
-        link.className = "operator-nav__link" + (active ? " is-active" : "");
+        link.className = "operator-nav__link nav-link" + (active ? " is-active" : "");
         if (active) link.setAttribute("aria-current", "page");
         else link.removeAttribute("aria-current");
       });
@@ -521,7 +521,10 @@
       }
       state.fetchFailed = false;
       state.notice = "";
-      if (data.color_scheme) document.body.dataset.theme = data.color_scheme;
+      if (data.color_scheme) {
+        document.body.dataset.theme = data.color_scheme;
+        document.body.dataset.bsTheme = data.color_scheme;
+      }
       ensureSelection();
       render();
     }

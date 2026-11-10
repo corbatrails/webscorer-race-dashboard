@@ -307,6 +307,7 @@ test("theme follows config and names render as text", async () => {
   const ui = startResults([payload([category("<i>A</i>", [racer("1", "<img src=x onerror=alert(1)>", "1:00")])], { color_scheme: "light" })]);
   await ui.poll();
   assert.equal(ui.document.body.dataset.theme, "light");
+  assert.equal(ui.document.body.dataset.bsTheme, "light");
   assert.equal(ui.titles()[0], "<i>A</i>");
   assert.equal(ui.rows()[0][2], "<img src=x onerror=alert(1)>");
 });
