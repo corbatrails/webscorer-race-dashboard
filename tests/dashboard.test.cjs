@@ -9,6 +9,7 @@ const vm = require("node:vm");
 
 const HELPERS_SOURCE = fs.readFileSync(path.join(__dirname, "..", "static", "result_helpers.js"), "utf8");
 const SOURCE = fs.readFileSync(path.join(__dirname, "..", "static", "dashboard.js"), "utf8");
+const STYLE_SOURCE = fs.readFileSync(path.join(__dirname, "..", "static", "style.css"), "utf8");
 
 function escapeText(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -354,6 +355,21 @@ test("demographics and category pages render Bootstrap cards, lists, tables, and
   await d.respond(await d.press("ArrowRight"), p);
   assert.match(d.dashboard.innerHTML, /results-table[^"]*\btable\b/);
   assert.match(d.dashboard.innerHTML, /category-meta[\s\S]*\bbadge\b/);
+});
+
+test("TV badges preserve their parent typography instead of Bootstrap badge scaling", () => {
+  assert.match(
+    STYLE_SOURCE,
+    /\.demographics-teams-list\s*\{[^}]*font-size:\s*2\.2vh;/s,
+  );
+  assert.match(
+    STYLE_SOURCE,
+    /\.category-meta\s*\{[^}]*font-size:\s*2vh;/s,
+  );
+  assert.match(
+    STYLE_SOURCE,
+    /\.tv-badge\s*\{[^}]*font-size:\s*inherit;[^}]*line-height:\s*inherit;/s,
+  );
 });
 
 test("a settings change adds and removes the lap overview at once", async () => {

@@ -362,6 +362,8 @@ body {
   color: var(--text-primary);
   border: 1px solid var(--border-color);
   border-radius: 0.4vh;
+  font-size: inherit;
+  line-height: inherit;
   font-weight: 600;
 }
 
