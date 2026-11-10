@@ -80,3 +80,33 @@
   --bs-link-hover-color: #263D20;
   --bs-link-hover-color-rgb: 38, 61, 32;
 }
+
+.btn-outline-primary {
+  --bs-btn-color: var(--accent-primary);
+  --bs-btn-border-color: var(--accent-primary);
+  --bs-btn-hover-color: var(--bg-primary);
+  --bs-btn-hover-bg: var(--accent-primary);
+  --bs-btn-hover-border-color: var(--accent-primary);
+  --bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
+  --bs-btn-active-color: var(--bg-primary);
+  --bs-btn-active-bg: var(--accent-primary);
+  --bs-btn-active-border-color: var(--accent-primary);
+  --bs-btn-disabled-color: var(--text-muted);
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: var(--border-color);
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--text-muted);
+  --bs-btn-border-color: var(--border-color);
+  --bs-btn-hover-color: var(--text-primary);
+  --bs-btn-hover-bg: var(--bg-track);
+  --bs-btn-hover-border-color: var(--border-color);
+  --bs-btn-focus-shadow-rgb: var(--bs-secondary-color-rgb);
+  --bs-btn-active-color: var(--text-primary);
+  --bs-btn-active-bg: var(--bg-track);
+  --bs-btn-active-border-color: var(--border-color);
+  --bs-btn-disabled-color: var(--text-muted);
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: var(--border-color);
+}

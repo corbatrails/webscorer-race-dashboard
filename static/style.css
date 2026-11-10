@@ -585,12 +585,19 @@ body {
 
 .progress-bar-count {
   position: absolute;
-  width: 100%;
+  left: 50%;
+  z-index: 1;
+  width: fit-content;
+  padding: 0 0.4em;
+  border-radius: 0.25em;
+  background: var(--bg-card);
   text-align: center;
   line-height: 5vh;
   font-size: 3vh;
   font-weight: bold;
   color: var(--text-primary);
+  white-space: nowrap;
+  transform: translateX(-50%);
 }
 
 /* Toast notifications */

@@ -105,7 +105,7 @@ table { border-collapse: collapse; width: 100%; table-layout: fixed; }
 th { height: 32px; padding: 0 10px; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; text-align: left; color: var(--text-muted); font-weight: 600; }
 td { height: 36px; padding: 0 10px; border-top: 1px solid var(--border-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .result-even > td, .split-table tr:nth-child(even) td { background: var(--row-even); }
-.col-name { position: relative; padding-right: 42px; }
+#control-table .col-name { position: relative; padding-right: 42px; }
 .split-toggle { position: absolute; right: 7px; top: 50%; transform: translateY(-50%); width: 26px; height: 26px; padding: 0; }
 .split-detail > td { padding: 8px 10px; height: auto; white-space: normal; background: var(--bg-primary); }
 .split-detail .empty-message { padding: 0; }

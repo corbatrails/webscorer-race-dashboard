@@ -324,6 +324,10 @@ test("summary and lap overview render Bootstrap cards and progress components", 
   assert.match(d.dashboard.innerHTML, /class="[^"]*\bcard\b[^"]*stat-card/);
   assert.match(d.dashboard.innerHTML, /class="[^"]*\bprogress\b[^"]*progress-bar-track/);
   assert.match(d.dashboard.innerHTML, /class="[^"]*\bprogress-bar\b[^"]*progress-bar-fill/);
+  assert.match(
+    d.dashboard.innerHTML,
+    /class="progress-bar progress-bar-fill" style="width:38%;background:var\(--accent-primary\)"/
+  );
 
   await d.respond(await d.press("ArrowRight"), withProgress);
   assert.match(d.dashboard.innerHTML, /class="[^"]*\bcard\b[^"]*lap-cell/);

@@ -140,6 +140,65 @@ def test_dark_boundaries_and_progress_fill_are_distinguishable(foreground, backg
 
 
 @pytest.mark.parametrize("theme", ["light", "dark"])
+def test_bootstrap_outline_buttons_use_theme_colors_and_states(theme):
+    css = THEME_CSS.read_text(encoding="utf-8")
+    tokens = _tokens(theme)
+    rules = {}
+    for selector in (".btn-outline-primary", ".btn-outline-secondary"):
+        match = re.search(
+            rf"{re.escape(selector)}\s*\{{(?P<body>[^}}]+)\}}",
+            css,
+        )
+        assert match, f"{selector} needs explicit Woodland button colors"
+        rules[selector] = dict(
+            re.findall(r"(--[\w-]+):\s*([^;]+);", match.group("body"))
+        )
+
+    primary = rules[".btn-outline-primary"]
+    assert primary["--bs-btn-color"] == "var(--accent-primary)"
+    assert primary["--bs-btn-hover-color"] == "var(--bg-primary)"
+    assert primary["--bs-btn-hover-bg"] == "var(--accent-primary)"
+    assert primary["--bs-btn-active-color"] == "var(--bg-primary)"
+    assert primary["--bs-btn-focus-shadow-rgb"] == "var(--bs-primary-rgb)"
+
+    secondary = rules[".btn-outline-secondary"]
+    assert secondary["--bs-btn-color"] == "var(--text-muted)"
+    assert secondary["--bs-btn-hover-color"] == "var(--text-primary)"
+    assert secondary["--bs-btn-hover-bg"] == "var(--bg-track)"
+    assert secondary["--bs-btn-focus-shadow-rgb"] == "var(--bs-secondary-color-rgb)"
+
+    for surface in ("--bg-primary", "--bg-card"):
+        assert contrast_ratio(tokens["--accent-primary"], tokens[surface]) >= 4.5
+        assert contrast_ratio(tokens["--text-muted"], tokens[surface]) >= 4.5
+    assert contrast_ratio(tokens["--bg-primary"], tokens["--accent-primary"]) >= 4.5
+    assert contrast_ratio(tokens["--text-primary"], tokens["--bg-track"]) >= 4.5
+
+
+def test_race_control_name_cells_reserve_space_for_split_buttons():
+    css = (REPO_ROOT / "static" / "race_control.css").read_text(encoding="utf-8")
+    match = re.search(r"#control-table\s+\.col-name\s*\{(?P<body>[^}]+)\}", css)
+    assert match, "name-cell padding must override Bootstrap table cell padding"
+    declarations = dict(
+        re.findall(r"([\w-]+):\s*([^;]+);", match.group("body"))
+    )
+    assert declarations["padding-right"] == "42px"
+
+
+def test_summary_progress_count_uses_a_contrast_safe_surface():
+    css = (REPO_ROOT / "static" / "style.css").read_text(encoding="utf-8")
+    match = re.search(r"\.progress-bar-count\s*\{(?P<body>[^}]+)\}", css)
+    assert match, "summary progress count needs a dedicated readable label surface"
+    declarations = dict(
+        re.findall(r"([\w-]+):\s*([^;]+);", match.group("body"))
+    )
+    assert declarations["color"] == "var(--text-primary)"
+    assert declarations["background"] == "var(--bg-card)"
+    assert declarations["left"] == "50%"
+    assert declarations["transform"] == "translateX(-50%)"
+    assert declarations["width"] == "fit-content"
+
+
+@pytest.mark.parametrize("theme", ["light", "dark"])
 @pytest.mark.parametrize("surface", ["--bg-card", "--bg-primary"])
 def test_bootstrap_card_border_is_distinguishable_on_theme_surfaces(theme, surface):
     tokens = _tokens(theme)
