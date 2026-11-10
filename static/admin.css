@@ -84,6 +84,17 @@ fieldset.admin-card legend {
   border-radius: 0.25rem;
 }
 
+.form-select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) calc(50% + 1px),
+    calc(100% - 11px) calc(50% + 1px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
 .form-control:focus,
 .form-select:focus,
 .form-check-input:focus {
@@ -149,6 +160,31 @@ label.check .form-check-input {
 label.check .form-check-input:checked {
   background-color: var(--accent-primary);
   border-color: var(--accent-primary);
+}
+
+label.check .form-check-input:checked[type="checkbox"] {
+  background-image: none;
+}
+
+label.check .form-check-label {
+  position: relative;
+}
+
+label.check .form-check-label::before {
+  position: absolute;
+  top: 0.55rem;
+  left: -1.45rem;
+  display: none;
+  width: 0.45rem;
+  height: 0.25rem;
+  border: solid var(--bg-primary);
+  border-width: 0 0 0.125rem 0.125rem;
+  content: "";
+  transform: rotate(-45deg);
+}
+
+label.check .form-check-input:checked + .form-check-label::before {
+  display: block;
 }
 
 .race-picker { margin-top: 0.5rem; }

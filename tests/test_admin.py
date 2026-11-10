@@ -215,6 +215,25 @@ def test_admin_headers_and_cookie(client):
     assert "Content-Security-Policy" in page.headers
 
 
+def test_admin_form_indicators_avoid_csp_blocked_data_images(client):
+    _login(client)
+    response = client.get("/admin")
+    css = client.get("/static/admin.css").get_data(as_text=True)
+    assert "default-src 'self'" in response.headers["Content-Security-Policy"]
+    assert "img-src data:" not in response.headers["Content-Security-Policy"]
+    assert re.search(r"\.form-select\s*\{[^}]*linear-gradient", css, re.DOTALL)
+    assert re.search(
+        r"label\.check \.form-check-input:checked\[type=['\"]?checkbox['\"]?\]\s*\{"
+        r"[^}]*background-image:\s*none",
+        css,
+        re.DOTALL,
+    )
+    assert re.search(
+        r"label\.check \.form-check-input:checked \+ \.form-check-label::before",
+        css,
+    )
+
+
 def test_dashboard_keeps_its_own_headers(client):
     assert "Content-Security-Policy" not in client.get("/").headers
 
