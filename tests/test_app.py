@@ -80,6 +80,8 @@ def test_index_returns_html(client):
 def test_index_includes_data_theme(client):
     response = client.get("/")
     assert b'data-theme="dark"' in response.data
+    assert b'data-bs-theme="dark"' in response.data
+    assert b"/static/vendor/bootstrap.min.css" in response.data
 
 
 def test_pages_and_api_default_to_light_theme():

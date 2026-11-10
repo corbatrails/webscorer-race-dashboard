@@ -7,6 +7,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 THEME_CSS = REPO_ROOT / "static" / "theme.css"
+TV_CSS = REPO_ROOT / "static" / "style.css"
 VENDOR_DIR = REPO_ROOT / "static" / "vendor"
 
 
@@ -163,3 +164,20 @@ def test_bootstrap_is_vendored_with_version_and_license_metadata():
     css = (VENDOR_DIR / bootstrap["file"]).read_text(encoding="utf-8")
     assert re.search(r"Bootstrap\s+v5\.3\.8", css)
     assert "Licensed under MIT" in css
+
+
+def test_tv_styles_preserve_fixed_viewport_layout_without_bootstrap_collisions():
+    css = TV_CSS.read_text(encoding="utf-8")
+    assert re.search(r"body\s*\{[^}]*overflow:\s*hidden;[^}]*height:\s*100vh;", css, re.DOTALL)
+    assert re.search(r"\.page\s*\{[^}]*height:\s*100vh;", css, re.DOTALL)
+    assert re.search(
+        r"\.demographics-grid\s*\{[^}]*grid-template-columns:\s*1fr 1fr;"
+        r"[^}]*grid-template-rows:\s*1fr 1fr;",
+        css,
+        re.DOTALL,
+    )
+    assert re.search(r"\.results-table\s*\{[^}]*table-layout:\s*fixed;", css, re.DOTALL)
+    assert ".tv-toast" in css
+    assert ".pause-indicator.is-visible" in css
+    assert not re.search(r"(?m)^\s*\.toast(?:[.:\s,{])", css)
+    assert not re.search(r"(?m)^\s*\.pause-indicator\.visible(?:[.:\s,{])", css)

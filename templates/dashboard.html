@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Race Dashboard</title>
+    <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
     <link rel="stylesheet" href="/static/theme.css?v={{ cache_bust }}">
     <link rel="stylesheet" href="/static/style.css?v={{ cache_bust }}">
 </head>
-<body data-theme="{{ color_scheme }}">
+<body data-theme="{{ color_scheme }}" data-bs-theme="{{ color_scheme }}">
     <div id="dashboard">
         <div class="waiting-screen">
             <h1>Loading race data&hellip;</h1>
