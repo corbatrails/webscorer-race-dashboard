@@ -340,18 +340,34 @@ def _settings_app(tmp_path, text="race_id: '100'\n", api=True):
 def test_admin_pages_use_active_dashboard_theme(tmp_path, theme):
     _, c, _ = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {theme}\n")
     for url in ("/admin", "/admin/login"):
-        html = c.get(url).get_data(as_text=True)
+        response = c.get(url)
+        html = response.get_data(as_text=True)
         assert f'data-theme="{theme}"' in html
+        assert f'data-bs-theme="{theme}"' in html
+        assert re.search(r'<link [^>]*href="/static/vendor/bootstrap\.min\.css"[^>]*>', html)
         assert re.search(r'<link [^>]*href="/static/theme.css"[^>]*>', html)
+        stylesheet_urls = re.findall(
+            r'<link\b(?=[^>]*\brel=["\']stylesheet["\'])[^>]*\bhref=["\']([^"\']+)["\']',
+            html,
+        )
+        assert stylesheet_urls
+        assert all(url.startswith("/static/") for url in stylesheet_urls)
+        assert "default-src 'self'" in response.headers["Content-Security-Policy"]
     bad_login = _login(c, "wrong")
     assert bad_login.status_code == 401
-    assert f'data-theme="{theme}"' in bad_login.get_data(as_text=True)
+    bad_login_html = bad_login.get_data(as_text=True)
+    assert f'data-theme="{theme}"' in bad_login_html
+    assert f'data-bs-theme="{theme}"' in bad_login_html
 
 
-def test_admin_defaults_to_dark_theme(client):
-    assert 'data-theme="dark"' in client.get("/admin/login").get_data(as_text=True)
+def test_admin_defaults_to_light_theme(client):
+    login_html = client.get("/admin/login").get_data(as_text=True)
+    assert 'data-theme="light"' in login_html
+    assert 'data-bs-theme="light"' in login_html
     _login(client)
-    assert 'data-theme="dark"' in client.get("/admin").get_data(as_text=True)
+    admin_html = client.get("/admin").get_data(as_text=True)
+    assert 'data-theme="light"' in admin_html
+    assert 'data-bs-theme="light"' in admin_html
 
 
 def test_rejected_theme_change_keeps_active_theme(tmp_path):

@@ -211,7 +211,7 @@ def _build_blueprint():
 
     @bp.context_processor
     def theme_context():
-        return {"color_scheme": current_app.config["dashboard"].get("color_scheme", "dark")}
+        return {"color_scheme": current_app.config["dashboard"].get("color_scheme", "light")}
 
     @bp.after_request
     def security_headers(response):
