@@ -350,11 +350,11 @@ test("demographics and category pages render Bootstrap cards, lists, tables, and
   assert.match(d.dashboard.innerHTML, /demographics-panel[^"]*\bcard\b/);
   assert.match(d.dashboard.innerHTML, /demographics-teams-list[^"]*\blist-group\b/);
   assert.match(d.dashboard.innerHTML, /class="[^"]*\blist-group-item\b/);
-  assert.match(d.dashboard.innerHTML, /team-count[^"]*\bbadge\b/);
+  assert.match(d.dashboard.innerHTML, /team-count[^"]*\bbadge\b[^"]*\btv-badge\b/);
 
   await d.respond(await d.press("ArrowRight"), p);
   assert.match(d.dashboard.innerHTML, /results-table[^"]*\btable\b/);
-  assert.match(d.dashboard.innerHTML, /category-meta[\s\S]*\bbadge\b/);
+  assert.match(d.dashboard.innerHTML, /category-meta[\s\S]*\bbadge\b[^"]*\btv-badge\b/);
 });
 
 test("TV badges preserve their parent typography instead of Bootstrap badge scaling", () => {
