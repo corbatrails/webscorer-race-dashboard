@@ -426,7 +426,7 @@ def test_form_covers_option_registry(tmp_path):
     assert fields["show_summary"] == "true"
     assert fields["show_demographics"] is None
     assert fields["source"] == "webscorer"
-    assert fields["color_scheme"] == "dark"
+    assert fields["color_scheme"] == "light"
 
 
 def test_save_updates_only_selected_config(tmp_path):

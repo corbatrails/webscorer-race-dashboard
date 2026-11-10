@@ -105,7 +105,7 @@ OPTIONS = (
     Option("display_unfinished_in_category", False, _parse_bool),
     Option("display_unfinished_in_overall", False, _parse_bool),
     Option("chart_bucket_minutes", 15, _int_at_least(1)),
-    Option("color_scheme", "dark", _parse_choice(_COLOR_SCHEMES)),
+    Option("color_scheme", "light", _parse_choice(_COLOR_SCHEMES)),
     Option("show_toasts", True, _parse_bool),
 )
 

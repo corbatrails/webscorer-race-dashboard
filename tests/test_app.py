@@ -82,6 +82,18 @@ def test_index_includes_data_theme(client):
     assert b'data-theme="dark"' in response.data
 
 
+def test_pages_and_api_default_to_light_theme():
+    application = create_app({}, start_polling=False)
+    test_client = application.test_client()
+
+    for path in ("/", "/progress", "/race-results", "/announcements"):
+        response = test_client.get(path)
+        assert response.status_code == 200
+        assert b'data-theme="light"' in response.data
+
+    assert test_client.get("/api/data").get_json()["color_scheme"] == "light"
+
+
 def test_dashboard_has_no_results_link(client):
     html = client.get("/").get_data(as_text=True)
     for path in ("/progress", "/race-results", "/announcements"):

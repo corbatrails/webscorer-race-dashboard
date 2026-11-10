@@ -3,5 +3,11 @@
     "version": "4.4.7",
     "url": "https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js",
     "file": "chart.umd.min.js"
+  },
+  "bootstrap": {
+    "version": "5.3.8",
+    "url": "https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css",
+    "file": "bootstrap.min.css",
+    "license": "MIT"
   }
 }

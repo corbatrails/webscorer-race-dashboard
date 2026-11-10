@@ -68,7 +68,7 @@ def test_load_config_defaults(clean_env, tmp_path):
     assert cfg["show_overall_results"] is True
     assert cfg["show_category_results"] is True
     assert cfg["chart_bucket_minutes"] == 15
-    assert cfg["color_scheme"] == "dark"
+    assert cfg["color_scheme"] == "light"
     assert cfg["show_toasts"] is True
     assert cfg["pinned_leaders_on_overall_results"] is False
     assert cfg["overall_results_layout"] == "standard"
@@ -123,7 +123,7 @@ def test_yaml_defaults_ignore_legacy_environment(clean_env, tmp_path, monkeypatc
     assert cfg["refresh_interval"] == 60
     assert cfg["source"] == "webscorer"
     assert cfg["race_id"] is None
-    assert cfg["color_scheme"] == "dark"
+    assert cfg["color_scheme"] == "light"
 
 
 def test_process_secret_overrides_dotenv_secret(clean_env, tmp_path, monkeypatch):
@@ -135,7 +135,7 @@ def test_process_secret_overrides_dotenv_secret(clean_env, tmp_path, monkeypatch
 def test_missing_config_yaml_uses_defaults(clean_env, tmp_path):
     cfg = _load(tmp_path)
     assert cfg["refresh_interval"] == 60
-    assert cfg["color_scheme"] == "dark"
+    assert cfg["color_scheme"] == "light"
     assert cfg["show_demographics"] is False
     assert cfg["race_id"] is None
     assert cfg["data_file"] is None
@@ -471,14 +471,14 @@ def test_watcher_returns_none_when_file_is_unchanged(clean_env, tmp_path):
 
 def test_watcher_applies_live_change_once_file_settles(clean_env, tmp_path):
     path, running, watcher = _start_watcher(tmp_path, {"scroll_speed": 150})
-    _edit_config(path, {"scroll_speed": 200, "color_scheme": "light"})
+    _edit_config(path, {"scroll_speed": 200, "color_scheme": "dark"})
 
     assert watcher.check(running) is None
     result = watcher.check(running)
 
     assert result.changed == ["scroll_speed", "color_scheme"]
     assert result.config["scroll_speed"] == 200
-    assert result.config["color_scheme"] == "light"
+    assert result.config["color_scheme"] == "dark"
     assert result.config["pinned_leaders"] == running["pinned_leaders"]
     assert result.config["api_token"] == "abc123de"
     assert running["scroll_speed"] == 150

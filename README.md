@@ -123,7 +123,7 @@ Environment variables never override non-secret options; only the secrets above 
 | `display_unfinished_in_category` | false | Show in-progress category pages before racers finish |
 | `display_unfinished_in_overall` | false | Show in-progress Overall pages before racers finish |
 | `chart_bucket_minutes` | 15 | Minutes per bucket in the finish chart (at least 1) |
-| `color_scheme` | dark | `dark` or `light` |
+| `color_scheme` | light | `dark` or `light` |
 | `show_toasts` | true | Toast notifications when racers finish |
 
 The full set of effective options is printed at startup. Booleans must be `true` or `false`, and choice options must use one of the listed values; an invalid value stops startup with a message naming the option. Unknown keys in `config.yaml` and secrets placed in it are ignored with a warning.

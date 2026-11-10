@@ -52,6 +52,6 @@ chart_bucket_minutes: 15
 
 # --- Appearance ---
 # dark or light.
-color_scheme: dark
+color_scheme: light
 # Toast notifications when racers finish.
 show_toasts: true
