@@ -1,4 +1,6 @@
 import json
+import re
+from pathlib import Path
 
 import pytest
 
@@ -243,6 +245,20 @@ def test_race_control_uses_shared_navigation_without_duplicate_view_buttons(path
     assert 'id="results-tab"' not in html
     assert 'aria-label="Race control views"' not in html
     assert 'id="refresh-button"' in html
+
+
+def test_race_control_cards_are_flat_and_filters_use_compact_corner_radius():
+    root = Path(__file__).resolve().parents[1]
+    template = (root / "templates" / "race_control.html").read_text(encoding="utf-8")
+    css = (root / "static" / "race_control.css").read_text(encoding="utf-8")
+
+    assert "shadow-sm" not in template
+    stat_rule = re.search(r"\.control-stat\s*\{([^}]*)\}", css)
+    assert stat_rule
+    assert "box-shadow" not in stat_rule.group(1)
+    filter_rule = re.search(r"\.result-filters button\s*\{([^}]*)\}", css)
+    assert filter_rule
+    assert "border-radius: 5px" in filter_rule.group(1)
 
 
 def test_race_control_invalid_view_defaults_to_progress():
