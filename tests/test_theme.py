@@ -52,14 +52,10 @@ def composite_rgba(foreground: str, background: str) -> str:
 
 
 def _tokens(theme: str) -> dict[str, str]:
-    css = THEME_CSS.read_text(encoding="utf-8")
-    match = re.search(
-        rf'\[data-theme="{theme}"\]\s*\{{(?P<body>.*?)\}}',
-        css,
-        flags=re.DOTALL,
-    )
-    assert match, f"missing {theme} theme block"
-    return dict(re.findall(r"(--[\w-]+):\s*(#[0-9A-Fa-f]{6})", match.group("body")))
+    return {
+        name: value for name, value in _raw_tokens(theme).items()
+        if re.fullmatch(r"#[0-9A-Fa-f]{6}", value)
+    }
 
 
 def _raw_tokens(theme: str) -> dict[str, str]:
@@ -70,7 +66,28 @@ def _raw_tokens(theme: str) -> dict[str, str]:
         flags=re.DOTALL,
     )
     assert match, f"missing {theme} theme block"
-    return dict(re.findall(r"(--[\w-]+):\s*([^;]+);", match.group("body")))
+    shared = re.search(r"\[data-theme\]\s*\{(?P<body>.*?)\}", css, flags=re.DOTALL)
+    declarations = (shared.group("body") if shared else "") + match.group("body")
+    return dict(re.findall(r"(--[\w-]+):\s*([^;]+);", declarations))
+
+
+@pytest.mark.parametrize("theme", ["light", "dark", "woodland-light", "woodland-dark"])
+def test_bootstrap_rgb_utilities_follow_the_selected_palette(theme):
+    tokens = _tokens(theme)
+    raw_tokens = _raw_tokens(theme)
+    for color, rgb in (
+        ("--bg-primary", "--bs-body-bg-rgb"),
+        ("--text-body", "--bs-body-color-rgb"),
+        ("--text-primary", "--bs-emphasis-color-rgb"),
+        ("--text-muted", "--bs-secondary-color-rgb"),
+        ("--accent-primary", "--bs-primary-rgb"),
+        ("--accent-secondary", "--bs-secondary-rgb"),
+        ("--success-color", "--bs-success-rgb"),
+        ("--error-color", "--bs-danger-rgb"),
+        ("--accent-primary", "--bs-link-color-rgb"),
+    ):
+        expected = ", ".join(str(int(tokens[color][index:index + 2], 16)) for index in (1, 3, 5))
+        assert raw_tokens[rgb] == expected
 
 
 @pytest.mark.parametrize(
@@ -89,8 +106,8 @@ def _raw_tokens(theme: str) -> dict[str, str]:
         ("--success-color", "--bg-primary"),
     ],
 )
-def test_light_meaningful_text_has_enhanced_contrast(foreground, background):
-    tokens = _tokens("light")
+def test_woodland_light_meaningful_text_has_enhanced_contrast(foreground, background):
+    tokens = _tokens("woodland-light")
     assert contrast_ratio(tokens[foreground], tokens[background]) >= 7
 
 
@@ -101,8 +118,8 @@ def test_light_meaningful_text_has_enhanced_contrast(foreground, background):
         ("--accent-primary", "--bg-track"),
     ],
 )
-def test_light_dividers_and_progress_fill_are_distinguishable(foreground, background):
-    tokens = _tokens("light")
+def test_woodland_light_dividers_and_progress_fill_are_distinguishable(foreground, background):
+    tokens = _tokens("woodland-light")
     assert contrast_ratio(tokens[foreground], tokens[background]) >= 3
 
 
@@ -122,8 +139,8 @@ def test_light_dividers_and_progress_fill_are_distinguishable(foreground, backgr
         ("--success-color", "--bg-primary"),
     ],
 )
-def test_dark_meaningful_text_has_wcag_aa_contrast(foreground, background):
-    tokens = _tokens("dark")
+def test_woodland_dark_meaningful_text_has_wcag_aa_contrast(foreground, background):
+    tokens = _tokens("woodland-dark")
     assert contrast_ratio(tokens[foreground], tokens[background]) >= 4.5
 
 
@@ -134,12 +151,12 @@ def test_dark_meaningful_text_has_wcag_aa_contrast(foreground, background):
         ("--accent-primary", "--bg-track"),
     ],
 )
-def test_dark_boundaries_and_progress_fill_are_distinguishable(foreground, background):
-    tokens = _tokens("dark")
+def test_woodland_dark_boundaries_and_progress_fill_are_distinguishable(foreground, background):
+    tokens = _tokens("woodland-dark")
     assert contrast_ratio(tokens[foreground], tokens[background]) >= 3
 
 
-@pytest.mark.parametrize("theme", ["light", "dark"])
+@pytest.mark.parametrize("theme", ["light", "dark", "woodland-light", "woodland-dark"])
 def test_bootstrap_outline_buttons_use_theme_colors_and_states(theme):
     css = THEME_CSS.read_text(encoding="utf-8")
     tokens = _tokens(theme)
@@ -149,7 +166,7 @@ def test_bootstrap_outline_buttons_use_theme_colors_and_states(theme):
             rf"{re.escape(selector)}\s*\{{(?P<body>[^}}]+)\}}",
             css,
         )
-        assert match, f"{selector} needs explicit Woodland button colors"
+        assert match, f"{selector} needs explicit theme button colors"
         rules[selector] = dict(
             re.findall(r"(--[\w-]+):\s*([^;]+);", match.group("body"))
         )
@@ -167,11 +184,12 @@ def test_bootstrap_outline_buttons_use_theme_colors_and_states(theme):
     assert secondary["--bs-btn-hover-bg"] == "var(--bg-track)"
     assert secondary["--bs-btn-focus-shadow-rgb"] == "var(--bs-secondary-color-rgb)"
 
-    for surface in ("--bg-primary", "--bg-card"):
-        assert contrast_ratio(tokens["--accent-primary"], tokens[surface]) >= 4.5
-        assert contrast_ratio(tokens["--text-muted"], tokens[surface]) >= 4.5
-    assert contrast_ratio(tokens["--bg-primary"], tokens["--accent-primary"]) >= 4.5
-    assert contrast_ratio(tokens["--text-primary"], tokens["--bg-track"]) >= 4.5
+    if theme.startswith("woodland-"):
+        for surface in ("--bg-primary", "--bg-card"):
+            assert contrast_ratio(tokens["--accent-primary"], tokens[surface]) >= 4.5
+            assert contrast_ratio(tokens["--text-muted"], tokens[surface]) >= 4.5
+        assert contrast_ratio(tokens["--bg-primary"], tokens["--accent-primary"]) >= 4.5
+        assert contrast_ratio(tokens["--text-primary"], tokens["--bg-track"]) >= 4.5
 
 
 def test_race_control_name_cells_reserve_space_for_split_buttons():
@@ -198,7 +216,7 @@ def test_summary_progress_count_uses_a_contrast_safe_surface():
     assert declarations["width"] == "fit-content"
 
 
-@pytest.mark.parametrize("theme", ["light", "dark"])
+@pytest.mark.parametrize("theme", ["woodland-light", "woodland-dark"])
 @pytest.mark.parametrize("surface", ["--bg-card", "--bg-primary"])
 def test_bootstrap_card_border_is_distinguishable_on_theme_surfaces(theme, surface):
     tokens = _tokens(theme)

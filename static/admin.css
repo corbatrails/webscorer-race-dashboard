@@ -1,5 +1,5 @@
-body[data-theme="dark"] { color-scheme: dark; }
-body[data-theme="light"] { color-scheme: light; }
+body[data-bs-theme="dark"] { color-scheme: dark; }
+body[data-bs-theme="light"] { color-scheme: light; }
 
 * { box-sizing: border-box; }
 
@@ -218,8 +218,8 @@ label.check .form-check-input:checked + .form-check-label::before {
   border-color: var(--accent-primary);
 }
 
-[data-theme="dark"] .btn-primary {
-  color: #171D18;
+[data-bs-theme="dark"] .btn-primary {
+  color: var(--bg-primary);
 }
 
 .btn-primary:hover,
@@ -229,9 +229,9 @@ label.check .form-check-input:checked + .form-check-label::before {
   border-color: var(--text-primary);
 }
 
-[data-theme="dark"] .btn-primary:hover,
-[data-theme="dark"] .btn-primary:focus-visible {
-  color: #171D18;
+[data-bs-theme="dark"] .btn-primary:hover,
+[data-bs-theme="dark"] .btn-primary:focus-visible {
+  color: var(--bg-primary);
 }
 
 .btn-outline-secondary,
