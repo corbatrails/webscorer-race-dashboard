@@ -20,9 +20,11 @@ from providers import get_provider
 from admin import register_admin
 from race_prompt import prompt_for_race
 from config import (
+    DEFAULT_COLOR_SCHEME,
     DEFAULT_CONFIG_PATH,
     OPTIONS,
     ConfigWatcher,
+    color_scheme_mode,
     load_config,
     read_config_snapshot,
     save_config,
@@ -132,14 +134,18 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
 
     @app.route("/")
     def index():
-        color_scheme = app.config["dashboard"].get("color_scheme", "light")
-        return render_template("dashboard.html", cache_bust=_start_time, color_scheme=color_scheme)
+        color_scheme = app.config["dashboard"].get("color_scheme", DEFAULT_COLOR_SCHEME)
+        return render_template(
+            "dashboard.html", cache_bust=_start_time, color_scheme=color_scheme,
+            color_mode=color_scheme_mode(color_scheme),
+        )
 
     @app.route("/announcements")
     def results():
-        color_scheme = app.config["dashboard"].get("color_scheme", "light")
+        color_scheme = app.config["dashboard"].get("color_scheme", DEFAULT_COLOR_SCHEME)
         return render_template(
             "results.html", cache_bust=_start_time, color_scheme=color_scheme,
+            color_mode=color_scheme_mode(color_scheme),
             active_destination="announcements",
         )
 
@@ -148,9 +154,10 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
         return redirect(url_for("results"), code=301)
 
     def _render_race_control(initial_view):
-        color_scheme = app.config["dashboard"].get("color_scheme", "light")
+        color_scheme = app.config["dashboard"].get("color_scheme", DEFAULT_COLOR_SCHEME)
         return render_template(
             "race_control.html", cache_bust=_start_time, color_scheme=color_scheme,
+            color_mode=color_scheme_mode(color_scheme),
             admin_enabled=app.config["admin_enabled"],
             initial_view=initial_view,
             active_destination="detailed-results" if initial_view == "results" else "progress",
@@ -174,6 +181,7 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
         with _cache_lock:
             cfg = app.config["dashboard"]
             state = app.config["dashboard_state"]
+            color_scheme = cfg.get("color_scheme", DEFAULT_COLOR_SCHEME)
             return jsonify({
                 "pages": _cache["pages"],
                 "last_refresh": _cache["last_refresh"],
@@ -199,7 +207,8 @@ def create_app(config=None, start_polling=True, *, config_path=None, admin_passw
                 "display_unfinished_in_category": cfg.get("display_unfinished_in_category", False),
                 "display_unfinished_in_overall": cfg.get("display_unfinished_in_overall", False),
                 "pinned_leaders_on_overall_results": cfg.get("pinned_leaders_on_overall_results", False),
-                "color_scheme": cfg.get("color_scheme", "light"),
+                "color_scheme": color_scheme,
+                "color_mode": color_scheme_mode(color_scheme),
                 "refresh_interval": cfg.get("refresh_interval", 60),
                 "config_version": state["config_version"],
                 "race_generation": state["race_generation"],

@@ -355,14 +355,17 @@ def _settings_app(tmp_path, text="race_id: '100'\n", api=True):
     return app, c, path
 
 
-@pytest.mark.parametrize("theme", ["dark", "light"])
-def test_admin_pages_use_active_dashboard_theme(tmp_path, theme):
+@pytest.mark.parametrize("theme,mode", [
+    ("light", "light"), ("dark", "dark"),
+    ("woodland-light", "light"), ("woodland-dark", "dark"),
+])
+def test_admin_pages_use_active_dashboard_theme(tmp_path, theme, mode):
     _, c, _ = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {theme}\n")
     for url in ("/admin", "/admin/login"):
         response = c.get(url)
         html = response.get_data(as_text=True)
         assert f'data-theme="{theme}"' in html
-        assert f'data-bs-theme="{theme}"' in html
+        assert f'data-bs-theme="{mode}"' in html
         assert re.search(r'<link [^>]*href="/static/vendor/bootstrap\.min\.css"[^>]*>', html)
         assert re.search(r'<link [^>]*href="/static/theme.css"[^>]*>', html)
         stylesheet_urls = re.findall(
@@ -376,28 +379,32 @@ def test_admin_pages_use_active_dashboard_theme(tmp_path, theme):
     assert bad_login.status_code == 401
     bad_login_html = bad_login.get_data(as_text=True)
     assert f'data-theme="{theme}"' in bad_login_html
-    assert f'data-bs-theme="{theme}"' in bad_login_html
+    assert f'data-bs-theme="{mode}"' in bad_login_html
 
 
-def test_admin_defaults_to_light_theme(client):
+def test_admin_defaults_to_woodland_light_theme(client):
     login_html = client.get("/admin/login").get_data(as_text=True)
-    assert 'data-theme="light"' in login_html
+    assert 'data-theme="woodland-light"' in login_html
     assert 'data-bs-theme="light"' in login_html
     _login(client)
     admin_html = client.get("/admin").get_data(as_text=True)
-    assert 'data-theme="light"' in admin_html
+    assert 'data-theme="woodland-light"' in admin_html
     assert 'data-bs-theme="light"' in admin_html
 
 
-def test_rejected_theme_change_keeps_active_theme(tmp_path):
-    _, c, _ = _settings_app(tmp_path, "race_id: '100'\ncolor_scheme: light\n")
-    response = _post_form(c, _form(c), color_scheme="dark", scroll_speed="0")
+@pytest.mark.parametrize("active,submitted", [
+    ("light", "dark"), ("woodland-light", "woodland-dark"),
+])
+def test_rejected_theme_change_keeps_active_theme(tmp_path, active, submitted):
+    _, c, _ = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {active}\n")
+    response = _post_form(c, _form(c), color_scheme=submitted, scroll_speed="0")
     assert response.status_code == 400
     html = response.get_data(as_text=True)
-    assert 'data-theme="light"' in html
+    assert f'data-theme="{active}"' in html
+    assert 'data-bs-theme="light"' in html
     parser = _FormParser()
     parser.feed(html)
-    assert parser.fields["color_scheme"] == "dark"
+    assert parser.fields["color_scheme"] == submitted
 
 
 @pytest.mark.parametrize("failure,status", [("validation", 400), ("conflict", 409), ("write", 500)])
@@ -440,14 +447,34 @@ def test_failed_save_with_unreadable_config_uses_explicit_running_baseline(tmp_p
     assert "last running settings" in html
 
 
-@pytest.mark.parametrize("theme", ["dark", "light"])
-def test_saved_theme_applies_to_admin_and_dashboard(tmp_path, theme):
+@pytest.mark.parametrize("theme,mode", [
+    ("light", "light"), ("dark", "dark"),
+    ("woodland-light", "light"), ("woodland-dark", "dark"),
+])
+def test_saved_theme_applies_to_admin_and_dashboard(tmp_path, theme, mode):
     previous = "light" if theme == "dark" else "dark"
-    _, c, _ = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {previous}\n")
+    _, c, path = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {previous}\n")
     response = _post_form(c, _form(c), color_scheme=theme)
     assert response.status_code == 303
+    assert _yaml(path)["color_scheme"] == theme
     for url in (response.headers["Location"], "/admin/login", "/", "/progress", "/race-results", "/announcements"):
-        assert f'data-theme="{theme}"' in c.get(url).get_data(as_text=True)
+        html = c.get(url).get_data(as_text=True)
+        assert f'data-theme="{theme}"' in html
+        assert f'data-bs-theme="{mode}"' in html
+    data = c.get("/api/data").get_json()
+    assert data["color_scheme"] == theme
+    assert data["color_mode"] == mode
+
+
+def test_theme_selector_shows_four_named_palettes(tmp_path):
+    _, c, _ = _settings_app(tmp_path)
+    html = c.get("/admin").get_data(as_text=True)
+    select = re.search(r'<select\b[^>]*name="color_scheme"[^>]*>(.*?)</select>', html, re.DOTALL)
+    assert select
+    assert re.findall(r'<option value="([^"]+)"[^>]*>([^<]+)</option>', select.group(1)) == [
+        ("light", "Light"), ("dark", "Dark"),
+        ("woodland-light", "Woodland Light"), ("woodland-dark", "Woodland Dark"),
+    ]
 
 
 def test_form_covers_option_registry(tmp_path):
@@ -461,7 +488,7 @@ def test_form_covers_option_registry(tmp_path):
     assert fields["show_summary"] == "true"
     assert fields["show_demographics"] is None
     assert fields["source"] == "webscorer"
-    assert fields["color_scheme"] == "light"
+    assert fields["color_scheme"] == "woodland-light"
 
 
 def test_save_updates_only_selected_config(tmp_path):

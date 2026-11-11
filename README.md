@@ -123,10 +123,12 @@ Environment variables never override non-secret options; only the secrets above 
 | `display_unfinished_in_category` | false | Show in-progress category pages before racers finish |
 | `display_unfinished_in_overall` | false | Show in-progress Overall pages before racers finish |
 | `chart_bucket_minutes` | 15 | Minutes per bucket in the finish chart (at least 1) |
-| `color_scheme` | light | `dark` or `light` |
+| `color_scheme` | woodland-light | `light`, `dark`, `woodland-light`, or `woodland-dark` |
 | `show_toasts` | true | Toast notifications when racers finish |
 
 The full set of effective options is printed at startup. Booleans must be `true` or `false`, and choice options must use one of the listed values; an invalid value stops startup with a message naming the option. Unknown keys in `config.yaml` and secrets placed in it are ignored with a warning.
+
+All four themes share the Bootstrap layouts. **Light** and **Dark** restore the original neutral/blue palettes; **Woodland Light** and **Woodland Dark** use the earthy palettes. Woodland Light is the default when no theme is configured. Saved `light` and `dark` values select the original palettes; choose a `woodland-` value to retain the Woodland colors. The Woodland themes provide higher contrast for outdoor TV use.
 
 ### Changing settings while running
 
@@ -137,7 +139,7 @@ The app watches its config file (`config.yaml`, or the `--config` path) and appl
 - **Secrets are not reloaded.** `.env`, the API credentials and `ADMIN_PASSWORD` keep their startup values; restart to change them.
 - **Bad edits are rejected whole.** If the file has invalid YAML or an invalid value (including `refresh_interval` below 1), the last good settings keep running and a warning is printed to the console once per distinct error. Fix the file and it is picked up automatically.
 - **Switching races:** changing `source`, `race_id`, or `data_file` clears the current race from the TV right away, shows a waiting screen, and polls the new race immediately. Results from the old race that arrive afterward are discarded. If the new race cannot be fetched yet, the selection is kept and the app retries every `refresh_interval`. The TV drops the old race's pages, charts and finish pop-ups, and racers who had already finished in the new race don't trigger pop-ups; only later finishers do.
-- **`/api/data` fields:** `config_version` starts at 1 and increments each time an option changes. `race_generation` changes each time the race (`source`, `race_id`, `data_file`) changes. `race_selection_required` is true while a live WebScorer setup has no race chosen. `color_scheme` and `refresh_interval` report the active values. `admin_enabled` says whether the admin page is on (never the password).
+- **`/api/data` fields:** `config_version` starts at 1 and increments each time an option changes. `race_generation` changes each time the race (`source`, `race_id`, `data_file`) changes. `race_selection_required` is true while a live WebScorer setup has no race chosen. `color_scheme` and `refresh_interval` report the active values; `color_mode` reports the theme's Bootstrap mode (`light` or `dark`). `admin_enabled` says whether the admin page is on (never the password).
 
 ### Migrating from an `.env`-only setup
 
@@ -150,7 +152,7 @@ Set `ADMIN_PASSWORD` in `.env` and restart to enable `http://<host>:5000/admin`.
 Admin uses the shared operator navigation, as do the read-only Race control and Race results pages. Those read-only pages do not require a login and must be deployed only on a race-staff-restricted network or at a staff-only location; Admin remains protected by `ADMIN_PASSWORD`.
 From Admin, navigation links also open in the current tab. If settings have changed, your browser warns before you leave. Restoring saved values removes the warning; **Save settings** and **Discard changes** let you leave without it. If a save fails, retained edits remain protected until you save, restore, or discard them.
 
-The admin settings and login pages use the dashboard's configured `color_scheme`. Saving a color scheme change applies it to the admin page after the save.
+The admin settings and login pages use the dashboard's configured `color_scheme`. The **Theme** selector offers Light, Dark, Woodland Light, and Woodland Dark. Saving a theme change applies it to the admin page after the save and to open operator/TV pages on their next fetch.
 
 The page edits every option in `config.yaml`, grouped by purpose. Saving validates the values, writes `config.yaml` (keeping its comments), and applies them to the running dashboard within one poll; no restart is needed. Invalid values are listed next to their fields and nothing is written.
 

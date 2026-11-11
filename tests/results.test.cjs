@@ -59,6 +59,7 @@ function payload(pages, extra = {}) {
     race_generation: 1,
     refresh_interval: 30,
     color_scheme: "dark",
+    color_mode: (extra.color_scheme || "dark").endsWith("dark") ? "dark" : "light",
     race_name: "Trail Fest",
     last_refresh: "09:41:00",
     display_unfinished_in_category: false,
@@ -304,12 +305,19 @@ test("fetch failures keep results but mark them stale and retry", async () => {
 });
 
 test("theme follows config and names render as text", async () => {
-  const ui = startResults([payload([category("<i>A</i>", [racer("1", "<img src=x onerror=alert(1)>", "1:00")])], { color_scheme: "light" })]);
-  await ui.poll();
-  assert.equal(ui.document.body.dataset.theme, "light");
-  assert.equal(ui.document.body.dataset.bsTheme, "light");
-  assert.equal(ui.titles()[0], "<i>A</i>");
-  assert.equal(ui.rows()[0][2], "<img src=x onerror=alert(1)>");
+  const themes = [
+    ["light", "light"], ["woodland-light", "light"],
+    ["dark", "dark"], ["woodland-dark", "dark"], ["light", "light"],
+  ];
+  const pages = [category("<i>A</i>", [racer("1", "<img src=x onerror=alert(1)>", "1:00")])];
+  const ui = startResults(themes.map(([theme]) => payload(pages, { color_scheme: theme })));
+  for (const [theme, mode] of themes) {
+    await ui.poll();
+    assert.equal(ui.document.body.dataset.theme, theme);
+    assert.equal(ui.document.body.dataset.bsTheme, mode);
+    assert.equal(ui.titles()[0], "<i>A</i>");
+    assert.equal(ui.rows()[0][2], "<img src=x onerror=alert(1)>");
+  }
 });
 
 test("R refreshes the source, then redraws immediately and restarts the poll timer", async () => {

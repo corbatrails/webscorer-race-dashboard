@@ -51,7 +51,7 @@ overall_results_layout: standard
 chart_bucket_minutes: 15
 
 # --- Appearance ---
-# dark or light.
-color_scheme: light
+# Theme: light, dark, woodland-light, or woodland-dark.
+color_scheme: woodland-light
 # Toast notifications when racers finish.
 show_toasts: true

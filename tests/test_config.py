@@ -68,7 +68,7 @@ def test_load_config_defaults(clean_env, tmp_path):
     assert cfg["show_overall_results"] is True
     assert cfg["show_category_results"] is True
     assert cfg["chart_bucket_minutes"] == 15
-    assert cfg["color_scheme"] == "light"
+    assert cfg["color_scheme"] == "woodland-light"
     assert cfg["show_toasts"] is True
     assert cfg["pinned_leaders_on_overall_results"] is False
     assert cfg["overall_results_layout"] == "standard"
@@ -95,6 +95,9 @@ def test_load_config_missing_data_file(clean_env, tmp_path, monkeypatch):
 @pytest.mark.parametrize("data,key,expected", [
     ({"chart_bucket_minutes": 30}, "chart_bucket_minutes", 30),
     ({"color_scheme": "light"}, "color_scheme", "light"),
+    ({"color_scheme": "dark"}, "color_scheme", "dark"),
+    ({"color_scheme": "woodland-light"}, "color_scheme", "woodland-light"),
+    ({"color_scheme": " Woodland-Dark "}, "color_scheme", "woodland-dark"),
     ({"show_toasts": False}, "show_toasts", False),
     ({"pinned_leaders_on_overall_results": True}, "pinned_leaders_on_overall_results", True),
     ({"overall_results_layout": "detailed"}, "overall_results_layout", "detailed"),
@@ -123,7 +126,7 @@ def test_yaml_defaults_ignore_legacy_environment(clean_env, tmp_path, monkeypatc
     assert cfg["refresh_interval"] == 60
     assert cfg["source"] == "webscorer"
     assert cfg["race_id"] is None
-    assert cfg["color_scheme"] == "light"
+    assert cfg["color_scheme"] == "woodland-light"
 
 
 def test_process_secret_overrides_dotenv_secret(clean_env, tmp_path, monkeypatch):
@@ -135,7 +138,7 @@ def test_process_secret_overrides_dotenv_secret(clean_env, tmp_path, monkeypatch
 def test_missing_config_yaml_uses_defaults(clean_env, tmp_path):
     cfg = _load(tmp_path)
     assert cfg["refresh_interval"] == 60
-    assert cfg["color_scheme"] == "light"
+    assert cfg["color_scheme"] == "woodland-light"
     assert cfg["show_demographics"] is False
     assert cfg["race_id"] is None
     assert cfg["data_file"] is None

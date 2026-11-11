@@ -64,12 +64,15 @@ def test_save_preserves_comments_unknown_keys_and_all_options(cfg_path):
     assert _leftover_temp_files(cfg_path) == []
 
 
-def test_save_creates_missing_file_with_all_options(tmp_path):
+@pytest.mark.parametrize("theme", ["light", "dark", "woodland-light", "woodland-dark"])
+def test_save_creates_missing_file_with_all_options(tmp_path, theme):
     path = tmp_path / "new.yaml"
-    save_config(str(path), {"color_scheme": "light"}, SECRETS)
+    save_config(str(path), {"color_scheme": theme}, SECRETS)
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
-    assert data["color_scheme"] == "light"
+    assert data["color_scheme"] == theme
     assert {o.key for o in OPTIONS} == set(data)
+    reloaded, _ = read_config_snapshot(str(path), SECRETS)
+    assert reloaded["color_scheme"] == theme
 
 
 def test_save_never_writes_secrets_from_existing_file(cfg_path):

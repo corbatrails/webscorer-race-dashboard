@@ -12,10 +12,12 @@ import sys
 from flask import Blueprint, abort, current_app, jsonify, redirect, render_template, request, session, url_for
 
 from config import (
+    DEFAULT_COLOR_SCHEME,
     OPTIONS,
     ConfigConflict,
     ConfigError,
     ConfigValidationError,
+    color_scheme_mode,
     config_revision,
     option_choices,
     option_minimum,
@@ -69,7 +71,8 @@ FIELD_GROUPS = (
         ("chart_bucket_minutes", "Finish chart bucket (minutes)", None),
     )),
     ("Appearance", (
-        ("color_scheme", "Color scheme", None),
+        ("color_scheme", "Theme", "Light and Dark use the original colors. "
+                                  "Woodland themes offer higher contrast for outdoor displays."),
         ("show_toasts", "Finish notifications", "Pop-ups when racers finish."),
     )),
 )
@@ -211,7 +214,8 @@ def _build_blueprint():
 
     @bp.context_processor
     def theme_context():
-        return {"color_scheme": current_app.config["dashboard"].get("color_scheme", "light")}
+        color_scheme = current_app.config["dashboard"].get("color_scheme", DEFAULT_COLOR_SCHEME)
+        return {"color_scheme": color_scheme, "color_mode": color_scheme_mode(color_scheme)}
 
     @bp.after_request
     def security_headers(response):

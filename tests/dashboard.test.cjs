@@ -179,19 +179,23 @@ function payload({ generation = 1, raceName = "Race A", finishers = [], waiting 
     race_selection_required: selectionRequired,
     admin_enabled: adminEnabled,
     color_scheme: colorScheme,
+    color_mode: colorScheme.endsWith("dark") ? "dark" : "light",
   };
 }
 
 test("live theme changes keep app and Bootstrap theme attributes synchronized", async () => {
   const d = startDashboard();
-  await d.respond(0, payload({ colorScheme: "light", finishers: [1] }));
   const body = vm.runInContext("document.body", d.context);
-  assert.equal(body.dataset.theme, "light");
-  assert.equal(body.dataset.bsTheme, "light");
-
-  await d.respond(await d.poll(), payload({ colorScheme: "dark", finishers: [1] }));
-  assert.equal(body.dataset.theme, "dark");
-  assert.equal(body.dataset.bsTheme, "dark");
+  const themes = [
+    ["light", "light"], ["woodland-light", "light"],
+    ["dark", "dark"], ["woodland-dark", "dark"], ["light", "light"],
+  ];
+  for (let i = 0; i < themes.length; i++) {
+    const [theme, mode] = themes[i];
+    await d.respond(i === 0 ? 0 : await d.poll(), payload({ colorScheme: theme, finishers: [1] }));
+    assert.equal(body.dataset.theme, theme);
+    assert.equal(body.dataset.bsTheme, mode);
+  }
 });
 
 test("race generation change clears old page and toasts", async () => {

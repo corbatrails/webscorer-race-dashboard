@@ -201,7 +201,7 @@
       state.notice = null;
       if (data.color_scheme) {
         document.body.dataset.theme = data.color_scheme;
-        document.body.dataset.bsTheme = data.color_scheme;
+        document.body.dataset.bsTheme = data.color_mode;
       }
       if (raceChanged) {
         state.selectedKey = null;

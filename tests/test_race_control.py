@@ -220,14 +220,17 @@ def test_control_lap_splits_are_empty_without_visible_crossings(status, start):
     assert row.get("LapSplits") == []
 
 
-@pytest.mark.parametrize("scheme", ["dark", "light"])
-def test_race_control_route_renders_configured_theme(scheme):
+@pytest.mark.parametrize("scheme,mode", [
+    ("light", "light"), ("dark", "dark"),
+    ("woodland-light", "light"), ("woodland-dark", "dark"),
+])
+def test_race_control_route_renders_configured_theme(scheme, mode):
     app = create_app({"color_scheme": scheme}, start_polling=False)
     response = app.test_client().get("/progress")
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert f'data-theme="{scheme}"' in html
-    assert f'data-bs-theme="{scheme}"' in html
+    assert f'data-bs-theme="{mode}"' in html
     assert "/static/vendor/bootstrap.min.css" in html
     for asset in ("theme.css", "operator.css", "race_control.css", "result_helpers.js", "race_control.js"):
         assert f"/static/{asset}?v=" in html

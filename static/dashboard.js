@@ -58,7 +58,7 @@
         detectNewFinishers(data);
         if (data.color_scheme) {
           document.body.dataset.theme = data.color_scheme;
-          document.body.dataset.bsTheme = data.color_scheme;
+          document.body.dataset.bsTheme = data.color_mode;
         }
         var configChanged = configVersion !== null && data.config_version !== configVersion;
         configVersion = data.config_version;

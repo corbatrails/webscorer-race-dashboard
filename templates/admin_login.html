@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
 </head>
-<body class="admin-login-page" data-theme="{{ color_scheme }}" data-bs-theme="{{ color_scheme }}">
+<body class="admin-login-page" data-theme="{{ color_scheme }}" data-bs-theme="{{ color_mode }}">
     <main class="admin-card admin-login card rounded-0">
         <h1>Dashboard admin</h1>
         {% if error %}<p class="admin-error alert alert-danger rounded-0" role="alert">{{ error }}</p>{% endif %}

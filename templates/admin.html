@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
     <script src="{{ url_for('static', filename='admin.js') }}" defer></script>
 </head>
-<body class="operator-page operator-page--admin" data-theme="{{ color_scheme }}" data-bs-theme="{{ color_scheme }}">
+<body class="operator-page operator-page--admin" data-theme="{{ color_scheme }}" data-bs-theme="{{ color_mode }}">
     {% include "operator_nav.html" %}
     <header class="admin-header operator-page-header">
         <h1>Dashboard admin</h1>
@@ -36,7 +36,7 @@
                     {% if f.kind == "choice" %}
                     <select class="form-select" id="field-{{ f.key }}" name="{{ f.key }}" data-saved-value="{{ f.saved_value }}">
                         {% for choice in f.choices %}
-                        <option value="{{ choice }}"{% if choice == f.value %} selected{% endif %}>{{ choice }}</option>
+                        <option value="{{ choice }}"{% if choice == f.value %} selected{% endif %}>{{ choice.replace('-', ' ').title() if f.key == "color_scheme" else choice }}</option>
                         {% endfor %}
                     </select>
                     {% elif f.kind == "int" %}

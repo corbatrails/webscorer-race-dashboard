@@ -523,7 +523,7 @@
       state.notice = "";
       if (data.color_scheme) {
         document.body.dataset.theme = data.color_scheme;
-        document.body.dataset.bsTheme = data.color_scheme;
+        document.body.dataset.bsTheme = data.color_mode;
       }
       ensureSelection();
       render();

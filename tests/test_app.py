@@ -84,16 +84,19 @@ def test_index_includes_data_theme(client):
     assert b"/static/vendor/bootstrap.min.css" in response.data
 
 
-def test_pages_and_api_default_to_light_theme():
+def test_pages_and_api_default_to_woodland_light_theme():
     application = create_app({}, start_polling=False)
     test_client = application.test_client()
 
     for path in ("/", "/progress", "/race-results", "/announcements"):
         response = test_client.get(path)
         assert response.status_code == 200
-        assert b'data-theme="light"' in response.data
+        assert b'data-theme="woodland-light"' in response.data
+        assert b'data-bs-theme="light"' in response.data
 
-    assert test_client.get("/api/data").get_json()["color_scheme"] == "light"
+    data = test_client.get("/api/data").get_json()
+    assert data["color_scheme"] == "woodland-light"
+    assert data["color_mode"] == "light"
 
 
 def test_dashboard_has_no_results_link(client):
@@ -142,14 +145,20 @@ def test_legacy_operator_redirects(client, old, new):
     assert client.get(response.headers["Location"]).status_code == 200
 
 
-@pytest.mark.parametrize("scheme", ["dark", "light"])
-def test_results_page_renders_theme_and_assets(scheme):
+@pytest.mark.parametrize("scheme,mode", [
+    ("light", "light"), ("dark", "dark"),
+    ("woodland-light", "light"), ("woodland-dark", "dark"),
+])
+def test_results_page_renders_theme_and_assets(scheme, mode):
     application = create_app({"color_scheme": scheme}, start_polling=False)
     response = application.test_client().get("/announcements")
     html = response.get_data(as_text=True)
     assert response.status_code == 200
     assert f'data-theme="{scheme}"' in html
-    assert f'data-bs-theme="{scheme}"' in html
+    assert f'data-bs-theme="{mode}"' in html
+    data = application.test_client().get("/api/data").get_json()
+    assert data["color_scheme"] == scheme
+    assert data["color_mode"] == mode
     assert "/static/vendor/bootstrap.min.css" in html
     for asset in ("theme.css", "results.css", "result_helpers.js", "results.js"):
         assert f"/static/{asset}?v=" in html

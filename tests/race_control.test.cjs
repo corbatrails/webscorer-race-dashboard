@@ -45,6 +45,7 @@ const group = (key, distance = "50K", racers = [racer(0)]) => ({
 function payload(groups, extra = {}) {
   return {
     race_name: "Race", race_date: "Today", color_scheme: "dark", race_generation: 1,
+    color_mode: (extra.color_scheme || "dark").endsWith("dark") ? "dark" : "light",
     last_refresh: "10:00:00", refresh_interval: 30, waiting: false, server_time: 1000,
     race_control: {
       race_name: "Race", race_date: "Today",
@@ -442,13 +443,18 @@ test("all result rows render without paging and selections and scroll survive re
   app.page.setView("results");
   assert.equal(app.rows().length, 25);
   app.get("table-wrap").scrollTop = 240;
-  app.page.applyData(payload([group("A"), group("B", "25K", racers)], { color_scheme: "light" }));
-  assert.equal(app.document.body.dataset.theme, "light");
-  assert.equal(app.document.body.dataset.bsTheme, "light");
-  assert.equal(app.page.state.groupKey, "B");
-  assert.equal(app.page.state.view, "results");
-  assert.equal(app.rows().length, 25);
-  assert.equal(app.get("table-wrap").scrollTop, 240);
+  for (const [theme, mode] of [
+    ["light", "light"], ["woodland-light", "light"],
+    ["dark", "dark"], ["woodland-dark", "dark"], ["light", "light"],
+  ]) {
+    app.page.applyData(payload([group("A"), group("B", "25K", racers)], { color_scheme: theme }));
+    assert.equal(app.document.body.dataset.theme, theme);
+    assert.equal(app.document.body.dataset.bsTheme, mode);
+    assert.equal(app.page.state.groupKey, "B");
+    assert.equal(app.page.state.view, "results");
+    assert.equal(app.rows().length, 25);
+    assert.equal(app.get("table-wrap").scrollTop, 240);
+  }
   assert.match(app.get("result-count").textContent, /25 racers/);
 });
 
