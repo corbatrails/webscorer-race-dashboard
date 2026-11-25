@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: weekly
     groups:
-      pip-minor-patch:
+      minor-patch:
         patterns:
           - "*"
         update-types:
@@ -17,7 +17,7 @@ updates:
     schedule:
       interval: weekly
     groups:
-      github-actions-minor-patch:
+      minor-patch:
         patterns:
           - "*"
         update-types:
