@@ -111,7 +111,7 @@
         state.groups.forEach(function (group) {
           var button = document.createElement("button");
           button.type = "button";
-          button.className = "group-button";
+          button.className = "group-button nav-link";
           button.textContent = group.title;
           button.dataset.key = group.key;
           button.addEventListener("click", function () {
@@ -199,7 +199,10 @@
       state.data = data;
       state.fetchFailed = false;
       state.notice = null;
-      if (data.color_scheme) document.body.dataset.theme = data.color_scheme;
+      if (data.color_scheme) {
+        document.body.dataset.theme = data.color_scheme;
+        document.body.dataset.bsTheme = data.color_mode;
+      }
       if (raceChanged) {
         state.selectedKey = null;
         el("race-name").textContent = "";

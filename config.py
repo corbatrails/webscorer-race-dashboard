@@ -20,7 +20,18 @@ DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "
 SECRET_ENV_VARS = ("WEBSCORER_API_ID", "WEBSCORER_API_TOKEN", "ADMIN_PASSWORD")
 
 _OVERALL_RESULTS_LAYOUTS = ("standard", "detailed")
-_COLOR_SCHEMES = ("dark", "light")
+DEFAULT_COLOR_SCHEME = "woodland-light"
+_COLOR_SCHEMES = {
+    "light": "light",
+    "dark": "dark",
+    "woodland-light": "light",
+    "woodland-dark": "dark",
+}
+
+
+def color_scheme_mode(color_scheme: str) -> str:
+    """Map a configured palette to Bootstrap's light or dark mode."""
+    return _COLOR_SCHEMES[color_scheme]
 
 
 def _parse_int(value, minimum=None):
@@ -105,7 +116,7 @@ OPTIONS = (
     Option("display_unfinished_in_category", False, _parse_bool),
     Option("display_unfinished_in_overall", False, _parse_bool),
     Option("chart_bucket_minutes", 15, _int_at_least(1)),
-    Option("color_scheme", "dark", _parse_choice(_COLOR_SCHEMES)),
+    Option("color_scheme", DEFAULT_COLOR_SCHEME, _parse_choice(_COLOR_SCHEMES)),
     Option("show_toasts", True, _parse_bool),
 )
 

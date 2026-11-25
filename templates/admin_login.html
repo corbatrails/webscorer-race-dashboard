@@ -4,18 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard admin login</title>
+    <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
 </head>
-<body data-theme="{{ color_scheme }}">
-    <main class="admin-card admin-login">
+<body class="admin-login-page" data-theme="{{ color_scheme }}" data-bs-theme="{{ color_mode }}">
+    <main class="admin-card admin-login card rounded-0">
         <h1>Dashboard admin</h1>
-        {% if error %}<p class="admin-error" role="alert">{{ error }}</p>{% endif %}
+        {% if error %}<p class="admin-error alert alert-danger rounded-0" role="alert">{{ error }}</p>{% endif %}
         <form method="post" action="{{ url_for('admin.login') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-            <label for="password">Password</label>
-            <input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
-            <button type="submit">Log in</button>
+            <label class="form-label" for="password">Password</label>
+            <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+            <button class="btn btn-primary" type="submit">Log in</button>
         </form>
     </main>
 </body>

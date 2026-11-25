@@ -14,6 +14,7 @@ function element(tag) {
     removeChild(child) { this.children.splice(this.children.indexOf(child), 1); },
     setAttribute(key, value) { this.attributes[key] = String(value); },
     getAttribute(key) { return this.attributes[key]; },
+    removeAttribute(key) { delete this.attributes[key]; },
     focus() { this.focused = true; },
     querySelectorAll(selector) {
       return this.children.flatMap(child => [
@@ -22,7 +23,12 @@ function element(tag) {
       ]);
     },
     addEventListener(key, fn) { (this.listeners[key] ||= []).push(fn); },
-    dispatch(key) { (this.listeners[key] || []).forEach(fn => fn({ target: this })); },
+    dispatch(key, extra = {}) {
+      const event = { target: this, button: 0, defaultPrevented: false,
+        preventDefault() { this.defaultPrevented = true; }, ...extra };
+      (this.listeners[key] || []).forEach(fn => fn(event));
+      return event;
+    },
     get textContent() { return this._text + this.children.map(c => c.textContent).join(""); },
     set textContent(value) { this.children = []; this._text = String(value); },
     set innerHTML(_) { throw new Error("Render API values as text, not HTML"); },
@@ -39,6 +45,7 @@ const group = (key, distance = "50K", racers = [racer(0)]) => ({
 function payload(groups, extra = {}) {
   return {
     race_name: "Race", race_date: "Today", color_scheme: "dark", race_generation: 1,
+    color_mode: (extra.color_scheme || "dark").endsWith("dark") ? "dark" : "light",
     last_refresh: "10:00:00", refresh_interval: 30, waiting: false, server_time: 1000,
     race_control: {
       race_name: "Race", race_date: "Today",
@@ -48,17 +55,25 @@ function payload(groups, extra = {}) {
   };
 }
 
-function ui(responses = []) {
+function ui(responses = [], initialView) {
   const nodes = {};
-  const get = id => nodes[id] ||= element("div");
+  const get = id => {
+    if (id === "progress-tab" || id === "results-tab") return null;
+    return nodes[id] ||= element("div");
+  };
   const listeners = {}, timers = [], intervals = [], requests = [];
   let now = 1000000;
+  const location = { href: initialView === "results" ? "http://localhost/race-results" : "http://localhost/progress" };
+  const history = {
+    replaceState(_state, _title, url) { location.href = new URL(url, location.href).href; },
+  };
   const document = {
     body: element("body"), getElementById: get, createElement: element,
     addEventListener(name, fn) { listeners[name] = fn; },
   };
+  if (initialView !== undefined) document.body.dataset.initialView = initialView;
   const env = {
-    document, now: () => now,
+    document, location, history, now: () => now,
     getComputedStyle(node) { return { display: node.hidden ? "none" : "table-cell" }; },
     setTimeout(fn, ms) { timers.push({ fn, ms }); return timers.length; },
     clearTimeout(id) { if (timers[id - 1]) timers[id - 1].cleared = true; },
@@ -78,9 +93,17 @@ function ui(responses = []) {
     }
     get("result-head").appendChild(heading);
   }
+  const initialNavView = initialView === "results" ? "results" : "progress";
+  ["progress", "results"].forEach(view => {
+    const link = get(`operator-nav-${view}`);
+    link.href = view === "progress" ? "http://localhost/progress" : "http://localhost/race-results";
+    const active = view === initialNavView;
+    link.className = "operator-nav__link nav-link" + (active ? " is-active" : "");
+    if (active) link.setAttribute("aria-current", "page");
+  });
   const page = Control.start(env);
   return {
-    page, get, timers, requests, document,
+    page, get, timers, requests, document, location,
     advance(ms) { now += ms; },
     tick() { intervals.forEach(fn => fn()); },
     press(key, extra = {}) {
@@ -98,6 +121,77 @@ test("pagination clamps removed pages and never overfills a short viewport", () 
   assert.equal(Control.capacity(90, 32, 36), 1);
   assert.equal(Control.capacity(10, 32, 36), 1);
   assert.equal(Control.paginate([], 3, 9).page, 0);
+});
+
+test("initial view uses the server-selected results view", () => {
+  const app = ui([], "results");
+  assert.equal(app.page.state.view, "results");
+});
+
+test("initial view falls back to progress", () => {
+  const app = ui([], "unknown");
+  assert.equal(app.page.state.view, "progress");
+});
+
+test("shared navigation and shortcuts work without duplicate view buttons", () => {
+  for (const initialView of ["progress", "results"]) {
+    let app;
+    assert.doesNotThrow(() => {
+      app = ui([], initialView);
+      app.page.applyData(payload([group("Overall")]));
+    });
+
+    app.get("operator-nav-results").dispatch("click");
+    assert.equal(app.location.href, "http://localhost/race-results");
+    assert.equal(app.get("results-view").hidden, false);
+    assert.equal(app.get("progress-view").hidden, true);
+    assert.equal(app.rows().length, 1);
+
+    app.press("1");
+    assert.equal(app.location.href, "http://localhost/progress");
+    assert.equal(app.get("progress-view").hidden, false);
+    assert.equal(app.get("results-view").hidden, true);
+    assert.equal(app.get("operator-nav-progress").getAttribute("aria-current"), "page");
+  }
+});
+
+test("operator navigation keeps its active link and URL in sync with the view", () => {
+  const app = ui();
+  const event = app.get("operator-nav-results").dispatch("click");
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(app.page.state.view, "results");
+  assert.equal(app.location.href, "http://localhost/race-results");
+  assert.equal(app.get("operator-nav-results").className, "operator-nav__link nav-link is-active");
+  assert.equal(app.get("operator-nav-results").getAttribute("aria-current"), "page");
+  assert.equal(app.get("operator-nav-progress").getAttribute("aria-current"), undefined);
+
+  app.page.setView("progress");
+  assert.equal(app.location.href, "http://localhost/progress");
+  assert.equal(app.get("operator-nav-progress").getAttribute("aria-current"), "page");
+  assert.equal(app.get("operator-nav-results").getAttribute("aria-current"), undefined);
+});
+
+test("view switching preserves unrelated URL state and current selection", () => {
+  const app = ui();
+  app.location.href = "http://localhost/progress?view=progress&filter=finished#table";
+  app.page.state.filter = "finished";
+  app.page.state.distance = "50K";
+  app.page.state.groupKey = "women";
+  app.get("operator-nav-results").dispatch("click");
+  assert.equal(app.location.href, "http://localhost/race-results?filter=finished#table");
+  assert.equal(app.page.state.filter, "finished");
+  assert.equal(app.page.state.distance, "50K");
+  assert.equal(app.page.state.groupKey, "women");
+});
+
+test("modified navigation clicks retain explicit browser gestures", () => {
+  for (const extra of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 }]) {
+    const app = ui();
+    const event = app.get("operator-nav-results").dispatch("click", extra);
+    assert.equal(event.defaultPrevented, false);
+    assert.equal(app.page.state.view, "progress");
+    assert.equal(app.location.href, "http://localhost/progress");
+  }
 });
 
 test("all racers includes statuses; finished-only excludes every non-finisher", () => {
@@ -349,12 +443,18 @@ test("all result rows render without paging and selections and scroll survive re
   app.page.setView("results");
   assert.equal(app.rows().length, 25);
   app.get("table-wrap").scrollTop = 240;
-  app.page.applyData(payload([group("A"), group("B", "25K", racers)], { color_scheme: "light" }));
-  assert.equal(app.document.body.dataset.theme, "light");
-  assert.equal(app.page.state.groupKey, "B");
-  assert.equal(app.page.state.view, "results");
-  assert.equal(app.rows().length, 25);
-  assert.equal(app.get("table-wrap").scrollTop, 240);
+  for (const [theme, mode] of [
+    ["light", "light"], ["woodland-light", "light"],
+    ["dark", "dark"], ["woodland-dark", "dark"], ["light", "light"],
+  ]) {
+    app.page.applyData(payload([group("A"), group("B", "25K", racers)], { color_scheme: theme }));
+    assert.equal(app.document.body.dataset.theme, theme);
+    assert.equal(app.document.body.dataset.bsTheme, mode);
+    assert.equal(app.page.state.groupKey, "B");
+    assert.equal(app.page.state.view, "results");
+    assert.equal(app.rows().length, 25);
+    assert.equal(app.get("table-wrap").scrollTop, 240);
+  }
   assert.match(app.get("result-count").textContent, /25 racers/);
 });
 

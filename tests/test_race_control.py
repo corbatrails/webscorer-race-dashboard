@@ -1,4 +1,6 @@
 import json
+import re
+from pathlib import Path
 
 import pytest
 
@@ -218,16 +220,58 @@ def test_control_lap_splits_are_empty_without_visible_crossings(status, start):
     assert row.get("LapSplits") == []
 
 
-@pytest.mark.parametrize("scheme", ["dark", "light"])
-def test_race_control_route_renders_configured_theme(scheme):
+@pytest.mark.parametrize("scheme,mode", [
+    ("light", "light"), ("dark", "dark"),
+    ("woodland-light", "light"), ("woodland-dark", "dark"),
+])
+def test_race_control_route_renders_configured_theme(scheme, mode):
     app = create_app({"color_scheme": scheme}, start_polling=False)
-    response = app.test_client().get("/race-control")
+    response = app.test_client().get("/progress")
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert f'data-theme="{scheme}"' in html
-    for asset in ("theme.css", "race_control.css", "result_helpers.js", "race_control.js"):
+    assert f'data-bs-theme="{mode}"' in html
+    assert "/static/vendor/bootstrap.min.css" in html
+    for asset in ("theme.css", "operator.css", "race_control.css", "result_helpers.js", "race_control.js"):
         assert f"/static/{asset}?v=" in html
     assert 'id="theme"' not in html
+
+
+@pytest.mark.parametrize("path", ["/progress", "/race-results"])
+def test_race_control_uses_shared_navigation_without_duplicate_view_buttons(path):
+    response = create_app({}, start_polling=False).test_client().get(path)
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert 'href="/progress"' in html
+    assert 'href="/race-results"' in html
+    assert 'id="progress-tab"' not in html
+    assert 'id="results-tab"' not in html
+    assert 'aria-label="Race control views"' not in html
+    assert 'id="refresh-button"' in html
+
+
+def test_race_control_cards_are_flat_and_filters_use_compact_corner_radius():
+    root = Path(__file__).resolve().parents[1]
+    template = (root / "templates" / "race_control.html").read_text(encoding="utf-8")
+    css = (root / "static" / "race_control.css").read_text(encoding="utf-8")
+
+    assert "shadow-sm" not in template
+    stat_rule = re.search(r"\.control-stat\s*\{([^}]*)\}", css)
+    assert stat_rule
+    assert "box-shadow" not in stat_rule.group(1)
+    filter_rule = re.search(r"\.result-filters button\s*\{([^}]*)\}", css)
+    assert filter_rule
+    assert "border-radius: 5px" in filter_rule.group(1)
+
+
+def test_race_control_invalid_view_defaults_to_progress():
+    client = create_app({}, start_polling=False).test_client()
+
+    results_html = client.get("/race-control?view=results", follow_redirects=True).get_data(as_text=True)
+    invalid_html = client.get("/race-control?view=unknown", follow_redirects=True).get_data(as_text=True)
+
+    assert 'data-initial-view="results"' in results_html
+    assert 'data-initial-view="progress"' in invalid_html
 
 
 def test_control_payload_ignores_tv_visibility_options_and_resets_on_race_switch(tmp_path):

@@ -58,10 +58,14 @@
     var document = env.document;
     var el = function (id) { return document.getElementById(id); };
     var now = env.now || root.performance.now.bind(root.performance);
+    var location = env.location || root.location;
+    var history = env.history || root.history;
+    var requestedView = document.body && document.body.dataset && document.body.dataset.initialView;
     var pollTimer = null;
     var pendingPoll = null;
     var state = {
-      data: null, view: "progress", distance: null, allDistances: false, distanceInitialized: false,
+      data: null, view: requestedView === "results" ? "results" : "progress",
+      distance: null, allDistances: false, distanceInitialized: false,
       groupKey: null, filter: "all",
       distancePage: 0, lapPage: 0, distRailPage: 0, groupRailPage: 0,
       expandedRacers: new Set(),
@@ -178,8 +182,6 @@
       el("last-updated").className = warnings.length ? "stale" : "updated";
       el("refresh-button").disabled = state.refreshing;
       renderClock();
-      el("progress-tab").setAttribute("aria-pressed", String(state.view === "progress"));
-      el("results-tab").setAttribute("aria-pressed", String(state.view === "results"));
     }
 
     function renderStats(progress) {
@@ -188,7 +190,7 @@
       [["registered", "Registered"], ["on_course", "On course"], ["finished", "Finished"],
         ["dns", "DNS"], ["not_started", "Not started"], ["dnf", "DNF"], ["dsq", "DSQ"]]
         .forEach(function (entry) {
-          var card = node("div", null, "control-stat stat-" + entry[0]);
+          var card = node("div", null, "control-stat card stat-" + entry[0]);
           card.appendChild(node("strong", progress.totals[entry[0]] || 0));
           card.appendChild(node("span", entry[1]));
           box.appendChild(card);
@@ -322,7 +324,7 @@
         list.dataset.signature = signature;
         clear(list);
         result.items.forEach(function (item) {
-          var button = node("button", item.title);
+          var button = node("button", item.title, "btn btn-sm");
           button.type = "button";
           button.dataset.key = choiceValue(item);
           button.title = item.title;
@@ -402,7 +404,7 @@
           detail.appendChild(spacer);
           var cell = node("td");
           cell.colSpan = columnCount - 2;
-          var toggle = node("button", detail.hidden ? "+" : "-", "split-toggle");
+          var toggle = node("button", detail.hidden ? "+" : "-", "split-toggle btn btn-outline-secondary btn-sm");
           toggle.type = "button";
           toggle.dataset.racerKey = key;
           toggle.setAttribute("aria-controls", detail.id);
@@ -479,7 +481,30 @@
       else renderResults();
     }
 
-    function setView(view) { state.view = view; render(); }
+    function syncOperatorNavigation() {
+      ["progress", "results"].forEach(function (view) {
+        var link = el("operator-nav-" + view);
+        if (!link) return;
+        var active = state.view === view;
+        link.className = "operator-nav__link nav-link" + (active ? " is-active" : "");
+        if (active) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      });
+    }
+    function syncViewLocation() {
+      if (!location || !history || typeof history.replaceState !== "function") return;
+      var url = new URL(location.href);
+      url.pathname = new URL(el("operator-nav-" + state.view).href, location.href).pathname;
+      url.searchParams.delete("view");
+      history.replaceState(null, "", url.toString());
+    }
+    function setView(view) {
+      if (view !== "progress" && view !== "results") return;
+      state.view = view;
+      syncOperatorNavigation();
+      syncViewLocation();
+      render();
+    }
     function applyData(data) {
       var raceChanged = state.raceGeneration !== data.race_generation;
       if (state.raceGeneration !== null && raceChanged) resetSelection();
@@ -496,7 +521,10 @@
       }
       state.fetchFailed = false;
       state.notice = "";
-      if (data.color_scheme) document.body.dataset.theme = data.color_scheme;
+      if (data.color_scheme) {
+        document.body.dataset.theme = data.color_scheme;
+        document.body.dataset.bsTheme = data.color_mode;
+      }
       ensureSelection();
       render();
     }
@@ -552,8 +580,15 @@
         });
     }
 
-    el("progress-tab").addEventListener("click", function () { setView("progress"); });
-    el("results-tab").addEventListener("click", function () { setView("results"); });
+    [["progress", "progress"], ["results", "results"]].forEach(function (entry) {
+      var link = el("operator-nav-" + entry[0]);
+      if (link) link.addEventListener("click", function (event) {
+        if (event.defaultPrevented || event.button > 0 ||
+            event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        setView(entry[1]);
+      });
+    });
     el("refresh-button").addEventListener("click", refresh);
     el("distance-select").addEventListener("change", function () {
       var value = el("distance-select").value;
@@ -613,6 +648,7 @@
       getComputedStyle: root.getComputedStyle.bind(root),
       clearTimeout: root.clearTimeout.bind(root), setInterval: root.setInterval.bind(root),
       addEventListener: root.addEventListener.bind(root), ResizeObserver: root.ResizeObserver,
+      history: root.history, location: root.location,
     }).poll();
   }
 })(typeof globalThis !== "undefined" ? globalThis : this);

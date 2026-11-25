@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import pytest
 from unittest.mock import patch, MagicMock
 from app import create_app
@@ -79,25 +80,99 @@ def test_index_returns_html(client):
 def test_index_includes_data_theme(client):
     response = client.get("/")
     assert b'data-theme="dark"' in response.data
+    assert b'data-bs-theme="dark"' in response.data
+    assert b"/static/vendor/bootstrap.min.css" in response.data
+
+
+def test_pages_and_api_default_to_woodland_light_theme():
+    application = create_app({}, start_polling=False)
+    test_client = application.test_client()
+
+    for path in ("/", "/progress", "/race-results", "/announcements"):
+        response = test_client.get(path)
+        assert response.status_code == 200
+        assert b'data-theme="woodland-light"' in response.data
+        assert b'data-bs-theme="light"' in response.data
+
+    data = test_client.get("/api/data").get_json()
+    assert data["color_scheme"] == "woodland-light"
+    assert data["color_mode"] == "light"
 
 
 def test_dashboard_has_no_results_link(client):
     html = client.get("/").get_data(as_text=True)
-    assert 'href="/results"' not in html
+    for path in ("/progress", "/race-results", "/announcements"):
+        assert f'href="{path}"' not in html
     assert "/static/theme.css?v=" in html
 
 
-@pytest.mark.parametrize("scheme", ["dark", "light"])
-def test_results_page_renders_theme_and_assets(scheme):
+def test_operator_pages_stay_public_when_admin_disabled(client):
+    for path in ("/progress", "/race-results", "/announcements"):
+        response = client.get(path)
+        assert response.status_code == 200
+        assert 'href="/admin"' not in response.get_data(as_text=True)
+    assert 'class="operator-nav"' not in client.get("/").get_data(as_text=True)
+
+
+@pytest.mark.parametrize("path,view,label", [
+    ("/progress", "progress", "Race progress"),
+    ("/progress?view=results", "progress", "Race progress"),
+    ("/race-results", "results", "Detailed results"),
+    ("/race-results?view=progress", "results", "Detailed results"),
+    ("/announcements", None, "Winner announcements"),
+])
+def test_canonical_operator_routes(client, path, view, label):
+    response = client.get(path)
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    if view:
+        assert f'data-initial-view="{view}"' in html
+    active_links = re.findall(r'<a\b[^>]*aria-current="page"[^>]*>([^<]+)</a>', html)
+    assert active_links == [label]
+
+
+@pytest.mark.parametrize("old,new", [
+    ("/race-control", "/progress"),
+    ("/race-control?view=progress", "/progress"),
+    ("/race-control?view=unknown", "/progress"),
+    ("/race-control?view=results", "/race-results"),
+    ("/results", "/announcements"),
+])
+def test_legacy_operator_redirects(client, old, new):
+    response = client.get(old)
+    assert response.status_code == 301
+    assert response.headers["Location"] == new
+    assert client.get(response.headers["Location"]).status_code == 200
+
+
+@pytest.mark.parametrize("scheme,mode", [
+    ("light", "light"), ("dark", "dark"),
+    ("woodland-light", "light"), ("woodland-dark", "dark"),
+])
+def test_results_page_renders_theme_and_assets(scheme, mode):
     application = create_app({"color_scheme": scheme}, start_polling=False)
-    response = application.test_client().get("/results")
+    response = application.test_client().get("/announcements")
     html = response.get_data(as_text=True)
     assert response.status_code == 200
     assert f'data-theme="{scheme}"' in html
+    assert f'data-bs-theme="{mode}"' in html
+    data = application.test_client().get("/api/data").get_json()
+    assert data["color_scheme"] == scheme
+    assert data["color_mode"] == mode
+    assert "/static/vendor/bootstrap.min.css" in html
     for asset in ("theme.css", "results.css", "result_helpers.js", "results.js"):
         assert f"/static/{asset}?v=" in html
     assert 'id="top-count"' in html and 'value="3"' in html
     assert 'id="group-list"' in html
+
+
+def test_operator_pages_include_shared_styles(client):
+    for path in ("/progress", "/race-results", "/announcements"):
+        html = client.get(path).get_data(as_text=True)
+        assert "/static/vendor/bootstrap.min.css" in html
+        assert "/static/operator.css?v=" in html
+    dashboard_html = client.get("/").get_data(as_text=True)
+    assert "/static/operator.css" not in dashboard_html
 
 
 @patch("providers.webscorer.fetch_race_results")

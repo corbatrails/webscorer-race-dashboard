@@ -64,15 +64,81 @@ def test_admin_redirects_to_login_when_logged_out(client):
     assert response.headers["Location"].endswith("/admin/login")
 
 
+def test_operator_navigation_is_shared(client):
+    _login(client)
+    pages = [
+        client.get("/progress").get_data(as_text=True),
+        client.get("/race-results").get_data(as_text=True),
+        client.get("/announcements").get_data(as_text=True),
+        client.get("/admin").get_data(as_text=True),
+    ]
+    destinations = (
+        'href="/progress"',
+        'href="/race-results"',
+        'href="/announcements"',
+        'href="/admin"',
+    )
+    for html in pages:
+        assert 'class="operator-nav"' in html
+        assert all(destination in html for destination in destinations)
+        assert "Observability" not in html
+        assert 'action="/admin/logout"' in html
+        assert 'aria-current="page"' in html
+
+
+def test_operator_navigation_stays_in_the_same_tab(client):
+    _login(client)
+    for page in ("/progress", "/race-results", "/announcements", "/admin"):
+        html = client.get(page).get_data(as_text=True)
+        nav = re.search(r'<nav\b.*?</nav>', html, re.DOTALL)
+        assert nav
+        links = re.findall(r'<a\b[^>]*>', nav.group(0))
+        assert len(links) == 4
+        assert all('target=' not in link for link in links)
+
+
+def test_admin_nav_requires_login(client):
+    results_html = client.get("/announcements").get_data(as_text=True)
+    assert 'href="/admin"' in results_html
+    response = client.get("/admin")
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/admin/login")
+
+
+def test_operator_pages_include_shared_styles(client):
+    _login(client)
+    html = client.get("/admin").get_data(as_text=True)
+    assert 'href="/static/operator.css"' in html
+
+
+def test_logout_from_results_clears_admin_session(client):
+    _login(client)
+    html = client.get("/announcements").get_data(as_text=True)
+    match = re.search(
+        r'<form[^>]*action="/admin/logout"[^>]*>.*?name="csrf_token" value="([^"]+)"',
+        html,
+        re.DOTALL,
+    )
+    assert match
+    token = match.group(1)
+
+    assert client.post("/admin/logout", data={}).status_code == 403
+    assert _session(client).get("authenticated") is True
+    assert client.post("/admin/logout", data={"csrf_token": token}).status_code == 303
+    assert "authenticated" not in _session(client)
+    assert client.get("/announcements").status_code == 200
+    assert client.get("/admin").headers["Location"].endswith("/admin/login")
+
+
 def test_admin_page_links_to_results_page(client):
     _login(client)
     html = client.get("/admin").get_data(as_text=True)
-    assert re.search(r'<a [^>]*href="/results"[^>]*>Race results</a>', html)
+    assert re.search(r'<a [^>]*href="/announcements"[^>]*>Winner announcements</a>', html)
 
 def test_admin_page_links_to_race_control(client):
     _login(client)
     html = client.get("/admin").get_data(as_text=True)
-    assert re.search(r'<a [^>]*href="/race-control"[^>]*>Race control</a>', html)
+    assert re.search(r'<a [^>]*href="/progress"[^>]*>Race progress</a>', html)
 
 
 def test_login_uses_constant_time_bytes_comparison(client, monkeypatch):
@@ -149,6 +215,25 @@ def test_admin_headers_and_cookie(client):
     assert "Content-Security-Policy" in page.headers
 
 
+def test_admin_form_indicators_avoid_csp_blocked_data_images(client):
+    _login(client)
+    response = client.get("/admin")
+    css = client.get("/static/admin.css").get_data(as_text=True)
+    assert "default-src 'self'" in response.headers["Content-Security-Policy"]
+    assert "img-src data:" not in response.headers["Content-Security-Policy"]
+    assert re.search(r"\.form-select\s*\{[^}]*linear-gradient", css, re.DOTALL)
+    assert re.search(
+        r"label\.check \.form-check-input:checked\[type=['\"]?checkbox['\"]?\]\s*\{"
+        r"[^}]*background-image:\s*none",
+        css,
+        re.DOTALL,
+    )
+    assert re.search(
+        r"label\.check \.form-check-input:checked \+ \.form-check-label::before",
+        css,
+    )
+
+
 def test_dashboard_keeps_its_own_headers(client):
     assert "Content-Security-Policy" not in client.get("/").headers
 
@@ -213,10 +298,13 @@ class _FormParser(HTMLParser):
     def __init__(self):
         super().__init__()
         self.fields = {}
+        self.saved_values = {}
         self._select = None
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
+        if tag in ("input", "select") and "name" in a and "data-saved-value" in a:
+            self.saved_values[a["name"]] = a["data-saved-value"]
         if tag == "input" and "name" in a:
             if a.get("type") == "checkbox":
                 self.fields[a["name"]] = "true" if "checked" in a else None
@@ -267,43 +355,126 @@ def _settings_app(tmp_path, text="race_id: '100'\n", api=True):
     return app, c, path
 
 
-@pytest.mark.parametrize("theme", ["dark", "light"])
-def test_admin_pages_use_active_dashboard_theme(tmp_path, theme):
+@pytest.mark.parametrize("theme,mode", [
+    ("light", "light"), ("dark", "dark"),
+    ("woodland-light", "light"), ("woodland-dark", "dark"),
+])
+def test_admin_pages_use_active_dashboard_theme(tmp_path, theme, mode):
     _, c, _ = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {theme}\n")
     for url in ("/admin", "/admin/login"):
-        html = c.get(url).get_data(as_text=True)
+        response = c.get(url)
+        html = response.get_data(as_text=True)
         assert f'data-theme="{theme}"' in html
+        assert f'data-bs-theme="{mode}"' in html
+        assert re.search(r'<link [^>]*href="/static/vendor/bootstrap\.min\.css"[^>]*>', html)
         assert re.search(r'<link [^>]*href="/static/theme.css"[^>]*>', html)
+        stylesheet_urls = re.findall(
+            r'<link\b(?=[^>]*\brel=["\']stylesheet["\'])[^>]*\bhref=["\']([^"\']+)["\']',
+            html,
+        )
+        assert stylesheet_urls
+        assert all(url.startswith("/static/") for url in stylesheet_urls)
+        assert "default-src 'self'" in response.headers["Content-Security-Policy"]
     bad_login = _login(c, "wrong")
     assert bad_login.status_code == 401
-    assert f'data-theme="{theme}"' in bad_login.get_data(as_text=True)
+    bad_login_html = bad_login.get_data(as_text=True)
+    assert f'data-theme="{theme}"' in bad_login_html
+    assert f'data-bs-theme="{mode}"' in bad_login_html
 
 
-def test_admin_defaults_to_dark_theme(client):
-    assert 'data-theme="dark"' in client.get("/admin/login").get_data(as_text=True)
+def test_admin_defaults_to_woodland_light_theme(client):
+    login_html = client.get("/admin/login").get_data(as_text=True)
+    assert 'data-theme="woodland-light"' in login_html
+    assert 'data-bs-theme="light"' in login_html
     _login(client)
-    assert 'data-theme="dark"' in client.get("/admin").get_data(as_text=True)
+    admin_html = client.get("/admin").get_data(as_text=True)
+    assert 'data-theme="woodland-light"' in admin_html
+    assert 'data-bs-theme="light"' in admin_html
 
 
-def test_rejected_theme_change_keeps_active_theme(tmp_path):
-    _, c, _ = _settings_app(tmp_path, "race_id: '100'\ncolor_scheme: light\n")
-    response = _post_form(c, _form(c), color_scheme="dark", scroll_speed="0")
+@pytest.mark.parametrize("active,submitted", [
+    ("light", "dark"), ("woodland-light", "woodland-dark"),
+])
+def test_rejected_theme_change_keeps_active_theme(tmp_path, active, submitted):
+    _, c, _ = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {active}\n")
+    response = _post_form(c, _form(c), color_scheme=submitted, scroll_speed="0")
     assert response.status_code == 400
     html = response.get_data(as_text=True)
-    assert 'data-theme="light"' in html
+    assert f'data-theme="{active}"' in html
+    assert 'data-bs-theme="light"' in html
     parser = _FormParser()
     parser.feed(html)
-    assert parser.fields["color_scheme"] == "dark"
+    assert parser.fields["color_scheme"] == submitted
 
 
-@pytest.mark.parametrize("theme", ["dark", "light"])
-def test_saved_theme_applies_to_admin_and_dashboard(tmp_path, theme):
+@pytest.mark.parametrize("failure,status", [("validation", 400), ("conflict", 409), ("write", 500)])
+def test_failed_save_preserves_saved_settings_baseline(tmp_path, failure, status):
+    app, c, path = _settings_app(tmp_path, "race_id: '100'\ncolor_scheme: dark\nshow_summary: true\n")
+    fields = _form(c)
+    changes = {"race_id": "300", "color_scheme": "light", "show_summary": None}
+    if failure == "validation":
+        changes["scroll_speed"] = "0"
+    elif failure == "conflict":
+        changes["revision"] = "stale"
+    else:
+        def reject_write(updates, revision):
+            raise admin_module.ConfigError("disk unavailable")
+        app.extensions["admin_save_settings"] = reject_write
+
+    response = _post_form(c, fields, **changes)
+    assert response.status_code == status
+    parser = _FormParser()
+    parser.feed(response.get_data(as_text=True))
+    assert parser.fields["race_id"] == "300"
+    assert parser.fields["color_scheme"] == "light"
+    assert parser.fields["show_summary"] is None
+    assert parser.saved_values.get("race_id") == "100"
+    assert parser.saved_values.get("color_scheme") == "dark"
+    assert parser.saved_values.get("show_summary") == "true"
+    assert _yaml(path)["race_id"] == "100"
+
+
+def test_failed_save_with_unreadable_config_uses_explicit_running_baseline(tmp_path):
+    _, c, path = _settings_app(tmp_path)
+    fields = _form(c)
+    path.write_text("scroll_speed: fast\n", encoding="utf-8")
+    response = _post_form(c, fields, race_id="300")
+    assert response.status_code == 409
+    html = response.get_data(as_text=True)
+    parser = _FormParser()
+    parser.feed(html)
+    assert parser.saved_values.get("race_id") == "100"
+    assert "last running settings" in html
+
+
+@pytest.mark.parametrize("theme,mode", [
+    ("light", "light"), ("dark", "dark"),
+    ("woodland-light", "light"), ("woodland-dark", "dark"),
+])
+def test_saved_theme_applies_to_admin_and_dashboard(tmp_path, theme, mode):
     previous = "light" if theme == "dark" else "dark"
-    _, c, _ = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {previous}\n")
+    _, c, path = _settings_app(tmp_path, f"race_id: '100'\ncolor_scheme: {previous}\n")
     response = _post_form(c, _form(c), color_scheme=theme)
     assert response.status_code == 303
-    for url in (response.headers["Location"], "/admin/login", "/", "/results"):
-        assert f'data-theme="{theme}"' in c.get(url).get_data(as_text=True)
+    assert _yaml(path)["color_scheme"] == theme
+    for url in (response.headers["Location"], "/admin/login", "/", "/progress", "/race-results", "/announcements"):
+        html = c.get(url).get_data(as_text=True)
+        assert f'data-theme="{theme}"' in html
+        assert f'data-bs-theme="{mode}"' in html
+    data = c.get("/api/data").get_json()
+    assert data["color_scheme"] == theme
+    assert data["color_mode"] == mode
+
+
+def test_theme_selector_shows_four_named_palettes(tmp_path):
+    _, c, _ = _settings_app(tmp_path)
+    html = c.get("/admin").get_data(as_text=True)
+    select = re.search(r'<select\b[^>]*name="color_scheme"[^>]*>(.*?)</select>', html, re.DOTALL)
+    assert select
+    assert re.findall(r'<option value="([^"]+)"[^>]*>([^<]+)</option>', select.group(1)) == [
+        ("light", "Light"), ("dark", "Dark"),
+        ("woodland-light", "Woodland Light"), ("woodland-dark", "Woodland Dark"),
+    ]
 
 
 def test_form_covers_option_registry(tmp_path):
@@ -317,7 +488,7 @@ def test_form_covers_option_registry(tmp_path):
     assert fields["show_summary"] == "true"
     assert fields["show_demographics"] is None
     assert fields["source"] == "webscorer"
-    assert fields["color_scheme"] == "dark"
+    assert fields["color_scheme"] == "woodland-light"
 
 
 def test_save_updates_only_selected_config(tmp_path):

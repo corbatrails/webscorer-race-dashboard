@@ -1,7 +1,8 @@
 {
  "admin_enabled": false,
  "chart_bucket_minutes": 15,
- "color_scheme": "dark",
+ "color_mode": "light",
+ "color_scheme": "woodland-light",
  "config_version": 1,
  "display_unfinished_in_category": false,
  "display_unfinished_in_overall": false,

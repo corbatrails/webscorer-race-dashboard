@@ -9,6 +9,7 @@ const vm = require("node:vm");
 
 const HELPERS_SOURCE = fs.readFileSync(path.join(__dirname, "..", "static", "result_helpers.js"), "utf8");
 const SOURCE = fs.readFileSync(path.join(__dirname, "..", "static", "dashboard.js"), "utf8");
+const STYLE_SOURCE = fs.readFileSync(path.join(__dirname, "..", "static", "style.css"), "utf8");
 
 function escapeText(text) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -115,6 +116,7 @@ function startDashboard() {
   }
 
   return {
+    context,
     dashboard,
     toastContainer,
     pauseIndicator,
@@ -154,7 +156,7 @@ function racer(bib, name, place, time) {
 }
 
 function payload({ generation = 1, raceName = "Race A", finishers = [], waiting = false, configVersion = 1,
-                   selectionRequired = false, adminEnabled = false, error = null } = {}) {
+                   selectionRequired = false, adminEnabled = false, error = null, colorScheme = "light" } = {}) {
   const racers = finishers.map((bib, i) => racer(bib, `${raceName} Rider ${bib}`, i + 1, `0:${10 + i}:00`));
   return {
     race_name: waiting ? "" : raceName,
@@ -176,8 +178,25 @@ function payload({ generation = 1, raceName = "Race A", finishers = [], waiting 
     race_generation: generation,
     race_selection_required: selectionRequired,
     admin_enabled: adminEnabled,
+    color_scheme: colorScheme,
+    color_mode: colorScheme.endsWith("dark") ? "dark" : "light",
   };
 }
+
+test("live theme changes keep app and Bootstrap theme attributes synchronized", async () => {
+  const d = startDashboard();
+  const body = vm.runInContext("document.body", d.context);
+  const themes = [
+    ["light", "light"], ["woodland-light", "light"],
+    ["dark", "dark"], ["woodland-dark", "dark"], ["light", "light"],
+  ];
+  for (let i = 0; i < themes.length; i++) {
+    const [theme, mode] = themes[i];
+    await d.respond(i === 0 ? 0 : await d.poll(), payload({ colorScheme: theme, finishers: [1] }));
+    assert.equal(body.dataset.theme, theme);
+    assert.equal(body.dataset.bsTheme, mode);
+  }
+});
 
 test("race generation change clears old page and toasts", async () => {
   const d = startDashboard();
@@ -301,6 +320,66 @@ test("lap overview follows Summary and dwells for summary_display_time", async (
   assert.match(d.dashboard.innerHTML, /Race A Overall/);
 });
 
+test("summary and lap overview render Bootstrap cards and progress components", async () => {
+  const d = startDashboard();
+  const withProgress = lapPayload();
+  withProgress.pages[0].data.distance_stats = [{ name: "25K", resolved: 3, total: 8 }];
+  await d.respond(0, withProgress);
+  assert.match(d.dashboard.innerHTML, /class="[^"]*\bcard\b[^"]*stat-card/);
+  assert.match(d.dashboard.innerHTML, /class="[^"]*\bprogress\b[^"]*progress-bar-track/);
+  assert.match(d.dashboard.innerHTML, /class="[^"]*\bprogress-bar\b[^"]*progress-bar-fill/);
+  assert.match(
+    d.dashboard.innerHTML,
+    /class="progress-bar progress-bar-fill" style="width:38%;background:var\(--accent-primary\)"/
+  );
+
+  await d.respond(await d.press("ArrowRight"), withProgress);
+  assert.match(d.dashboard.innerHTML, /class="[^"]*\bcard\b[^"]*lap-cell/);
+  assert.match(d.dashboard.innerHTML, /class="[^"]*\bprogress\b[^"]*lap-cell-share/);
+});
+
+test("demographics and category pages render Bootstrap cards, lists, tables, and badges", async () => {
+  const d = startDashboard();
+  const p = payload({ finishers: [1, 2] });
+  p.show_demographics = true;
+  p.pages.unshift({
+    type: "demographics",
+    title: "Demographics",
+    data: {
+      total_registrants: 8,
+      age: { average: 35, median: 34, min: 18, max: 62, labels: ["18-29"], counts: [2] },
+      gender: { labels: ["Women", "Men"], counts: [3, 5] },
+      distance: { labels: ["25K"], counts: [8] },
+      teams: { solo_count: 2, team_count: 6, top_teams: [{ name: "Pines", count: 3 }] },
+    },
+  });
+
+  await d.respond(0, p);
+  assert.match(d.dashboard.innerHTML, /demographics-panel[^"]*\bcard\b/);
+  assert.match(d.dashboard.innerHTML, /demographics-teams-list[^"]*\blist-group\b/);
+  assert.match(d.dashboard.innerHTML, /class="[^"]*\blist-group-item\b/);
+  assert.match(d.dashboard.innerHTML, /team-count[^"]*\bbadge\b[^"]*\btv-badge\b/);
+
+  await d.respond(await d.press("ArrowRight"), p);
+  assert.match(d.dashboard.innerHTML, /results-table[^"]*\btable\b/);
+  assert.match(d.dashboard.innerHTML, /category-meta[\s\S]*\bbadge\b[^"]*\btv-badge\b/);
+});
+
+test("TV badges preserve their parent typography instead of Bootstrap badge scaling", () => {
+  assert.match(
+    STYLE_SOURCE,
+    /\.demographics-teams-list\s*\{[^}]*font-size:\s*2\.2vh;/s,
+  );
+  assert.match(
+    STYLE_SOURCE,
+    /\.category-meta\s*\{[^}]*font-size:\s*2vh;/s,
+  );
+  assert.match(
+    STYLE_SOURCE,
+    /\.tv-badge\s*\{[^}]*font-size:\s*inherit;[^}]*line-height:\s*inherit;/s,
+  );
+});
+
 test("a settings change adds and removes the lap overview at once", async () => {
   const d = startDashboard();
   await d.respond(0, lapPayload({ show: false }));
@@ -385,10 +464,11 @@ test("P holds the page timer and resumes with the time left", async () => {
 
   await d.press("p");
   assert.equal(d.pageTimers().length, 0);
-  assert.match(d.pauseIndicator.className, /visible/);
+  assert.match(d.pauseIndicator.className, /\bis-visible\b/);
+  assert.doesNotMatch(d.pauseIndicator.className, /(?:^|\s)visible(?:\s|$)/);
 
   await d.press("P"); // caps lock on
-  assert.doesNotMatch(d.pauseIndicator.className, /visible/);
+  assert.doesNotMatch(d.pauseIndicator.className, /\bis-visible\b/);
   const resumed = d.pageTimers();
   assert.equal(resumed.length, 1);
   assert.ok(resumed[0].ms <= 1998000 && resumed[0].ms > 1990000, `resumes with the time left, got ${resumed[0].ms}`);
@@ -401,7 +481,7 @@ test("arrow keys still change page while paused, and it stays paused", async () 
   await d.respond(await d.press("ArrowRight"), payload({ finishers: [1, 2] }));
   assert.match(d.dashboard.innerHTML, /Rider 2/);
   assert.equal(d.pageTimers().length, 0);
-  assert.match(d.pauseIndicator.className, /visible/);
+  assert.match(d.pauseIndicator.className, /\bis-visible\b/);
 
   await d.press("p");
   assert.equal(d.pageTimers().length, 1);
@@ -442,5 +522,14 @@ test("R while paused shows new data but stays paused", async () => {
   await d.respond(d.requests.length - 1, payload({ finishers: [1, 2] }));
   assert.match(d.dashboard.innerHTML, /Rider 2/);
   assert.equal(d.pageTimers().length, 0);
-  assert.match(d.pauseIndicator.className, /visible/);
+  assert.match(d.pauseIndicator.className, /\bis-visible\b/);
+});
+
+test("notifications use the TV-specific toast class instead of Bootstrap toast", async () => {
+  const d = startDashboard();
+  await d.respond(0, payload({ finishers: [1] }));
+  await d.respond(await d.poll(), payload({ finishers: [1, 2] }));
+  assert.equal(d.toastContainer.children.length, 1);
+  assert.match(d.toastContainer.children[0].className, /\btv-toast\b/);
+  assert.doesNotMatch(d.toastContainer.children[0].className, /(?:^|\s)toast(?:\s|$)/);
 });

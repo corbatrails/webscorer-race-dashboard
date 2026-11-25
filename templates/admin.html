@@ -4,62 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard admin</title>
+    <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='operator.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
     <script src="{{ url_for('static', filename='admin.js') }}" defer></script>
 </head>
-<body data-theme="{{ color_scheme }}">
-    <header class="admin-header">
+<body class="operator-page operator-page--admin" data-theme="{{ color_scheme }}" data-bs-theme="{{ color_mode }}">
+    {% include "operator_nav.html" %}
+    <header class="admin-header operator-page-header">
         <h1>Dashboard admin</h1>
-        <div class="header-actions">
-            <a class="header-link" href="{{ url_for('race_control') }}" target="_blank" rel="noopener">Race control</a>
-            <a class="header-link" href="{{ url_for('results') }}" target="_blank" rel="noopener">Race results</a>
-            <form method="post" action="{{ url_for('admin.logout') }}">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-                <button type="submit" class="secondary">Log out</button>
-            </form>
-        </div>
     </header>
     <main class="admin-main">
-        {% if notice %}<p class="notice" role="status">{{ notice }}</p>{% endif %}
-        {% if form_error %}<p class="form-error" role="alert">{{ form_error }}</p>{% endif %}
+        {% if notice %}<p class="notice operator-status operator-status--success alert alert-success rounded-0" role="status">{{ notice }}</p>{% endif %}
+        {% if form_error %}<p class="form-error operator-status operator-status--error alert alert-danger rounded-0" role="alert">{{ form_error }}</p>{% endif %}
         <form method="post" action="{{ url_for('admin.save') }}" class="settings-form" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <input type="hidden" name="revision" value="{{ revision }}">
             {% for group in groups %}
-            <fieldset class="admin-card">
+            <fieldset class="admin-card card rounded-0">
                 <legend>{{ group.title }}</legend>
                 {% for f in group.fields %}
                 <div class="field field-{{ f.kind }}{% if f.error %} has-error{% endif %}">
                     {% if f.kind == "bool" %}
-                    <label class="check">
-                        <input type="checkbox" id="field-{{ f.key }}" name="{{ f.key }}" value="true"{% if f.value %} checked{% endif %}>
-                        {{ f.label }}
+                    <label class="check form-check">
+                        <input class="form-check-input" type="checkbox" id="field-{{ f.key }}" name="{{ f.key }}" value="true" data-saved-value="{{ 'true' if f.saved_value else 'false' }}"{% if f.value %} checked{% endif %}>
+                        <span class="form-check-label">{{ f.label }}</span>
                     </label>
                     {% else %}
-                    <label for="field-{{ f.key }}">{{ f.label }}</label>
+                    <label class="form-label" for="field-{{ f.key }}">{{ f.label }}</label>
                     {% if f.kind == "choice" %}
-                    <select id="field-{{ f.key }}" name="{{ f.key }}">
+                    <select class="form-select" id="field-{{ f.key }}" name="{{ f.key }}" data-saved-value="{{ f.saved_value }}">
                         {% for choice in f.choices %}
-                        <option value="{{ choice }}"{% if choice == f.value %} selected{% endif %}>{{ choice }}</option>
+                        <option value="{{ choice }}"{% if choice == f.value %} selected{% endif %}>{{ choice.replace('-', ' ').title() if f.key == "color_scheme" else choice }}</option>
                         {% endfor %}
                     </select>
                     {% elif f.kind == "int" %}
-                    <input type="number" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}"{% if f.minimum is not none %} min="{{ f.minimum }}"{% endif %} step="1">
+                    <input class="form-control" type="number" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" data-saved-value="{{ f.saved_value }}"{% if f.minimum is not none %} min="{{ f.minimum }}"{% endif %} step="1">
                     {% else %}
-                    <input type="text" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" autocomplete="off">
+                    <input class="form-control" type="text" id="field-{{ f.key }}" name="{{ f.key }}" value="{{ f.value }}" data-saved-value="{{ f.saved_value }}" autocomplete="off">
                     {% endif %}
                     {% endif %}
-                    {% if f.help %}<p class="help">{{ f.help }}</p>{% endif %}
-                    {% if f.error %}<p class="field-error">{{ f.error }}</p>{% endif %}
+                    {% if f.help %}<p class="help form-text">{{ f.help }}</p>{% endif %}
+                    {% if f.error %}<p class="field-error invalid-feedback d-block">{{ f.error }}</p>{% endif %}
                     {% if f.key == "race_id" %}
                     <div class="race-picker" id="race-picker" hidden>
-                        <label for="race-list">Pick from your WebScorer races</label>
+                        <label class="form-label" for="race-list">Pick from your WebScorer races</label>
                         <div class="race-picker-row">
-                            <select id="race-list"><option value="">Loading races...</option></select>
-                            <button type="button" class="secondary" id="race-reload">Reload list</button>
+                            <select class="form-select" id="race-list"><option value="">Loading races...</option></select>
+                            <button type="button" class="secondary btn btn-outline-secondary" id="race-reload">Reload list</button>
                         </div>
-                        <p class="help" id="race-status" role="status"></p>
+                        <p class="help form-text" id="race-status" role="status"></p>
                     </div>
                     {% endif %}
                 </div>
@@ -67,8 +62,8 @@
             </fieldset>
             {% endfor %}
             <div class="actions">
-                <button type="submit">Save settings</button>
-                <a class="secondary-link" href="{{ url_for('admin.settings') }}">Discard changes</a>
+                <button class="btn btn-primary" type="submit">Save settings</button>
+                <a class="secondary-link btn btn-outline-secondary" href="{{ url_for('admin.settings') }}" data-discard-changes>Discard changes</a>
             </div>
         </form>
     </main>

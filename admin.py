@@ -12,10 +12,12 @@ import sys
 from flask import Blueprint, abort, current_app, jsonify, redirect, render_template, request, session, url_for
 
 from config import (
+    DEFAULT_COLOR_SCHEME,
     OPTIONS,
     ConfigConflict,
     ConfigError,
     ConfigValidationError,
+    color_scheme_mode,
     config_revision,
     option_choices,
     option_minimum,
@@ -69,7 +71,8 @@ FIELD_GROUPS = (
         ("chart_bucket_minutes", "Finish chart bucket (minutes)", None),
     )),
     ("Appearance", (
-        ("color_scheme", "Color scheme", None),
+        ("color_scheme", "Theme", "Light and Dark use the original colors. "
+                                  "Woodland themes offer higher contrast for outdoor displays."),
         ("show_toasts", "Finish notifications", "Pop-ups when racers finish."),
     )),
 )
@@ -103,7 +106,8 @@ def _display(value):
     return str(value)
 
 
-def _field_groups(values, errors):
+def _field_groups(values, errors, saved_values=None):
+    saved_values = values if saved_values is None else saved_values
     options = {opt.key: opt for opt in OPTIONS}
     placed = set()
     groups = []
@@ -119,6 +123,7 @@ def _field_groups(values, errors):
             "choices": option_choices(opt) or (),
             "minimum": option_minimum(opt),
             "value": _display(values.get(key, opt.default)),
+            "saved_value": _display(saved_values.get(key, opt.default)),
             "error": errors.get(key),
         }
 
@@ -138,13 +143,25 @@ def _active_secrets():
 
 
 def _render_settings(values, revision, *, errors=None, form_error=None, notice=None, status=200):
+    saved_values = values
+    if status >= 400:
+        try:
+            saved_values, _ = read_config_snapshot(
+                current_app.config["dashboard_config_path"], _active_secrets(),
+            )
+        except ConfigError:
+            saved_values = current_app.config["dashboard"]
+            form_error = (form_error or "Nothing was saved.") + (
+                " Saved settings could not be read; change tracking uses the last running settings."
+            )
     return render_template(
         "admin.html",
         csrf_token=csrf_token(),
         revision=revision,
-        groups=_field_groups(values, errors or {}),
+        groups=_field_groups(values, errors or {}, saved_values),
         form_error=form_error,
         notice=notice,
+        active_destination="admin",
     ), status
 
 
@@ -197,7 +214,8 @@ def _build_blueprint():
 
     @bp.context_processor
     def theme_context():
-        return {"color_scheme": current_app.config["dashboard"].get("color_scheme", "dark")}
+        color_scheme = current_app.config["dashboard"].get("color_scheme", DEFAULT_COLOR_SCHEME)
+        return {"color_scheme": color_scheme, "color_mode": color_scheme_mode(color_scheme)}
 
     @bp.after_request
     def security_headers(response):

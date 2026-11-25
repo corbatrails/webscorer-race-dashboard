@@ -58,16 +58,18 @@ Press these on a keyboard attached to the dashboard browser:
 
 ## Race results page
 
-`http://<host>:5000/results` gives the race director a list of winners to announce. The admin page header links to it (**Race results**, opens in a new tab); the TV dashboard does not.
+`http://<host>:5000/announcements` gives the race director a list of winners to announce. Shared operator navigation links it with Race progress, detailed results, and Admin when enabled; the TV dashboard remains separate.
 
 - The left side lists the same distance/category groupings as the TV dashboard's result pages, following the `display_unfinished_*` options. Click one to show its finishers on the right.
 - **Show top** (default 3) sets how many places to show. Places are used exactly as ranked on the dashboard (overall winners are not removed from category lists), and everyone tied at the cutoff is included, so "top 3" with a tie for third shows four racers. DNS/DNF/DSQ and unplaced racers are never shown.
 - The page refreshes on `refresh_interval` and keeps your grouping and count. Press `R` to refresh from the source right away (same `POST /api/refresh` and 5-second cooldown as the TV dashboard). It doesn't rotate or scroll by itself, and it uses the configured `color_scheme`.
-- Like `/` and `/api/data`, it needs no login.
+- `/announcements` is read-only and has no app login. Deploy it only on a network restricted to race staff or at a staff-only location.
 
 ## Race control
 
-`http://<host>:5000/race-control` is a read-only workspace for race directors and timers. The admin header links to **Race control** in a new tab; the TV dashboard stays unchanged.
+`http://<host>:5000/progress` and `http://<host>:5000/race-results` provide a read-only workspace for race directors and timers. Shared operator navigation links these pages with Winner announcements (`/announcements`) and Admin (`/admin`) when enabled. Each page has its own path and remains selected on refresh. Use **Race progress** and **Detailed results** in the top navigation to switch views without reloading; your current filters and selection are retained.
+
+Top-navigation links open in the current browser tab. Legacy `/race-control?view=progress` and `/race-control?view=results` URLs redirect to `/progress` and `/race-results`; a missing or unknown legacy view redirects to `/progress`. Legacy `/results` URLs redirect to `/announcements`.
 
 - **Race progress:** registered/on-course/finished/DNS/not-started/DNF/DSQ totals, on-course racers by distance and lap, DNFs by lap, distance completion (finished + DNS + DNF + DSQ), and the latest finishers ordered by their actual finish time. Progress cells do not drill into results yet.
 - **Results:** choose a distance and grouping, then view all racers or finishers only. Ranking and ties match the dashboard. Completed laps, time/status and gap to the grouping leader are shown; narrow screens omit secondary columns. Multi-lap racers have a **+ / -** button beside their name to expand or collapse lap splits inline, left-aligned beneath the name column. Each recorded crossing shows its lap number, that lap's split duration, the ending elapsed race time, the wall-clock time of day the racer crossed (their start time plus elapsed, in the race's local time, `HH:MM:SS` with `+1 day` past midnight; `--:--:--` without a start time), the racer's place within the selected grouping at that lap (ranked by elapsed time among racers who have crossed it, ties sharing a place), and the change from their previous-lap place (▲ gained, ▼ lost, = unchanged; blank when the previous crossing is missing). A missing preceding crossing leaves the split unavailable; no crossings shows "No lap splits available." CSV imports do not supply lap crossings.
@@ -75,7 +77,9 @@ Press these on a keyboard attached to the dashboard browser:
 - The page follows `color_scheme`, including configuration changes while it is open. There is no independent theme toggle. It refreshes on `refresh_interval`, preserves your view, filters, selection, navigation pages, expanded racers and results scroll position, and marks stale data or errors explicitly. A race switch resets selections and expanded racers. Lap splits are derived from the normalized snapshot's cumulative `lap_crossings` in the Race Control payload; replay only includes crossings reached at the observation time.
 - Press **1** for progress, **2** for results, or **R** / **Refresh** to poll the source immediately (shared 5-second cooldown). Tab to the results table to scroll with the keyboard, or to a racer's split button and press Enter or Space to toggle it.
 - Operational data includes all groupings and unfinished racers regardless of TV `show_*` and `display_unfinished_*` settings. Those settings still govern the TV and announcer pages.
-- The race clock shows elapsed time since the first wave's earliest valid recorded racer start, regardless of the selected distance. If no racer starts are available, it falls back to the event's reported start time. It initializes from server time, then runs locally without corrections on results refreshes, including when results are stale or unavailable. Reload the page to pick up a changed start time; switching races also resets the clock. It includes days for multi-day/historical events and a negative countdown before the start. Like `/results`, this page and its data need no login; admin settings still require one.
+- The race clock shows elapsed time since the first wave's earliest valid recorded racer start, regardless of the selected distance. If no racer starts are available, it falls back to the event's reported start time. It initializes from server time, then runs locally without corrections on results refreshes, including when results are stale or unavailable. Reload the page to pick up a changed start time; switching races also resets the clock. It includes days for multi-day/historical events and a negative countdown before the start.
+
+`/progress`, `/race-results`, and `/announcements` remain read-only and unauthenticated; deploy them only on a race-staff-restricted network or at a staff-only location. The shared navigation shows Admin when `ADMIN_PASSWORD` enables it, and logged-out visitors must use the existing login. The TV display at `/` and shared API endpoints remain distinct and public.
 
 ## Configuration
 
@@ -119,10 +123,12 @@ Environment variables never override non-secret options; only the secrets above 
 | `display_unfinished_in_category` | false | Show in-progress category pages before racers finish |
 | `display_unfinished_in_overall` | false | Show in-progress Overall pages before racers finish |
 | `chart_bucket_minutes` | 15 | Minutes per bucket in the finish chart (at least 1) |
-| `color_scheme` | dark | `dark` or `light` |
+| `color_scheme` | woodland-light | `light`, `dark`, `woodland-light`, or `woodland-dark` |
 | `show_toasts` | true | Toast notifications when racers finish |
 
 The full set of effective options is printed at startup. Booleans must be `true` or `false`, and choice options must use one of the listed values; an invalid value stops startup with a message naming the option. Unknown keys in `config.yaml` and secrets placed in it are ignored with a warning.
+
+All four themes share the Bootstrap layouts. **Light** and **Dark** restore the original neutral/blue palettes; **Woodland Light** and **Woodland Dark** use the earthy palettes. Woodland Light is the default when no theme is configured. Saved `light` and `dark` values select the original palettes; choose a `woodland-` value to retain the Woodland colors. The Woodland themes provide higher contrast for outdoor TV use.
 
 ### Changing settings while running
 
@@ -133,7 +139,7 @@ The app watches its config file (`config.yaml`, or the `--config` path) and appl
 - **Secrets are not reloaded.** `.env`, the API credentials and `ADMIN_PASSWORD` keep their startup values; restart to change them.
 - **Bad edits are rejected whole.** If the file has invalid YAML or an invalid value (including `refresh_interval` below 1), the last good settings keep running and a warning is printed to the console once per distinct error. Fix the file and it is picked up automatically.
 - **Switching races:** changing `source`, `race_id`, or `data_file` clears the current race from the TV right away, shows a waiting screen, and polls the new race immediately. Results from the old race that arrive afterward are discarded. If the new race cannot be fetched yet, the selection is kept and the app retries every `refresh_interval`. The TV drops the old race's pages, charts and finish pop-ups, and racers who had already finished in the new race don't trigger pop-ups; only later finishers do.
-- **`/api/data` fields:** `config_version` starts at 1 and increments each time an option changes. `race_generation` changes each time the race (`source`, `race_id`, `data_file`) changes. `race_selection_required` is true while a live WebScorer setup has no race chosen. `color_scheme` and `refresh_interval` report the active values. `admin_enabled` says whether the admin page is on (never the password).
+- **`/api/data` fields:** `config_version` starts at 1 and increments each time an option changes. `race_generation` changes each time the race (`source`, `race_id`, `data_file`) changes. `race_selection_required` is true while a live WebScorer setup has no race chosen. `color_scheme` and `refresh_interval` report the active values; `color_mode` reports the theme's Bootstrap mode (`light` or `dark`). `admin_enabled` says whether the admin page is on (never the password).
 
 ### Migrating from an `.env`-only setup
 
@@ -143,7 +149,10 @@ Non-secret values in `.env` or the process environment (for example `REFRESH_INT
 
 Set `ADMIN_PASSWORD` in `.env` and restart to enable `http://<host>:5000/admin`. Leave it empty and the admin page is disabled (every `/admin` URL returns 404). Startup prints whether the admin page is enabled, never the password.
 
-The admin settings and login pages use the dashboard's configured `color_scheme`. Saving a color scheme change applies it to the admin page after the save.
+Admin uses the shared operator navigation, as do the read-only Race control and Race results pages. Those read-only pages do not require a login and must be deployed only on a race-staff-restricted network or at a staff-only location; Admin remains protected by `ADMIN_PASSWORD`.
+From Admin, navigation links also open in the current tab. If settings have changed, your browser warns before you leave. Restoring saved values removes the warning; **Save settings** and **Discard changes** let you leave without it. If a save fails, retained edits remain protected until you save, restore, or discard them.
+
+The admin settings and login pages use the dashboard's configured `color_scheme`. The **Theme** selector offers Light, Dark, Woodland Light, and Woodland Dark. Saving a theme change applies it to the admin page after the save and to open operator/TV pages on their next fetch.
 
 The page edits every option in `config.yaml`, grouped by purpose. Saving validates the values, writes `config.yaml` (keeping its comments), and applies them to the running dashboard within one poll; no restart is needed. Invalid values are listed next to their fields and nothing is written.
 
@@ -232,7 +241,7 @@ Run the tests from the repo root:
 
 ```bash
 pytest                                  # server, config and admin tests
-node --test tests/dashboard.test.cjs tests/results.test.cjs tests/race_control.test.cjs    # Page scripts (Node 22+, no npm install needed)
+node --test tests/dashboard.test.cjs tests/results.test.cjs tests/race_control.test.cjs tests/admin.test.cjs    # Page scripts (Node 22+, no npm install needed)
 ```
 
 For a quick manual check, point `--config` at a throwaway YAML file with `data_file` set to one of the files in `tests/fixtures/` (or use the [offline demo](#offline-demo)); no WebScorer credentials are needed.

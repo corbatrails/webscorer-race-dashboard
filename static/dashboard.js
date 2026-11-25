@@ -58,6 +58,7 @@
         detectNewFinishers(data);
         if (data.color_scheme) {
           document.body.dataset.theme = data.color_scheme;
+          document.body.dataset.bsTheme = data.color_mode;
         }
         var configChanged = configVersion !== null && data.config_version !== configVersion;
         configVersion = data.config_version;
@@ -262,7 +263,7 @@
       if (action) schedule(action.fn, action.ms);
     }
     var indicator = document.getElementById("pause-indicator");
-    if (indicator) indicator.className = "pause-indicator" + (paused ? " visible" : "");
+    if (indicator) indicator.className = "pause-indicator" + (paused ? " is-visible" : "");
   }
 
   function refreshNow() {
@@ -375,7 +376,7 @@
   }
 
   function renderEventHeader(data) {
-    var html = '<div class="summary-header">';
+    var html = '<div class="summary-header d-flex align-items-center">';
     html += '<img src="/static/logo.png" alt="Logo" onerror="this.style.display=\'none\'">';
     html += "<div>";
     html += '<div class="race-title">' + escapeHtml(data.race_name) + "</div>";
@@ -393,17 +394,16 @@
     html += renderEventHeader(data);
 
     html += '<div class="summary-stats-row">';
-    html += '<div class="stat-card stat-card-primary"><div class="stat-value">' + d.total_racers + '</div><div class="stat-label">Total Racers</div></div>';
-    html += '<div class="stat-card stat-card-primary"><div class="stat-value">' + d.total_finished + '</div><div class="stat-label">Finishers</div></div>';
-    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + d.total_dns + '</div><div class="stat-label">DNS</div></div>';
-    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + d.total_dnf + '</div><div class="stat-label">DNF</div></div>';
-    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + d.total_dsq + '</div><div class="stat-label">DSQ</div></div>';
+    html += '<div class="card stat-card stat-card-primary"><div class="stat-value">' + d.total_racers + '</div><div class="stat-label">Total Racers</div></div>';
+    html += '<div class="card stat-card stat-card-primary"><div class="stat-value">' + d.total_finished + '</div><div class="stat-label">Finishers</div></div>';
+    html += '<div class="card stat-card stat-card-secondary"><div class="stat-value">' + d.total_dns + '</div><div class="stat-label">DNS</div></div>';
+    html += '<div class="card stat-card stat-card-secondary"><div class="stat-value">' + d.total_dnf + '</div><div class="stat-label">DNF</div></div>';
+    html += '<div class="card stat-card stat-card-secondary"><div class="stat-value">' + d.total_dsq + '</div><div class="stat-label">DSQ</div></div>';
     html += "</div>";
 
-    var chartColorCount = (data.finish_chart && data.finish_chart.datasets) ? data.finish_chart.datasets.length : 0;
-    html += renderProgressBars(d.distance_stats, chartColorCount);
+    html += renderProgressBars(d.distance_stats);
 
-    html += '<div class="summary-chart-area">';
+    html += '<div class="card summary-chart-area">';
     if (data.finish_chart && data.finish_chart.labels && data.finish_chart.labels.length > 0) {
       html += '<canvas id="finish-chart"></canvas>';
     } else {
@@ -452,7 +452,7 @@
       emptyHtml += '<div class="category-header">';
       emptyHtml += '<div class="category-title">' + escapeHtml(category.title) + "</div>";
       emptyHtml += '<div class="category-meta">';
-      emptyHtml += '<span>Category ' + (catIndex + 1) + " of " + categories.length + "</span>";
+      emptyHtml += '<span class="badge tv-badge">Category ' + (catIndex + 1) + " of " + categories.length + "</span>";
       emptyHtml += "</div>";
       emptyHtml += "</div>";
       emptyHtml += renderResultHeader(columns, layoutClass);
@@ -468,7 +468,7 @@
     html += '<div class="category-header">';
     html += '<div class="category-title">' + escapeHtml(category.title) + "</div>";
     html += '<div class="category-meta">';
-    html += '<span>Category ' + (catIndex + 1) + " of " + categories.length + "</span>";
+    html += '<span class="badge tv-badge">Category ' + (catIndex + 1) + " of " + categories.length + "</span>";
     html += "</div>";
     html += "</div>";
 
@@ -476,7 +476,7 @@
 
     // Pinned leaders table (only shown when at least one racer has finished)
     if (pinned.length > 0) {
-      html += '<table class="results-table pinned-table ' + layoutClass + '">';
+      html += '<table class="results-table table pinned-table ' + layoutClass + '">';
       html += "<tbody>";
       for (var i = 0; i < pinned.length; i++) {
         html += renderRacerRow(pinned[i], showPodiumStyling, columns);
@@ -487,7 +487,7 @@
     // Scrolling results
     if (scrolling.length > 0) {
       html += '<div id="scroll-container" class="scroll-container">';
-      html += '<table class="results-table scroll-table ' + layoutClass + '">';
+      html += '<table class="results-table table scroll-table ' + layoutClass + '">';
       html += "<tbody>";
       for (var j = 0; j < scrolling.length; j++) {
         html += renderRacerRow(scrolling[j], showPodiumStyling, columns);
@@ -538,7 +538,7 @@
   }
 
   function renderResultHeader(columns, layoutClass) {
-    var html = '<table class="results-table results-header-table ' + layoutClass + '">';
+    var html = '<table class="results-table table results-header-table ' + layoutClass + '">';
     html += "<thead><tr>";
     for (var i = 0; i < columns.length; i++) {
       html += '<th class="' + columns[i].className + '">' + escapeHtml(columns[i].header) + "</th>";
@@ -606,17 +606,16 @@
     return colors;
   }
 
-  function renderProgressBars(distanceStats, colorCount) {
+  function renderProgressBars(distanceStats) {
     if (!distanceStats || distanceStats.length === 0) return "";
-    var colors = generateChartColors(colorCount || distanceStats.length);
     var html = '<div class="progress-bars-row">';
     for (var i = 0; i < distanceStats.length; i++) {
       var stat = distanceStats[i];
       var pct = stat.total > 0 ? Math.round((stat.resolved / stat.total) * 100) : 0;
       html += '<div class="progress-bar-item">';
       html += '<div class="progress-bar-label">' + escapeHtml(stat.name) + '</div>';
-      html += '<div class="progress-bar-track">';
-      html += '<div class="progress-bar-fill" style="width:' + pct + '%;background:' + colors[i] + '"></div>';
+      html += '<div class="progress progress-bar-track">';
+      html += '<div class="progress-bar progress-bar-fill" style="width:' + pct + '%;background:var(--accent-primary)"></div>';
       html += '<div class="progress-bar-count">' + stat.resolved + '/' + stat.total + '</div>';
       html += '</div>';
       html += '</div>';
@@ -626,20 +625,20 @@
   }
 
   function lapStatCard(value, label, primary) {
-    return '<div class="stat-card ' + (primary ? "stat-card-primary" : "stat-card-secondary") +
+    return '<div class="card stat-card ' + (primary ? "stat-card-primary" : "stat-card-secondary") +
       '"><div class="stat-value">' + value + '</div><div class="stat-label">' + label + "</div></div>";
   }
 
   function renderLapCell(distance, lapIndex) {
     var lapNumber = lapIndex + 1;
     if (lapIndex >= distance.lap_count) {
-      return '<div class="lap-cell lap-cell-na">no lap ' + lapNumber + "</div>";
+      return '<div class="card lap-cell lap-cell-na">no lap ' + lapNumber + "</div>";
     }
     var count = distance.on_course_by_lap[lapIndex] || 0;
     var share = distance.started > 0 ? Math.round((count / distance.started) * 100) : 0;
-    var html = '<div class="lap-cell' + (count > 0 ? " lap-cell-active" : "") + '">';
+    var html = '<div class="card lap-cell' + (count > 0 ? " lap-cell-active" : "") + '">';
     html += '<div class="lap-cell-count">' + count + "</div>";
-    html += '<div class="lap-cell-share" title="Share of starters on this lap"><div style="width:' + share + '%"></div></div>';
+    html += '<div class="progress lap-cell-share" title="Share of starters on this lap"><div class="progress-bar" style="width:' + share + '%"></div></div>';
     var dnfHere = distance.dnf_by_lap[lapIndex] || 0;
     if (lapIndex === 0) dnfHere += distance.dnf_without_crossing;
     if (dnfHere > 0) {
@@ -682,11 +681,11 @@
 
     for (var j = 0; j < d.distances.length; j++) {
       var dist = d.distances[j];
-      html += '<div class="lap-row-label"><div class="lap-row-name">' + escapeHtml(dist.name) + "</div></div>";
+      html += '<div class="card lap-row-label"><div class="lap-row-name">' + escapeHtml(dist.name) + "</div></div>";
       for (var k = 0; k < maxLaps; k++) {
         html += renderLapCell(dist, k);
       }
-      html += '<div class="lap-cell lap-cell-finished"><div class="lap-cell-count">' + dist.finished + "</div></div>";
+      html += '<div class="card lap-cell lap-cell-finished"><div class="lap-cell-count">' + dist.finished + "</div></div>";
     }
     html += "</div>";
 
@@ -702,23 +701,23 @@
     html += renderEventHeader(lastData);
 
     html += '<div class="summary-stats-row">';
-    html += '<div class="stat-card stat-card-primary"><div class="stat-value">' + d.total_registrants + '</div><div class="stat-label">Total Registrants</div></div>';
-    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + (age.average != null ? age.average : "\u2014") + '</div><div class="stat-label">Avg Age</div></div>';
-    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + (age.median != null ? age.median : "\u2014") + '</div><div class="stat-label">Median Age</div></div>';
-    html += '<div class="stat-card stat-card-secondary"><div class="stat-value">' + (age.min != null ? age.min + "\u2013" + age.max : "\u2014") + '</div><div class="stat-label">Age Range</div></div>';
+    html += '<div class="card stat-card stat-card-primary"><div class="stat-value">' + d.total_registrants + '</div><div class="stat-label">Total Registrants</div></div>';
+    html += '<div class="card stat-card stat-card-secondary"><div class="stat-value">' + (age.average != null ? age.average : "\u2014") + '</div><div class="stat-label">Avg Age</div></div>';
+    html += '<div class="card stat-card stat-card-secondary"><div class="stat-value">' + (age.median != null ? age.median : "\u2014") + '</div><div class="stat-label">Median Age</div></div>';
+    html += '<div class="card stat-card stat-card-secondary"><div class="stat-value">' + (age.min != null ? age.min + "\u2013" + age.max : "\u2014") + '</div><div class="stat-label">Age Range</div></div>';
     html += "</div>";
 
     html += '<div class="demographics-grid">';
-    html += '<div class="demographics-panel"><canvas id="demographics-age-chart"></canvas></div>';
-    html += '<div class="demographics-panel"><canvas id="demographics-gender-chart"></canvas></div>';
-    html += '<div class="demographics-panel"><canvas id="demographics-distance-chart"></canvas></div>';
-    html += '<div class="demographics-panel demographics-teams-panel">';
+    html += '<div class="demographics-panel card"><canvas id="demographics-age-chart"></canvas></div>';
+    html += '<div class="demographics-panel card"><canvas id="demographics-gender-chart"></canvas></div>';
+    html += '<div class="demographics-panel card"><canvas id="demographics-distance-chart"></canvas></div>';
+    html += '<div class="demographics-panel card demographics-teams-panel">';
     html += '<div class="demographics-teams-summary">' + d.teams.solo_count + ' solo &middot; ' + d.teams.team_count + ' on teams</div>';
     if (d.teams.top_teams.length > 0) {
-      html += '<ol class="demographics-teams-list">';
+      html += '<ol class="demographics-teams-list list-group list-group-flush">';
       for (var i = 0; i < d.teams.top_teams.length; i++) {
         var t = d.teams.top_teams[i];
-        html += '<li><span class="team-name">' + escapeHtml(t.name) + '</span><span class="team-count">' + t.count + '</span></li>';
+        html += '<li class="list-group-item"><span class="team-name">' + escapeHtml(t.name) + '</span><span class="team-count badge tv-badge">' + t.count + '</span></li>';
       }
       html += '</ol>';
     } else {
@@ -890,7 +889,7 @@
 
   function createToast(container, toast) {
     var el = document.createElement("div");
-    el.className = "toast" + (toast.placeClass ? " " + toast.placeClass : "");
+    el.className = "tv-toast" + (toast.placeClass ? " " + toast.placeClass : "");
     el.textContent = toast.text;
     container.appendChild(el);
 
