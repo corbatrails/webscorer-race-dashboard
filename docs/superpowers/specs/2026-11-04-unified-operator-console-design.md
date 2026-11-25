@@ -3,6 +3,10 @@
 **Roadmap:** Successor roadmap epic #96, first priority issue #101. Related
 issues: #98 (admin observability) and #100 (progress-to-results drill-down).
 
+The [canonical routes design](2026-11-06-canonical-operator-routes-design.md)
+supersedes the URLs below. The [Woodland theme design](2026-11-08-woodland-high-contrast-theme-design.md)
+defines the shared layouts and four palette choices.
+
 ## Intent
 
 Give race directors one connected console for race progress, detailed results,

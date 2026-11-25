@@ -2,24 +2,24 @@
 
 ## Intent
 
-Use Bootstrap 5.3.8 as the visual foundation for the whole race dashboard, with the Paddock Woodland palette across staff pages and rotating TV screens. Make the light palette the default for new installations so event staff can use the dashboard in bright outdoor conditions.
+Use Bootstrap 5.3.8 as the visual foundation for staff pages and rotating TV screens. Give event staff a high-contrast Woodland palette for outdoor viewing while keeping the original Light and Dark palettes available.
 
 ## Goals
 
-- Apply one Woodland design to the rotating dashboard, Race Progress, Detailed Results, Winner Announcements, Admin, and Admin login.
+- Share the same Bootstrap layouts across all four themes on the rotating dashboard, Race Progress, Detailed Results, Winner Announcements, Admin, and Admin login.
 - Use Bootstrap components and utilities for shared page structure and common components, while retaining custom CSS for TV-specific layout and sizing.
-- Keep both light and dark schemes. Default new installations to light and preserve an explicit dark selection.
-- In the light palette, target at least 7:1 contrast for meaningful text and at least 3:1 for meaningful dividers and progress indicators. Verify colors against their actual surfaces. Maintain WCAG AA contrast for the dark palette and semantic status colors.
-- Keep the chosen top navigation, compact flat cards, warm ivory, cream, forest, and olive colors. Avoid decorative colored edge stripes, pill-shaped controls, and oversized rounded panels. Do not rely on color alone to communicate race status.
+- Default to Woodland Light when no theme is configured. Keep explicit `light` and `dark` selections on the original palettes.
+- Target at least 7:1 for meaningful text in Woodland Light and 4.5:1 in Woodland Dark, including semantic status text. Target at least 3:1 for meaningful dividers and progress indicators in both Woodland palettes. Verify colors against their actual surfaces.
+- Keep the chosen top navigation and compact, flat cards. Use warm ivory, cream, forest, and olive for Woodland. Avoid decorative colored edge stripes, pill-shaped controls, and oversized rounded panels. Do not rely on color alone to communicate race status.
 - Preserve existing routes, data, page rotation, scrolling, filters, settings, and interactions.
 
 ## Non-goals and limits
 
-- Do not change authentication, routing, race-data behavior, or configuration options other than changing the default value of `color_scheme`.
+- Do not change authentication, routing, race-data behavior, or configuration options beyond the choices and default for `color_scheme`.
 - Do not use a CDN or add Bootstrap JavaScript. Self-host the Bootstrap CSS so the Admin Content Security Policy remains effective.
 - Do not add automatic light sensing or claim that color contrast ratios guarantee sunlight readability.
 - Retain custom TV CSS where Bootstrap does not support the fixed viewport, dynamic lap grid, or dashboard-specific controls.
-- Preserve the user's existing uncommitted `config.yaml` changes, including `color_scheme: light`.
+- Do not restore pre-Bootstrap layouts with the classic themes or automatically rewrite saved theme selections.
 - Confirm readability on the installed TV at the venue, from the expected viewing distance and under the actual glare conditions.
 
 ## Approaches
@@ -35,13 +35,26 @@ Use Bootstrap 5.3.8 as the visual foundation for the whole race dashboard, with 
 - Load the local stylesheet from every applicable page. Do not request assets from a CDN. Bootstrap JavaScript is not needed for this work.
 - Use Bootstrap navigation, cards, tables, progress bars, badges, lists, forms, buttons, grid and spacing utilities where they fit.
 - Keep the existing page-specific CSS for layout and behavior that Bootstrap does not provide.
-- Keep the configured `color_scheme` and Bootstrap's `data-bs-theme` in sync. The implementation may use one as the source of truth, but the dashboard, staff pages, Admin, and Admin login must all render the same configured mode.
+- Set `data-theme` to the configured palette ID and `data-bs-theme` to its Bootstrap mode. The palette sets the app and Bootstrap colors; the mode keeps Bootstrap and native controls in light or dark mode.
 
-### Woodland palette
+### Theme selection
 
-Use the approved outdoor-light preview as the starting point:
+Admin's **Theme** selector sets the existing `color_scheme` option:
 
-| Token | Light | Dark |
+| Label | `color_scheme` | Bootstrap mode | Palette |
+|---|---|---|---|
+| Light | `light` | `light` | Original light |
+| Dark | `dark` | `dark` | Original dark |
+| Woodland Light | `woodland-light` | `light` | High-contrast Woodland (default) |
+| Woodland Dark | `woodland-dark` | `dark` | Dark Woodland |
+
+Saved `light` and `dark` values select the original colors. Select the corresponding Woodland option to keep the earthy colors from the initial Woodland rollout. Choose Woodland when higher contrast matters; the classic palettes do not target Woodland's contrast thresholds.
+
+Admin applies the theme after a successful save, and Admin login uses the active theme when rendered. `/api/data` reports both `color_scheme` and `color_mode`; open operator and TV pages apply both on their next fetch, including switches between palettes with the same mode.
+
+### Woodland palettes
+
+| Token | Woodland Light | Woodland Dark |
 |---|---|---|
 | Page background | `#F2F0E5` | `#171D18` |
 | Card background | `#FFFDF6` | `#252E25` |
@@ -52,7 +65,7 @@ Use the approved outdoor-light preview as the starting point:
 | Divider | `#7B8474` | `#6B786C` |
 | Progress track | `#D0D8C4` | `#3B4637` |
 
-These are starting colors, not permission to skip contrast checks. The dark divider was raised from the preview's `#39443A` to `#6B786C` so meaningful card boundaries reach 3:1. Check primary, secondary, warning, error, success, podium, muted text, and table states against the surfaces where each appears. In light mode, preserve the mockup's verified minimums: 7.35:1 for text, 3.18:1 for separators, and 6.17:1 for progress fill against its track. Revise any semantic color that misses its target.
+The Woodland Dark divider is lighter than the preview's `#39443A` so meaningful card boundaries reach 3:1. Check text, status colors, table states, and progress fill against the surfaces where each appears.
 
 ### TV dashboard constraints
 
@@ -66,9 +79,9 @@ The Admin Content Security Policy permits same-origin assets only, so every styl
 
 ## Acceptance and verification
 
-- All listed pages use the local Bootstrap 5.3.8 stylesheet and the Woodland palette. The Admin and login pages load without CSP violations or external requests.
-- The new-install `color_scheme` default is light, and explicitly configured dark mode remains available and synchronized across pages. Update `OPTIONS`, the committed default in `config.yaml`, the README options table, config display, and focused tests as required by the repository's configuration rules. Preserve the user's original `config.yaml` changes in the path-scoped stash until all planned commits are complete.
-- Contrast tests or focused assertions verify the targets above for both modes and meaningful component states.
+- All listed pages use the local Bootstrap 5.3.8 stylesheet and the selected palette. The Admin and login pages load without CSP violations or external requests.
+- A missing `color_scheme` and the shipped `config.yaml` both use `woodland-light`. All four palette choices persist through Admin and render with the correct Bootstrap mode. Open operator and TV pages follow saves on the next fetch; operator pages retain the current view, filters, and selection.
+- Contrast tests or focused assertions verify the Woodland targets above and meaningful component states.
 - Existing routes, result content, pagination/rotation, filtering, Admin behavior, and mobile layouts remain unchanged.
-- Run focused tests, then the suite relevant to configuration and templates. Start the app using a temporary configuration outside the repository and fixture data; inspect every dashboard view and each staff/Admin page in both modes at representative viewport sizes.
+- Verify defaults, Admin saves, and live switches with focused tests. Use fixture data and a temporary configuration outside the repository to inspect all four palettes on staff and TV pages at representative viewport sizes.
 - Report the physical TV check as outstanding until someone verifies the display under the tent in the actual event conditions.
