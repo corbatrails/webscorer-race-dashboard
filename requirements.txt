@@ -3,4 +3,4 @@ requests>=2.31
 python-dotenv>=1.0
 PyYAML>=6.0
 ruamel.yaml>=0.18,<0.19
-pytest>=8.0
+pytest>=9.2.0
